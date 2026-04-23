@@ -1,0 +1,2111 @@
+const playerList = document.querySelector("#playerList");
+const totalPlayers = document.querySelector("#totalPlayers");
+const playersPerGroup = document.querySelector("#playersPerGroup");
+const message = document.querySelector("#message");
+const groupsOutput = document.querySelector("#groupsOutput");
+const bracketOutput = document.querySelector("#bracket");
+const championOutput = document.querySelector("#champion");
+const nameList = document.querySelector("#nameList");
+const backupList = document.querySelector("#backupList");
+const paperBackup = document.querySelector("#paperBackup");
+const redrawWarning = document.querySelector("#redrawWarning");
+const teamDrawWarning = document.querySelector("#teamDrawWarning");
+const nameBackupList = document.querySelector("#nameBackupList");
+const outShotSheet = document.querySelector("#outShotSheet");
+const rollDiceButton = document.querySelector("#rollDice");
+const dieButtons = Array.from(document.querySelectorAll("[data-die-index]"));
+const diceTotal = document.querySelector("#diceTotal");
+const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
+const resetMysteryOutButton = document.querySelector("#resetMysteryOut");
+const mysteryOutValue = document.querySelector("#mysteryOutValue");
+const mysteryOutModeInputs = Array.from(document.querySelectorAll("[data-mystery-out-mode]"));
+const backupIndexKey = "dartsTournamentBracketBackupIndex";
+const backupKeyPrefix = "dartsTournamentBracketBackup:";
+const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
+const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
+const outShotStorageKey = "dartsTournamentOutShots";
+const outShotSlotCount = 25;
+const dartScores = [
+  ...Array.from({ length: 20 }, (_, index) => index + 1),
+  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
+  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 3),
+  25,
+  50,
+];
+const doubleOutFinishes = [
+  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
+  50,
+];
+const masterOutFinishes = [
+  ...doubleOutFinishes,
+  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 3),
+];
+const mysteryOutExclusions = {
+  open: [179],
+  double: [159, 162, 163, 165, 166, 168, 169],
+  master: [163, 166, 169, 172, 173, 175, 176, 178, 179],
+};
+const mysteryOutRanges = {
+  open: { min: 1, max: 180 },
+  double: { min: 2, max: 170 },
+  master: { min: 2, max: 180 },
+};
+const diceValues = [1, 1];
+const diceRollTimers = [null, null];
+
+let state = null;
+let currentTeams = [];
+let hasGeneratedTeams = false;
+let blockedGenerateCount = 0;
+let advancingMatchId = null;
+let mysteryOut = "";
+
+renderNameInputs(Number(totalPlayers.value));
+renderBackups();
+renderNameBackups();
+renderOutShotSheet();
+renderDice();
+renderMysteryOut();
+
+totalPlayers.addEventListener("change", () => {
+  renderNameInputs(Number(totalPlayers.value));
+});
+
+document.querySelector("#refreshNames").addEventListener("click", () => {
+  renderNameInputs(Number(totalPlayers.value));
+});
+
+document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
+  if (!state) {
+    showMessage("Build a bracket before saving a backup.");
+    return;
+  }
+
+  saveBracketBackup({ selectedWinner: "", manual: true });
+  showMessage("Current bracket backup saved.");
+});
+
+document.querySelector("#printPaperBackup").addEventListener("click", () => {
+  updatePaperBackup();
+  window.print();
+});
+
+document.querySelector("#deleteBackups").addEventListener("click", () => {
+  deleteAllBackups();
+  showMessage("Saved bracket backups deleted.");
+});
+
+document.querySelector("#saveOutShots").addEventListener("click", () => {
+  saveOutShots();
+  showMessage("Out shots saved.");
+});
+
+document.querySelector("#clearOutShots").addEventListener("click", () => {
+  clearOutShots();
+  showMessage("Out shot sheet cleared.");
+});
+
+outShotSheet.addEventListener("input", () => {
+  saveOutShots();
+});
+
+rollDiceButton.addEventListener("click", () => {
+  rollDice();
+});
+
+dieButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    rollDie(Number(button.dataset.dieIndex));
+  });
+});
+
+generateMysteryOutButton.addEventListener("click", () => {
+  generateMysteryOut();
+});
+
+resetMysteryOutButton.addEventListener("click", () => {
+  resetMysteryOut();
+});
+
+mysteryOutModeInputs.forEach((input) => {
+  input.addEventListener("change", () => {
+    if (mysteryOut) {
+      setMysteryOutMode(mysteryOut.mode);
+    }
+  });
+});
+
+document.querySelector("#generatePlayers").addEventListener("click", () => {
+  const count = Number(totalPlayers.value);
+  const groupSize = Number(playersPerGroup.value);
+
+  if (hasGeneratedTeams) {
+    blockedGenerateCount += 1;
+    showTeamDrawWarning(`SHAME...SHAME...SHAME!!! Teams were already generated. This is blocked to prevent a redraw. Attempt ${blockedGenerateCount + 1}.`);
+    showMessage("Teams were already generated. Use the existing draw.");
+    return;
+  }
+
+  if (!Number.isInteger(count) || count < 2 || count > 200) {
+    showMessage("Enter 2 to 200 players.");
+    return;
+  }
+
+  if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > count) {
+    showMessage("Players per team must be at least 1 and no more than the player count.");
+    return;
+  }
+
+  const players = Array.from({ length: count }, (_, index) => String(index + 1));
+  const teams = chunk(shuffle(players), groupSize);
+  savePlayerNameBackup(count);
+  currentTeams = teams;
+  hasGeneratedTeams = true;
+  blockedGenerateCount = 0;
+  hideTeamDrawWarning();
+  renderTeams(currentTeams);
+  showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
+});
+
+// document.querySelector("#drawGroups").addEventListener("click", () => {
+//   const groupSize = Number(playersPerGroup.value);
+//   const count = Number(totalPlayers.value);
+//
+//   if (!Number.isInteger(count) || count < 2 || count > 64) {
+//     showMessage("Enter 2 to 64 players.");
+//     return;
+//   }
+//
+//   if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > count) {
+//     showMessage("Players per team must be at least 1 and no more than the player count.");
+//     return;
+//   }
+//
+//   const players = Array.from({ length: count }, (_, index) => String(index + 1));
+//   currentTeams = chunk(shuffle(players), groupSize);
+//   hasGeneratedTeams = true;
+//   renderTeams(currentTeams);
+//   showMessage(`Redrew ${currentTeams.length} random team${currentTeams.length === 1 ? "" : "s"}.`);
+// });
+
+document.querySelector("#buildBracket").addEventListener("click", () => {
+  const players = getPlayers();
+
+  if (players.length < 2) {
+    showMessage("Add at least 2 players to build a bracket.");
+    return;
+  }
+
+  if (players.length > 100) {
+    showMessage("Bracket supports up to 100 teams.");
+    return;
+  }
+
+  state = createBracketGraph(players);
+  renderBracket();
+  showMessage(`Bracket built for ${players.length} player${players.length === 1 ? "" : "s"}.`);
+});
+
+document.querySelector("#resetBracket").addEventListener("click", () => {
+  resetTournament();
+});
+
+bracketOutput.addEventListener("click", (event) => {
+  const resetButton = event.target.closest("[data-reset-match]");
+
+  if (resetButton) {
+    saveBracketBackup({
+      resetMatch: resetButton.dataset.resetMatch,
+      selectedWinner: "",
+    });
+    resetMatchResult(Number(resetButton.dataset.matchId));
+    return;
+  }
+
+  const button = event.target.closest("[data-match-type]");
+
+  if (!button) {
+    return;
+  }
+
+  saveBracketBackup({
+    matchId: Number(button.dataset.matchId),
+    selectedWinner: button.dataset.player,
+  });
+
+  chooseWinner(Number(button.dataset.matchId), button.dataset.player);
+});
+
+backupList.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-backup-id]");
+
+  if (deleteButton) {
+    deleteBackup(deleteButton.dataset.deleteBackupId);
+    showMessage("Backup deleted.");
+    return;
+  }
+
+  const button = event.target.closest("[data-backup-id]");
+
+  if (!button) {
+    return;
+  }
+
+  const backup = readBackup(button.dataset.backupId);
+
+  if (!backup) {
+    showMessage("That backup could not be loaded.");
+    renderBackups();
+    return;
+  }
+
+  state = backup.state;
+  if (state.mode === "graph") {
+    rebuildGraphMatchIndex(state);
+    refreshGraphSources(state);
+  } else {
+    refreshGameNumbersAndSources(state);
+  }
+  renderBracket();
+  showMessage(`Restored backup from ${formatBackupTime(backup.createdAt)}.`);
+});
+
+nameBackupList.addEventListener("click", (event) => {
+  const mergeButton = event.target.closest("[data-merge-name-backup-id]");
+
+  if (mergeButton) {
+    mergePlayerNameBackup(mergeButton.dataset.mergeNameBackupId);
+    return;
+  }
+
+  const deleteButton = event.target.closest("[data-delete-name-backup-id]");
+
+  if (deleteButton) {
+    deletePlayerNameBackup(deleteButton.dataset.deleteNameBackupId);
+    showMessage("Player name backup deleted.");
+  }
+});
+
+function getPlayers() {
+  return playerList.value
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function renderTeams(teams) {
+  playerList.value = "";
+  groupsOutput.innerHTML = "";
+  playerList.value = teams.map(formatTeam).join("\n");
+  renderGroups(teams);
+}
+
+function showTeamDrawWarning(text) {
+  teamDrawWarning.hidden = false;
+  teamDrawWarning.textContent = text;
+}
+
+function hideTeamDrawWarning() {
+  teamDrawWarning.hidden = true;
+  teamDrawWarning.textContent = "";
+}
+
+function resetTournament() {
+  state = null;
+  currentTeams = [];
+  hasGeneratedTeams = false;
+  blockedGenerateCount = 0;
+  playerList.value = "";
+  championOutput.textContent = "Champion: pending";
+  groupsOutput.className = "groups empty";
+  groupsOutput.textContent = "No groups drawn yet.";
+  bracketOutput.className = "bracket empty";
+  bracketOutput.textContent = "Build a bracket to start.";
+  paperBackup.textContent = "Build a bracket to create a paper backup.";
+  mysteryOut = "";
+  renderMysteryOut();
+  hideTeamDrawWarning();
+  clearPlayerNames();
+  showMessage("Bracket, teams, and player names cleared.");
+}
+
+function clearPlayerNames() {
+  nameList.querySelectorAll("[data-player-number]").forEach((input) => {
+    input.value = "";
+  });
+}
+
+function renderOutShotSheet() {
+  const savedRows = readOutShots();
+
+  outShotSheet.innerHTML = Array.from({ length: outShotSlotCount }, (_, index) => {
+    const row = savedRows[index] || {};
+
+    return `
+      <article class="out-shot-row">
+        <div class="out-shot-number">${index + 1}</div>
+        <label>
+          Player
+          <input data-out-field="player" data-out-index="${index}" type="text" value="${escapeAttribute(row.player || "")}" placeholder="Name">
+        </label>
+        <label>
+          Number hit
+          <input data-out-field="number" data-out-index="${index}" type="number" inputmode="numeric" min="2" max="170" value="${escapeAttribute(row.number || row.score || "")}">
+        </label>
+      </article>
+    `;
+  }).join("");
+}
+
+function getOutShots() {
+  return Array.from({ length: outShotSlotCount }, (_, index) => {
+    const row = {};
+
+    outShotSheet.querySelectorAll(`[data-out-index="${index}"]`).forEach((input) => {
+      row[input.dataset.outField] = input.value.trim();
+    });
+
+    return row;
+  });
+}
+
+function saveOutShots() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  localStorage.setItem(outShotStorageKey, JSON.stringify(getOutShots()));
+}
+
+function readOutShots() {
+  if (!canUseLocalStorage()) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(outShotStorageKey)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function clearOutShots() {
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(outShotStorageKey);
+  }
+
+  renderOutShotSheet();
+}
+
+function rollDice() {
+  diceValues.forEach((_, index) => {
+    animateDieRoll(index);
+  });
+}
+
+function rollDie(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= diceValues.length) {
+    return;
+  }
+
+  animateDieRoll(index);
+}
+
+function animateDieRoll(index) {
+  const button = dieButtons[index];
+  if (!button) {
+    return;
+  }
+
+  if (diceRollTimers[index]) {
+    clearInterval(diceRollTimers[index].interval);
+    clearTimeout(diceRollTimers[index].timeout);
+  }
+
+  button.classList.add("rolling");
+  diceRollTimers[index] = {
+    interval: setInterval(() => {
+      setDieValue(index, randomD20());
+    }, 55),
+    timeout: setTimeout(() => {
+      clearInterval(diceRollTimers[index].interval);
+      diceRollTimers[index] = null;
+      setDieValue(index, randomD20());
+      button.classList.remove("rolling");
+    }, 620),
+  };
+}
+
+function randomD20() {
+  return Math.floor(Math.random() * 20) + 1;
+}
+
+function renderDice() {
+  dieButtons.forEach((button, index) => {
+    setDieValue(index, diceValues[index]);
+  });
+}
+
+function generateMysteryOut() {
+  if (mysteryOut) {
+    return;
+  }
+
+  const mode = getMysteryOutMode();
+  const availableOuts = getAvailableOuts(mode);
+  mysteryOut = {
+    mode,
+    score: availableOuts[Math.floor(Math.random() * availableOuts.length)],
+  };
+  renderMysteryOut();
+}
+
+function renderMysteryOut() {
+  mysteryOutValue.textContent = mysteryOut ? mysteryOut.score : "--";
+  generateMysteryOutButton.disabled = Boolean(mysteryOut);
+  generateMysteryOutButton.textContent = mysteryOut ? "Locked until reset" : "Generate mystery out";
+  resetMysteryOutButton.hidden = !mysteryOut;
+  mysteryOutModeInputs.forEach((input) => {
+    input.disabled = Boolean(mysteryOut);
+  });
+}
+
+function resetMysteryOut() {
+  mysteryOut = "";
+  renderMysteryOut();
+}
+
+function getAvailableOuts(mode) {
+  const finishScores = getMysteryOutFinishes(mode);
+  const totals = new Set();
+
+  finishScores.forEach((finish) => totals.add(finish));
+  dartScores.forEach((first) => {
+    finishScores.forEach((finish) => totals.add(first + finish));
+    dartScores.forEach((second) => {
+      finishScores.forEach((finish) => totals.add(first + second + finish));
+    });
+  });
+
+  const exclusions = mysteryOutExclusions[mode] || [];
+  const range = mysteryOutRanges[mode] || mysteryOutRanges.double;
+
+  return [...totals]
+    .filter((score) => score >= range.min && score <= range.max && !exclusions.includes(score))
+    .sort((a, b) => a - b);
+}
+
+function getMysteryOutFinishes(mode) {
+  if (mode === "open") {
+    return dartScores;
+  }
+
+  if (mode === "master") {
+    return masterOutFinishes;
+  }
+
+  return doubleOutFinishes;
+}
+
+function getMysteryOutMode() {
+  return mysteryOutModeInputs.find((input) => input.checked)?.dataset.mysteryOutMode || "double";
+}
+
+function setMysteryOutMode(mode) {
+  mysteryOutModeInputs.forEach((input) => {
+    input.checked = input.dataset.mysteryOutMode === mode;
+  });
+}
+
+function setDieValue(index, value) {
+  const button = dieButtons[index];
+  if (!button) {
+    return;
+  }
+
+  diceValues[index] = value;
+  button.querySelector(".die-value").textContent = value;
+  button.setAttribute("aria-label", `Roll die ${index + 1}, current value ${value}`);
+
+  diceTotal.textContent = `Total: ${diceValues.reduce((sum, value) => sum + value, 0)}`;
+}
+
+function renderNameInputs(count) {
+  if (!Number.isInteger(count) || count < 2 || count > 200) {
+    nameList.innerHTML = `<p class="empty-names">Enter 2 to 200 players, then update the list.</p>`;
+    return;
+  }
+
+  const existingNames = getPlayerNameMap();
+
+  nameList.innerHTML = Array.from({ length: count }, (_, index) => {
+    const number = String(index + 1);
+    const value = existingNames[number] || "";
+
+    return `
+      <label class="name-row">
+        <span>${number}</span>
+        <input
+          type="text"
+          data-player-number="${number}"
+          value="${escapeAttribute(value)}"
+          placeholder="Player ${number}"
+        >
+      </label>
+    `;
+  }).join("");
+}
+
+function getPlayerNameMap() {
+  const names = {};
+
+  nameList.querySelectorAll("[data-player-number]").forEach((input) => {
+    const value = input.value.trim();
+    if (value) {
+      names[input.dataset.playerNumber] = value;
+    }
+  });
+
+  return names;
+}
+
+function applyPlayerNameMap(names, overwriteExisting = false) {
+  nameList.querySelectorAll("[data-player-number]").forEach((input) => {
+    const savedName = names[input.dataset.playerNumber];
+    if (savedName && (overwriteExisting || !input.value.trim())) {
+      input.value = savedName;
+    }
+  });
+}
+
+function getPlayerLabel(number) {
+  const names = getPlayerNameMap();
+  return names[number] || `Player ${number}`;
+}
+
+function formatTeam(players) {
+  const playerNumbers = Array.isArray(players) ? players : parseTeamNumbers(players);
+
+  return playerNumbers
+    .map((number) => `${getPlayerLabel(number)} (#${number})`)
+    .join(" / ");
+}
+
+function parseTeamNumbers(team) {
+  return String(team)
+    .match(/#?\d+/g)
+    ?.map((value) => value.replace("#", ""))
+    || [];
+}
+
+function validateDraw(players, groupSize) {
+  if (players.length < 1) {
+    showMessage("Add at least one player.");
+    return false;
+  }
+
+  if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > players.length) {
+    showMessage("Players per group must be at least 1 and no more than the player count.");
+    return false;
+  }
+
+  return true;
+}
+
+function shuffle(items) {
+  const copy = [...items];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+
+  return copy;
+}
+
+function chunk(items, size) {
+  const groups = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    groups.push(items.slice(index, index + size));
+  }
+
+  return groups;
+}
+
+function renderGroups(groups) {
+  groupsOutput.className = "groups";
+  groupsOutput.innerHTML = groups.map((group, index) => `
+    <article class="group-card">
+      <h3>Team ${index + 1}</h3>
+      <div class="team-members">${escapeHtml(Array.isArray(group) ? formatTeam(group) : group)}</div>
+    </article>
+  `).join("");
+}
+
+function createBracketGraph(players) {
+  if (players.length === 9) {
+    return createNineTeamBracketGraph(players);
+  }
+
+  const size = nextPowerOfTwo(players.length);
+  const matches = [];
+  const rounds = {
+    winner: [],
+    loser: [],
+  };
+  let nextId = 1;
+
+  const winnerRounds = Math.log2(size);
+  for (let roundIndex = 0; roundIndex < winnerRounds; roundIndex += 1) {
+    const matchCount = size / 2 ** (roundIndex + 1);
+    rounds.winner[roundIndex] = [];
+    for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
+      const match = createGraphMatch(nextId, "winner", roundIndex, matchIndex);
+      nextId += 1;
+      matches.push(match);
+      rounds.winner[roundIndex].push(match);
+    }
+  }
+
+  const loserRoundCount = Math.max(1, winnerRounds * 2 - 2);
+  for (let roundIndex = 0; roundIndex < loserRoundCount; roundIndex += 1) {
+    const roundNumber = roundIndex + 1;
+    const exponent = roundNumber % 2 === 1
+      ? (roundNumber + 3) / 2
+      : roundNumber / 2 + 1;
+    const matchCount = Math.max(1, size / 2 ** exponent);
+    rounds.loser[roundIndex] = [];
+    for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
+      const match = createGraphMatch(nextId, "loser", roundIndex, matchIndex);
+      nextId += 1;
+      matches.push(match);
+      rounds.loser[roundIndex].push(match);
+    }
+  }
+
+  const final = createGraphMatch(nextId, "final", 0, 0);
+  nextId += 1;
+  const resetFinal = createGraphMatch(nextId, "resetFinal", 1, 0);
+  final.title = `Game ${final.id} - Grand Final`;
+  resetFinal.title = `Game ${resetFinal.id} - Reset Final`;
+  matches.push(final);
+  matches.push(resetFinal);
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size,
+    matches,
+    matchesById: {},
+    rounds,
+    final,
+    resetFinal,
+    champion: "",
+  };
+
+  matches.forEach((match) => {
+    bracketState.matchesById[match.id] = match;
+  });
+
+  seedGraphPlayers(bracketState, players);
+  wireGraphWinnerDestinations(bracketState);
+  autoAdvanceGraphByes(bracketState);
+  wireGraphLoserDestinations(bracketState);
+  settleGraphByesAndSources(bracketState);
+
+  return bracketState;
+}
+
+function createNineTeamBracketGraph(players) {
+  const definitions = [
+    { id: 1, type: "winner", roundIndex: 0, matchIndex: 0, players: ["T1", "T2"], winnerTo: [5, 0], loserTo: [6, 0] },
+    { id: 2, type: "winner", roundIndex: 0, matchIndex: 1, players: ["T3", "T4"], winnerTo: [9, 0], loserTo: [6, 1] },
+    { id: 3, type: "winner", roundIndex: 0, matchIndex: 2, players: ["T5", "T6"], winnerTo: [9, 1], loserTo: [7, 1] },
+    { id: 4, type: "winner", roundIndex: 0, matchIndex: 3, players: ["T7", "T8"], winnerTo: [10, 0], loserTo: [7, 0] },
+    { id: 5, type: "winner", roundIndex: 1, matchIndex: 0, players: ["winner_of_1", "T9"], winnerTo: [10, 1], loserTo: [8, 1] },
+    { id: 9, type: "winner", roundIndex: 1, matchIndex: 1, players: ["winner_of_2", "winner_of_3"], winnerTo: [13, 0], loserTo: [12, 1] },
+    { id: 10, type: "winner", roundIndex: 1, matchIndex: 2, players: ["winner_of_4", "winner_of_5"], winnerTo: [13, 1], loserTo: [11, 1] },
+    { id: 13, type: "winner", roundIndex: 2, matchIndex: 0, players: ["winner_of_9", "winner_of_10"], winnerTo: [16, 0], loserTo: [15, 1] },
+    { id: 6, type: "loser", roundIndex: 0, matchIndex: 0, players: ["loser_of_1", "loser_of_2"], winnerTo: [8, 0] },
+    { id: 7, type: "loser", roundIndex: 0, matchIndex: 1, players: ["loser_of_4", "loser_of_3"], winnerTo: [11, 0] },
+    { id: 8, type: "loser", roundIndex: 1, matchIndex: 0, players: ["winner_of_6", "loser_of_5"], winnerTo: [12, 0] },
+    { id: 11, type: "loser", roundIndex: 1, matchIndex: 1, players: ["winner_of_7", "loser_of_10"], winnerTo: [14, 0] },
+    { id: 12, type: "loser", roundIndex: 2, matchIndex: 0, players: ["winner_of_8", "loser_of_9"], winnerTo: [14, 1] },
+    { id: 14, type: "loser", roundIndex: 3, matchIndex: 0, players: ["winner_of_11", "winner_of_12"], winnerTo: [15, 0] },
+    { id: 15, type: "loser", roundIndex: 4, matchIndex: 0, players: ["winner_of_14", "loser_of_13"], winnerTo: [16, 1] },
+    { id: 16, type: "final", roundIndex: 0, matchIndex: 0, players: ["winner_of_13", "winner_of_15"] },
+    { id: 17, type: "resetFinal", roundIndex: 1, matchIndex: 0, players: ["", ""] },
+  ];
+  const matches = definitions.map((definition) => createTemplateMatch(definition, players));
+  matches.forEach((match) => {
+    if (match.type === "final") {
+      match.title = `Game ${match.id} - Grand Final`;
+    }
+    if (match.type === "resetFinal") {
+      match.title = `Game ${match.id} - Reset Final`;
+    }
+  });
+  const rounds = { winner: [], loser: [] };
+  const matchesById = {};
+  const templateSources = {};
+
+  matches.forEach((match) => {
+    matchesById[match.id] = match;
+    templateSources[match.id] = [...match.slotSources];
+    if (match.type === "winner") {
+      if (!rounds.winner[match.roundIndex]) {
+        rounds.winner[match.roundIndex] = [];
+      }
+      rounds.winner[match.roundIndex].push(match);
+    }
+    if (match.type === "loser") {
+      if (!rounds.loser[match.roundIndex]) {
+        rounds.loser[match.roundIndex] = [];
+      }
+      rounds.loser[match.roundIndex].push(match);
+    }
+  });
+
+  rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+  rounds.loser.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size: 9,
+    matches,
+    matchesById,
+    templateSources,
+    rounds,
+    final: matchesById[16],
+    resetFinal: matchesById[17],
+    champion: "",
+  };
+
+  settleGraphByesAndSources(bracketState);
+  return bracketState;
+}
+
+function createTemplateMatch(definition, players) {
+  const match = createGraphMatch(definition.id, definition.type, definition.roundIndex, definition.matchIndex);
+  match.players = definition.players.map((slot) => {
+    const playerNumber = /^T(\d+)$/.exec(slot)?.[1];
+    return playerNumber ? players[Number(playerNumber) - 1] : "";
+  });
+  match.slotSources = definition.players.map((slot) => formatTemplateSource(slot));
+  match.winnerTo = definition.winnerTo ? { matchId: definition.winnerTo[0], slot: definition.winnerTo[1] } : null;
+  match.loserTo = definition.loserTo ? { matchId: definition.loserTo[0], slot: definition.loserTo[1] } : null;
+  return match;
+}
+
+function formatTemplateSource(slot) {
+  const winner = /^winner_of_(\d+)$/.exec(slot)?.[1];
+  if (winner) {
+    return `Winner of Game ${winner}`;
+  }
+
+  const loser = /^loser_of_(\d+)$/.exec(slot)?.[1];
+  if (loser) {
+    return `Loser of Game ${loser}`;
+  }
+
+  return "";
+}
+
+function createGraphMatch(id, type, roundIndex, matchIndex) {
+  return {
+    id,
+    type,
+    roundIndex,
+    matchIndex,
+    title: `Game ${id}`,
+    players: ["", ""],
+    slotSources: ["", ""],
+    winner: "",
+    loser: "",
+    winnerTo: null,
+    loserTo: null,
+    autoAdvanced: false,
+    gameNumber: id,
+  };
+}
+
+function seedGraphPlayers(bracketState, players) {
+  const firstRound = bracketState.rounds.winner[0];
+  const seeds = seedPlayersWithByes(players, bracketState.size);
+
+  firstRound.forEach((match, index) => {
+    match.players[0] = seeds[index * 2];
+    match.players[1] = seeds[index * 2 + 1];
+  });
+}
+
+function wireGraphWinnerDestinations(bracketState) {
+  bracketState.rounds.winner.forEach((round, roundIndex) => {
+    round.forEach((match) => {
+      const nextWinnerRound = bracketState.rounds.winner[roundIndex + 1];
+      match.winnerTo = nextWinnerRound
+        ? { matchId: nextWinnerRound[Math.floor(match.matchIndex / 2)].id, slot: match.matchIndex % 2 }
+        : { matchId: bracketState.final.id, slot: 0 };
+
+    });
+  });
+
+  bracketState.rounds.loser.forEach((round, roundIndex) => {
+    round.forEach((match) => {
+      const nextLoserRound = bracketState.rounds.loser[roundIndex + 1];
+      if (nextLoserRound) {
+        const feedRound = roundIndex % 2 === 0;
+        const nextMatch = feedRound
+          ? nextLoserRound[match.matchIndex]
+          : nextLoserRound[Math.floor(match.matchIndex / 2)];
+        match.winnerTo = {
+          matchId: nextMatch.id,
+          slot: feedRound ? 0 : match.matchIndex % 2,
+        };
+      } else {
+        match.winnerTo = { matchId: bracketState.final.id, slot: 1 };
+      }
+    });
+  });
+}
+
+function wireGraphLoserDestinations(bracketState) {
+  bracketState.rounds.winner.forEach((round) => {
+    round.forEach((match) => {
+      match.loserTo = getGraphLoserDestination(bracketState, match);
+    });
+  });
+}
+
+function getGraphLoserDestination(bracketState, match) {
+  if (match.type !== "winner") {
+    return null;
+  }
+
+  const mainFirstRoundIndex = bracketState.originalPlayers.length === bracketState.size ? 0 : 1;
+
+  if (match.roundIndex <= mainFirstRoundIndex) {
+    const earlyMatches = bracketState.rounds.winner
+      .slice(0, mainFirstRoundIndex + 1)
+      .flat()
+      .filter((winnerMatch) => isGraphWinnerDropMatch(winnerMatch, bracketState))
+      .sort((a, b) => a.id - b.id);
+    const dropIndex = earlyMatches.findIndex((winnerMatch) => winnerMatch.id === match.id);
+    const targetMatch = bracketState.rounds.loser[0]?.[Math.floor(dropIndex / 2)];
+
+    return targetMatch && dropIndex >= 0
+      ? { matchId: targetMatch.id, slot: dropIndex % 2 }
+      : null;
+  }
+
+  const loserRoundIndex = Math.max(1, (match.roundIndex - mainFirstRoundIndex) * 2 - 1);
+  const targetRound = bracketState.rounds.loser[loserRoundIndex];
+  if (!targetRound) {
+    return null;
+  }
+
+  const targetIndex = getCrossDropMatchIndex(match.matchIndex, targetRound.length);
+  return { matchId: targetRound[targetIndex].id, slot: 1 };
+}
+
+function isGraphWinnerDropMatch(match, bracketState) {
+  if (match.type !== "winner" || match.autoAdvanced) {
+    return false;
+  }
+
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  return realPlayerCount >= 2 || hasGraphFeederToMatch(bracketState, match.id);
+}
+
+function hasGraphFeederToMatch(bracketState, matchId) {
+  return bracketState.matches.some((match) => {
+    if (match.winner || match.autoAdvanced) {
+      return false;
+    }
+
+    return match.winnerTo?.matchId === matchId;
+  });
+}
+
+function chooseWinner(matchId, winnerName) {
+  if (!state?.matchesById || !winnerName || winnerName === "BYE") {
+    return;
+  }
+
+  const match = state.matchesById[matchId];
+  if (!match || match.winner) {
+    return;
+  }
+
+  const loserName = match.players.find((player) => player && player !== winnerName) || "";
+  if (!loserName || loserName === "BYE") {
+    return;
+  }
+
+  match.winner = winnerName;
+  match.loser = loserName;
+  match.autoAdvanced = false;
+  advancingMatchId = getGraphAdvanceAnimationTarget(state, match, winnerName);
+
+  if (match.type === "final") {
+    applyGraphFinalResult(state, match, winnerName, loserName);
+  } else if (match.type === "resetFinal") {
+    state.champion = winnerName;
+  } else {
+    placeGraphPlayer(state, match.winnerTo, winnerName);
+    placeGraphPlayer(state, match.loserTo, loserName);
+  }
+
+  settleGraphByesAndSources(state);
+  renderBracket();
+}
+
+function getGraphAdvanceAnimationTarget(bracketState, match, winnerName) {
+  if (match.type === "final") {
+    const winnersSidePlayer = match.players[0];
+    return winnerName === winnersSidePlayer ? null : bracketState.resetFinal?.id || null;
+  }
+
+  if (match.type === "resetFinal") {
+    return null;
+  }
+
+  return match.winnerTo?.matchId || null;
+}
+
+function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
+  const winnersSidePlayer = match.players[0];
+  const resetFinal = bracketState.resetFinal;
+
+  if (winnerName === winnersSidePlayer || !resetFinal) {
+    bracketState.champion = winnerName;
+    return;
+  }
+
+  resetFinal.players = [loserName, winnerName];
+  resetFinal.slotSources = ["", ""];
+}
+
+function resetMatchResult(matchId) {
+  if (!state?.matchesById) {
+    return;
+  }
+
+  const manualResults = state.matches
+    .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
+    .map((match) => ({ id: match.id, winner: match.winner }));
+
+  state = createBracketGraph(state.originalPlayers);
+
+  manualResults.forEach((result) => {
+    const match = state.matchesById[result.id];
+    if (match?.players.includes(result.winner) && !match.winner) {
+      chooseWinner(result.id, result.winner);
+    }
+  });
+
+  renderBracket();
+  showMessage("Match result cleared. Pick the correct winner.");
+}
+
+function placeGraphPlayer(bracketState, destination, player) {
+  if (!destination || !player || player === "BYE") {
+    return;
+  }
+
+  const match = bracketState.matchesById[destination.matchId];
+  if (!match || match.winner) {
+    return;
+  }
+
+  match.players[destination.slot] = player;
+}
+
+function settleGraphByesAndSources(bracketState) {
+  let changed = true;
+
+  while (changed) {
+    refreshGraphSources(bracketState);
+    changed = autoAdvanceGraphByes(bracketState);
+  }
+
+  refreshGraphSources(bracketState);
+}
+
+function autoAdvanceGraphByes(bracketState) {
+  let changed = true;
+  let changedAny = false;
+
+  while (changed) {
+    changed = false;
+    bracketState.matches.forEach((match) => {
+      if (match.winner) {
+        return;
+      }
+
+      const realPlayers = match.players.filter((player) => player && player !== "BYE");
+      const hasBye = match.players.includes("BYE");
+      if (realPlayers.length === 1 && hasBye) {
+        match.winner = realPlayers[0];
+        match.loser = "";
+        match.autoAdvanced = true;
+        placeGraphPlayer(bracketState, match.winnerTo, realPlayers[0]);
+        changed = true;
+        changedAny = true;
+        return;
+      }
+
+      const emptySlot = match.players.findIndex((player) => !player);
+      const sourceCount = match.slotSources.filter(Boolean).length;
+      if (
+        !bracketState.templateSources &&
+        match.type === "loser" &&
+        realPlayers.length === 1 &&
+        sourceCount === 0 &&
+        emptySlot >= 0 &&
+        !hasPendingGraphFeeder(bracketState, match.id, emptySlot)
+      ) {
+        match.winner = realPlayers[0];
+        match.loser = "";
+        match.autoAdvanced = true;
+        placeGraphPlayer(bracketState, match.winnerTo, realPlayers[0]);
+        changed = true;
+        changedAny = true;
+      }
+    });
+  }
+
+  return changedAny;
+}
+
+function hasPendingGraphFeeder(bracketState, matchId, slot) {
+  return bracketState.matches.some((match) => {
+    if (match.winner || !canGraphFeederProducePlayer(bracketState, match)) {
+      return false;
+    }
+
+    return isSameGraphDestination(match.winnerTo, matchId, slot) ||
+      isSameGraphDestination(match.loserTo, matchId, slot);
+  });
+}
+
+function isSameGraphDestination(destination, matchId, slot) {
+  return destination?.matchId === matchId && destination.slot === slot;
+}
+
+function canGraphFeederProducePlayer(bracketState, match, visited = new Set()) {
+  if (visited.has(match.id)) {
+    return false;
+  }
+
+  visited.add(match.id);
+
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  if (realPlayerCount > 0 || match.slotSources.some(Boolean) || !isGraphHiddenMatch(match)) {
+    return true;
+  }
+
+  return bracketState.matches.some((source) => {
+    if (source.winner || source.autoAdvanced || source.winnerTo?.matchId !== match.id) {
+      return false;
+    }
+
+    return canGraphFeederProducePlayer(bracketState, source, visited);
+  });
+}
+
+function refreshGraphSources(bracketState) {
+  if (bracketState.templateSources) {
+    bracketState.matches.forEach((match) => {
+      const source = bracketState.templateSources[match.id] || ["", ""];
+      match.slotSources = match.players.map((player, index) => player ? "" : source[index]);
+    });
+    return;
+  }
+
+  bracketState.matches.forEach((match) => {
+    match.slotSources = ["", ""];
+  });
+
+  bracketState.matches.forEach((match) => {
+    if (isGraphHiddenMatch(match)) {
+      return;
+    }
+
+    addGraphSource(bracketState, match.winnerTo, `Winner of Game ${match.id}`);
+    if (match.type === "winner") {
+      addGraphSource(bracketState, match.loserTo, `Loser of Game ${match.id}`);
+    }
+  });
+}
+
+function rebuildGraphMatchIndex(bracketState) {
+  bracketState.matchesById = {};
+  bracketState.matches.forEach((match) => {
+    bracketState.matchesById[match.id] = match;
+  });
+  bracketState.resetFinal = bracketState.resetFinal || bracketState.matches.find((match) => match.type === "resetFinal") || null;
+}
+
+function addGraphSource(bracketState, destination, label) {
+  if (!destination) {
+    return;
+  }
+
+  const match = bracketState.matchesById[destination.matchId];
+  if (match && !match.players[destination.slot]) {
+    match.slotSources[destination.slot] = label;
+  }
+}
+
+function isGraphHiddenMatch(match) {
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  const sourceCount = match.slotSources.filter(Boolean).length;
+
+  return match.autoAdvanced ||
+    match.players.every((player) => player === "BYE") ||
+    (realPlayerCount === 0 && sourceCount < 2);
+}
+
+function createBracket(players) {
+  const size = nextPowerOfTwo(players.length);
+  const seededPlayers = seedPlayersWithByes(players, size);
+  const winnerRounds = createWinnerRounds(size);
+  const loserRounds = createLoserRounds(size);
+  const bracketState = {
+    originalPlayers: [...players],
+    size,
+    winnerRounds,
+    loserRounds,
+    final: createMatch("final", 0, 0, "Final"),
+    champion: "",
+  };
+
+  winnerRounds[0].matches.forEach((match, index) => {
+    match.players[0] = seededPlayers[index * 2];
+    match.players[1] = seededPlayers[index * 2 + 1];
+  });
+
+  if (size === 2) {
+    loserRounds[0].matches[0].players[1] = "BYE";
+  }
+
+  return bracketState;
+}
+
+function seedPlayersWithByes(players, size) {
+  const seeds = Array(size).fill("BYE");
+  const matchCount = size / 2;
+  const byeCount = size - players.length;
+  const playInCount = matchCount - byeCount;
+
+  for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
+    seeds[matchIndex * 2] = players[matchIndex] || "BYE";
+  }
+
+  for (let index = 0; index < playInCount; index += 1) {
+    const matchIndex = matchCount - 1 - index;
+    const playerIndex = matchCount + index;
+    seeds[matchIndex * 2 + 1] = players[playerIndex];
+  }
+
+  return seeds;
+}
+
+function createWinnerRounds(size) {
+  const roundCount = Math.log2(size);
+
+  return Array.from({ length: roundCount }, (_, roundIndex) => {
+    const matchCount = size / 2 ** (roundIndex + 1);
+    return {
+      title: `Winners R${roundIndex + 1}`,
+      matches: Array.from({ length: matchCount }, (_, matchIndex) => {
+        return createMatch("winner", roundIndex, matchIndex, `Match ${matchIndex + 1}`);
+      }),
+    };
+  });
+}
+
+function createLoserRounds(size) {
+  const winnerRoundCount = Math.log2(size);
+  const loserRoundCount = Math.max(1, winnerRoundCount * 2 - 2);
+
+  return Array.from({ length: loserRoundCount }, (_, roundIndex) => {
+    const roundNumber = roundIndex + 1;
+    const exponent = roundNumber % 2 === 1
+      ? (roundNumber + 3) / 2
+      : roundNumber / 2 + 1;
+    const matchCount = Math.max(1, size / 2 ** exponent);
+
+    return {
+      title: `Losers R${roundNumber}`,
+      matches: Array.from({ length: matchCount }, (_, matchIndex) => {
+        return createMatch("loser", roundIndex, matchIndex, `Match ${matchIndex + 1}`);
+      }),
+    };
+  });
+}
+
+function createMatch(type, roundIndex, matchIndex, title) {
+  return {
+    id: `${type}-${roundIndex}-${matchIndex}`,
+    type,
+    roundIndex,
+    matchIndex,
+    title,
+    players: ["", ""],
+    slotSources: ["", ""],
+    winner: "",
+    loser: "",
+    autoAdvanced: false,
+    gameNumber: 0,
+  };
+}
+
+function assignGameNumbers(bracketState) {
+  let gameNumber = 1;
+
+  bracketState.winnerRounds.forEach((round) => {
+    round.matches.forEach((match) => {
+      if (isPlayableMatch(match)) {
+        match.gameNumber = gameNumber;
+        match.title = `Game ${gameNumber}`;
+        gameNumber += 1;
+      } else {
+        match.gameNumber = 0;
+        match.title = "";
+      }
+    });
+  });
+
+  bracketState.loserRounds.forEach((round) => {
+    round.matches.forEach((match) => {
+      if (isPlayableMatch(match)) {
+        match.gameNumber = gameNumber;
+        match.title = `Game ${gameNumber}`;
+        gameNumber += 1;
+      } else {
+        match.gameNumber = 0;
+        match.title = "";
+      }
+    });
+  });
+
+  bracketState.final.gameNumber = gameNumber;
+  bracketState.final.title = `Game ${gameNumber}`;
+}
+
+function assignLoserDropSources(bracketState) {
+  getAllMatches(bracketState).forEach((match) => {
+    match.slotSources = ["", ""];
+  });
+
+  bracketState.winnerRounds.forEach((round) => {
+    round.matches.forEach((match) => {
+      if (!match.gameNumber) {
+        return;
+      }
+
+      const destination = getLoserDropDestination(match, bracketState);
+      if (destination) {
+        destination.match.slotSources[destination.slot] = `Loser of Game ${match.gameNumber}`;
+      }
+    });
+  });
+
+  assignWinnerAdvanceSources(bracketState);
+}
+
+function assignWinnerAdvanceSources(bracketState) {
+  [...bracketState.winnerRounds, ...bracketState.loserRounds].forEach((round) => {
+    round.matches.forEach((match) => {
+      if (!match.gameNumber || !hasMatchInput(match)) {
+        return;
+      }
+
+      const destination = getWinnerAdvanceDestination(match, bracketState);
+      if (destination) {
+        destination.match.slotSources[destination.slot] = `Winner of Game ${match.gameNumber}`;
+      }
+    });
+  });
+}
+
+function hasMatchInput(match) {
+  return match.players.some((player) => player && player !== "BYE") ||
+    match.slotSources.some(Boolean);
+}
+
+function refreshGameNumbersAndSources(bracketState) {
+  assignGameNumbers(bracketState);
+  assignLoserDropSources(bracketState);
+}
+
+function isPlayableMatch(match) {
+  return !match.autoAdvanced && !match.players.every((player) => player === "BYE");
+}
+
+function chooseWinnerLegacy(type, roundIndex, matchIndex, winnerName) {
+  if (!winnerName || winnerName === "BYE") {
+    return;
+  }
+
+  const match = getMatch(type, roundIndex, matchIndex);
+
+  if (!applyWinner(match, winnerName)) {
+    return;
+  }
+
+  autoAdvanceByes(state);
+  refreshGameNumbersAndSources(state);
+  renderBracket();
+}
+
+function resetMatchResultLegacy(type, roundIndex, matchIndex) {
+  if (!state) {
+    return;
+  }
+
+  const targetId = `${type}-${roundIndex}-${matchIndex}`;
+  const manualResults = getAllMatches(state)
+    .filter((match) => match.winner && !match.autoAdvanced && match.id !== targetId)
+    .map((match) => ({
+      type: match.type,
+      roundIndex: match.roundIndex,
+      matchIndex: match.matchIndex,
+      winner: match.winner,
+    }));
+
+  const rebuilt = createBracket(state.originalPlayers);
+  state = rebuilt;
+  autoAdvanceByes(state);
+  refreshGameNumbersAndSources(state);
+
+  manualResults.forEach((result) => {
+    const match = getMatch(result.type, result.roundIndex, result.matchIndex);
+    if (match?.players.includes(result.winner) && !match.winner) {
+      applyWinner(match, result.winner);
+      autoAdvanceByes(state);
+      refreshGameNumbersAndSources(state);
+    }
+  });
+
+  renderBracket();
+  showMessage("Match result cleared. Pick the correct winner.");
+}
+
+function applyWinner(match, winnerName) {
+  const loserName = match.players.find((player) => player && player !== winnerName) || "";
+
+  if (!loserName || loserName === "BYE") {
+    return false;
+  }
+
+  match.winner = winnerName;
+  match.loser = loserName;
+  match.autoAdvanced = false;
+  advanceWinner(match, winnerName);
+  dropLoser(match, loserName);
+  return true;
+}
+
+function advanceWinner(match, winnerName) {
+  const destination = getWinnerAdvanceDestination(match, state);
+
+  if (destination) {
+    placePlayer(destination.match, destination.slot, winnerName);
+    return;
+  }
+
+  if (match.type === "final") {
+    state.champion = winnerName;
+  }
+}
+
+function getWinnerAdvanceDestination(match, bracketState) {
+  if (match.type === "winner") {
+    const nextRound = bracketState.winnerRounds[match.roundIndex + 1];
+
+    if (nextRound) {
+      return {
+        match: nextRound.matches[Math.floor(match.matchIndex / 2)],
+        slot: match.matchIndex % 2,
+      };
+    }
+
+    return { match: bracketState.final, slot: 0 };
+  }
+
+  if (match.type === "loser") {
+    const nextRound = bracketState.loserRounds[match.roundIndex + 1];
+
+    if (nextRound) {
+      const isFeedRound = match.roundIndex % 2 === 0;
+      const nextMatch = isFeedRound
+        ? nextRound.matches[match.matchIndex]
+        : nextRound.matches[Math.floor(match.matchIndex / 2)];
+      const slot = isFeedRound ? 0 : match.matchIndex % 2;
+      return { match: nextMatch, slot };
+    }
+
+    return { match: bracketState.final, slot: 1 };
+  }
+
+  return null;
+}
+
+function dropLoser(match, loserName) {
+  if (match.type !== "winner") {
+    return;
+  }
+
+  const destination = getLoserDropDestination(match, state);
+  if (destination) {
+    placePlayer(destination.match, destination.slot, loserName);
+  }
+}
+
+function getLoserDropDestination(match, bracketState) {
+  if (match.type !== "winner") {
+    return null;
+  }
+
+  const mainFirstRoundIndex = getMainFirstWinnerRoundIndex(bracketState);
+
+  if (match.roundIndex <= mainFirstRoundIndex) {
+    const earlyMatches = bracketState.winnerRounds
+      .slice(0, mainFirstRoundIndex + 1)
+      .flatMap((round) => round.matches)
+      .filter((winnerMatch) => winnerMatch.gameNumber)
+      .sort((a, b) => a.gameNumber - b.gameNumber);
+    const dropIndex = earlyMatches.findIndex((winnerMatch) => winnerMatch.id === match.id);
+    const targetMatch = bracketState.loserRounds[0]?.matches[Math.floor(dropIndex / 2)];
+
+    return targetMatch && dropIndex >= 0
+      ? { match: targetMatch, slot: dropIndex % 2 }
+      : null;
+  }
+
+  const loserRoundIndex = Math.max(1, (match.roundIndex - mainFirstRoundIndex) * 2 - 1);
+  const targetRound = bracketState.loserRounds[loserRoundIndex];
+
+  if (!targetRound) {
+    return null;
+  }
+
+  const targetMatchIndex = getCrossDropMatchIndex(match.matchIndex, targetRound.matches.length);
+  const targetMatch = targetRound.matches[targetMatchIndex];
+
+  return targetMatch ? { match: targetMatch, slot: 1 } : null;
+}
+
+function getMainFirstWinnerRoundIndex(bracketState) {
+  return bracketState.originalPlayers.length === bracketState.size ? 0 : 1;
+}
+
+function getCrossDropMatchIndex(matchIndex, targetMatchCount) {
+  if (targetMatchCount <= 1) {
+    return 0;
+  }
+
+  const groupSize = 2;
+  const groupStart = Math.floor(matchIndex / groupSize) * groupSize;
+  const offset = matchIndex % groupSize;
+  const crossedIndex = groupStart + (groupSize - 1 - offset);
+
+  return Math.min(crossedIndex, targetMatchCount - 1);
+}
+
+function placePlayer(match, slot, player) {
+  if (!match || match.winner) {
+    return;
+  }
+
+  match.players[slot] = player;
+}
+
+function getMatch(type, roundIndex, matchIndex) {
+  if (type === "winner") {
+    return state.winnerRounds[roundIndex].matches[matchIndex];
+  }
+
+  if (type === "loser") {
+    return state.loserRounds[roundIndex].matches[matchIndex];
+  }
+
+  return state.final;
+}
+
+function autoAdvanceByes(bracketState) {
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+
+    getAllMatches(bracketState).forEach((match) => {
+      if (match.winner) {
+        return;
+      }
+
+      const realPlayers = match.players.filter((player) => player && player !== "BYE");
+      const hasBye = match.players.includes("BYE");
+
+      if (realPlayers.length === 1 && hasBye) {
+        match.winner = realPlayers[0];
+        match.loser = "";
+        match.autoAdvanced = true;
+        advanceWinner(match, realPlayers[0]);
+        changed = true;
+      }
+    });
+  }
+}
+
+function getAllMatches(bracketState) {
+  return [
+    ...bracketState.winnerRounds.flatMap((round) => round.matches),
+    ...bracketState.loserRounds.flatMap((round) => round.matches),
+    bracketState.final,
+  ];
+}
+
+function renderBracket() {
+  if (!state) {
+    return;
+  }
+
+  championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
+  bracketOutput.className = "bracket";
+  if (state.mode === "graph") {
+    bracketOutput.innerHTML = `
+      ${renderGraphSection("Winners bracket", state.rounds.winner)}
+      ${renderGraphSection("Losers bracket", state.rounds.loser)}
+      ${renderGraphFinal()}
+    `;
+    updatePaperBackup();
+    return;
+  }
+
+  bracketOutput.innerHTML = `
+    ${renderBracketSection("Winners bracket", state.winnerRounds)}
+    ${renderBracketSection("Losers bracket", state.loserRounds)}
+    ${renderFinal()}
+  `;
+  updatePaperBackup();
+}
+
+function saveBracketBackup(action) {
+  if (!state || !canUseLocalStorage()) {
+    return;
+  }
+
+  const createdAt = new Date().toISOString();
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const backup = {
+    id,
+    createdAt,
+    action,
+    state: JSON.parse(JSON.stringify(state)),
+  };
+  const index = readBackupIndex();
+
+  localStorage.setItem(`${backupKeyPrefix}${id}`, JSON.stringify(backup));
+  index.push({ id, createdAt, action });
+  localStorage.setItem(backupIndexKey, JSON.stringify(index));
+  renderBackups();
+  updatePaperBackup(backup.state, `Backup saved ${formatBackupTime(createdAt)}`);
+}
+
+function renderBackups() {
+  if (!backupList) {
+    return;
+  }
+
+  if (!canUseLocalStorage()) {
+    backupList.className = "backup-list empty";
+    backupList.textContent = "Backups need browser storage.";
+    return;
+  }
+
+  const index = readBackupIndex();
+
+  if (!index.length) {
+    backupList.className = "backup-list empty";
+    backupList.textContent = "No bracket backups yet.";
+    return;
+  }
+
+  backupList.className = "backup-list";
+  backupList.innerHTML = index.slice().reverse().map((backup, reverseIndex) => {
+    const number = index.length - reverseIndex;
+    const action = backup.action?.selectedWinner
+      ? `Before selecting ${backup.action.selectedWinner}`
+      : "Before bracket click";
+
+    return `
+      <article class="backup-item">
+        <div>
+          <strong>Backup ${number}</strong>
+          <span>${escapeHtml(formatBackupTime(backup.createdAt))}</span>
+          <small>${escapeHtml(action)}</small>
+        </div>
+        <div class="backup-item-actions">
+          <button class="secondary" type="button" data-backup-id="${escapeAttribute(backup.id)}">Restore</button>
+          <button class="danger" type="button" data-delete-backup-id="${escapeAttribute(backup.id)}">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function deleteBackup(id) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  const index = readBackupIndex().filter((backup) => backup.id !== id);
+  localStorage.removeItem(`${backupKeyPrefix}${id}`);
+  localStorage.setItem(backupIndexKey, JSON.stringify(index));
+  renderBackups();
+}
+
+function deleteAllBackups() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  readBackupIndex().forEach((backup) => {
+    localStorage.removeItem(`${backupKeyPrefix}${backup.id}`);
+  });
+  localStorage.removeItem(backupIndexKey);
+  renderBackups();
+}
+
+function savePlayerNameBackup(playerCount) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  const names = getPlayerNameMap();
+  const createdAt = new Date().toISOString();
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const backup = {
+    id,
+    createdAt,
+    playerCount,
+    names,
+  };
+  const index = readNameBackupIndex();
+
+  localStorage.setItem(`${nameBackupKeyPrefix}${id}`, JSON.stringify(backup));
+  index.push({
+    id,
+    createdAt,
+    playerCount,
+    nameCount: Object.keys(names).length,
+  });
+  localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
+  renderNameBackups();
+}
+
+function renderNameBackups() {
+  if (!nameBackupList) {
+    return;
+  }
+
+  if (!canUseLocalStorage()) {
+    nameBackupList.className = "backup-list empty";
+    nameBackupList.textContent = "Player name backups need browser storage.";
+    return;
+  }
+
+  const index = readNameBackupIndex();
+
+  if (!index.length) {
+    nameBackupList.className = "backup-list empty";
+    nameBackupList.textContent = "No player name backups yet.";
+    return;
+  }
+
+  nameBackupList.className = "backup-list";
+  nameBackupList.innerHTML = index.slice().reverse().map((backup, reverseIndex) => {
+    const number = index.length - reverseIndex;
+
+    return `
+      <article class="backup-item">
+        <div>
+          <strong>Name backup ${number}</strong>
+          <span>${escapeHtml(formatBackupTime(backup.createdAt))}</span>
+          <small>${backup.nameCount} saved name${backup.nameCount === 1 ? "" : "s"} for ${backup.playerCount} player slots</small>
+        </div>
+        <div class="backup-item-actions">
+          <button class="secondary" type="button" data-merge-name-backup-id="${escapeAttribute(backup.id)}">Merge names</button>
+          <button class="danger" type="button" data-delete-name-backup-id="${escapeAttribute(backup.id)}">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function mergePlayerNameBackup(id) {
+  const backup = readNameBackup(id);
+
+  if (!backup) {
+    showMessage("That player name backup could not be loaded.");
+    renderNameBackups();
+    return;
+  }
+
+  const currentCount = Number(totalPlayers.value);
+  if (backup.playerCount > currentCount) {
+    totalPlayers.value = backup.playerCount;
+    renderNameInputs(backup.playerCount);
+  }
+
+  applyPlayerNameMap(backup.names, false);
+  showMessage("Player names merged. Existing typed names were kept.");
+}
+
+function deletePlayerNameBackup(id) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  const index = readNameBackupIndex().filter((backup) => backup.id !== id);
+  localStorage.removeItem(`${nameBackupKeyPrefix}${id}`);
+  localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
+  renderNameBackups();
+}
+
+function readNameBackupIndex() {
+  if (!canUseLocalStorage()) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(nameBackupIndexKey)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function readNameBackup(id) {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(`${nameBackupKeyPrefix}${id}`));
+  } catch {
+    return null;
+  }
+}
+
+function readBackupIndex() {
+  if (!canUseLocalStorage()) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(backupIndexKey)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function readBackup(id) {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem(`${backupKeyPrefix}${id}`));
+  } catch {
+    return null;
+  }
+}
+
+function canUseLocalStorage() {
+  try {
+    return typeof localStorage !== "undefined";
+  } catch {
+    return false;
+  }
+}
+
+function formatBackupTime(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "unknown time";
+  }
+
+  return date.toLocaleString();
+}
+
+function updatePaperBackup(bracketState = state, title = "Current bracket") {
+  if (!paperBackup) {
+    return;
+  }
+
+  paperBackup.textContent = bracketState
+    ? bracketToText(bracketState, title)
+    : "Build a bracket to create a paper backup.";
+}
+
+function bracketToText(bracketState, title) {
+  if (bracketState.mode === "graph") {
+    const lines = [
+      title,
+      `Champion: ${bracketState.champion || "pending"}`,
+      "",
+      "WINNERS BRACKET",
+      ...roundsToText(bracketState.rounds.winner),
+      "",
+      "LOSERS BRACKET",
+      ...roundsToText(bracketState.rounds.loser),
+      "",
+      "FINAL",
+      matchToText(bracketState.final),
+      ...(bracketState.resetFinal && !isGraphHiddenMatch(bracketState.resetFinal)
+        ? [matchToText(bracketState.resetFinal)]
+        : []),
+    ];
+
+    return lines.join("\n");
+  }
+
+  const lines = [
+    title,
+    `Champion: ${bracketState.champion || "pending"}`,
+    "",
+    "WINNERS BRACKET",
+    ...roundsToText(bracketState.winnerRounds),
+    "",
+    "LOSERS BRACKET",
+    ...roundsToText(bracketState.loserRounds),
+    "",
+    "FINAL",
+    matchToText(bracketState.final),
+  ];
+
+  return lines.join("\n");
+}
+
+function renderGraphSection(title, rounds) {
+  return `
+    <section class="bracket-section">
+      <h3>${title}</h3>
+      <div class="rounds">
+        ${rounds.map((round, index) => `
+          <div class="round">
+            <p class="round-title">${title.startsWith("Winners") ? "Winners" : "Losers"} R${index + 1}</p>
+            ${round.map(renderMatch).join("")}
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderGraphFinal() {
+  return `
+    <section class="bracket-section">
+      <h3>Final</h3>
+      <div class="rounds">
+        <div class="round">
+          <p class="round-title">Grand Final</p>
+          ${renderMatch(state.final)}
+          ${state.resetFinal ? renderMatch(state.resetFinal) : ""}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function roundsToText(rounds) {
+  return rounds.flatMap((round) => [
+    round.title || "",
+    ...(Array.isArray(round) ? round : round.matches).map(matchToText),
+    "",
+  ]);
+}
+
+function matchToText(match) {
+  const first = match.players[0] || match.slotSources[0] || "Waiting";
+  const second = match.players[1] || match.slotSources[1] || "Waiting";
+  const result = match.winner ? ` -> Winner: ${match.winner}` : "";
+
+  return `${match.title}: ${first} vs ${second}${result}`;
+}
+
+function renderBracketSection(title, rounds) {
+  return `
+    <section class="bracket-section">
+      <h3>${title}</h3>
+      <div class="rounds">
+        ${rounds.map((round) => `
+          <div class="round">
+            <p class="round-title">${round.title}</p>
+            ${round.matches.map(renderMatch).join("")}
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderFinal() {
+  return `
+    <section class="bracket-section">
+      <h3>Final</h3>
+      <div class="rounds">
+        <div class="round">
+          <p class="round-title">Championship</p>
+          ${renderMatch(state.final)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderMatch(match) {
+  if (state?.mode === "graph" && isGraphHiddenMatch(match)) {
+    return "";
+  }
+
+  if (
+    match.players.every((player) => player === "BYE") ||
+    match.autoAdvanced ||
+    !hasMatchInput(match)
+  ) {
+    return "";
+  }
+
+  return `
+    <article class="match ${advancingMatchId === match.id ? "match-advance" : ""}">
+      <div class="match-header">
+        <p class="match-title">${match.title}${match.autoAdvanced ? " - bye" : ""}</p>
+        ${match.winner && !match.autoAdvanced ? `
+          <button
+            class="reset-match"
+            type="button"
+            data-reset-match="${escapeAttribute(match.id)}"
+            data-match-id="${match.id}"
+          >Fix</button>
+        ` : ""}
+      </div>
+      ${buildMatchMeta(match)}
+      <div class="slots">
+        ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex)).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function buildMatchMeta(match) {
+  if (state?.mode === "graph") {
+    const winnerMatch = match.winnerTo ? state.matchesById[match.winnerTo.matchId] : null;
+    const loserMatch = match.loserTo ? state.matchesById[match.loserTo.matchId] : null;
+    const winnerTarget = winnerMatch
+      ? `Winner to Game ${winnerMatch.id}`
+      : match.type === "final" ? "Winner is champion or forces reset"
+        : match.type === "resetFinal" ? "Winner is champion" : "";
+    const loserTarget = loserMatch && match.type === "winner"
+      ? `Loser to Game ${loserMatch.id}`
+      : "";
+    const labels = [winnerTarget, loserTarget].filter(Boolean);
+
+    return labels.length ? `<p class="match-meta">${labels.join(" | ")}</p>` : "";
+  }
+
+  const destination = state ? getWinnerAdvanceDestination(match, state) : null;
+  const winnerTarget = destination?.match?.gameNumber
+    ? `Winner to Game ${destination.match.gameNumber}`
+    : match.type === "final" ? "Winner is champion" : "";
+  const loserTarget = match.type === "winner"
+    ? getLoserDestinationLabel(match)
+    : "";
+  const labels = [winnerTarget, loserTarget].filter(Boolean);
+
+  if (!labels.length) {
+    return "";
+  }
+
+  return `<p class="match-meta">${labels.join(" | ")}</p>`;
+}
+
+function getLoserDestinationLabel(match) {
+  const destination = state ? getLoserDropDestination(match, state) : null;
+
+  if (!destination?.match?.gameNumber) {
+    return "";
+  }
+
+  return `Loser to Game ${destination.match.gameNumber}`;
+}
+
+function renderPlayerButton(match, player, slotIndex) {
+  const sourceLabel = match.slotSources[slotIndex];
+  const label = player || sourceLabel || "Waiting";
+  const isWinner = player && match.winner === player;
+  const isLoser = player && match.loser === player && player !== "BYE";
+  const isBye = player === "BYE";
+  const classNames = [
+    "player-button",
+    !player ? "waiting" : "",
+    sourceLabel && !player ? "source-slot" : "",
+    isWinner ? "winner" : "",
+    isLoser ? "loser" : "",
+    isBye ? "bye" : "",
+  ].filter(Boolean).join(" ");
+  const disabled = !player || isBye || Boolean(match.winner);
+
+  return `
+    <button
+      class="${classNames}"
+      type="button"
+      ${disabled ? "disabled" : ""}
+      data-match-type="${escapeAttribute(match.type)}"
+      data-round-index="${match.roundIndex}"
+      data-match-index="${match.matchIndex}"
+      data-match-id="${match.id}"
+      data-player="${escapeAttribute(player)}"
+    >${escapeHtml(label)}</button>
+  `;
+}
+
+function nextPowerOfTwo(value) {
+  let power = 1;
+
+  while (power < value) {
+    power *= 2;
+  }
+
+  return power;
+}
+
+function showMessage(text) {
+  message.textContent = text;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+    .replaceAll("\n", " ");
+}

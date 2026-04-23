@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darts Draw and Bracket</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Darts tournament tool</p>
+        <h1>Draw & Double-Elim Bracket</h1>
+      </div>
+      <button id="resetBracket" class="secondary" type="button">Reset bracket</button>
+    </header>
+
+    <div class="top-workspace">
+      <div class="setup-stack">
+        <section class="panel setup-panel">
+          <div id="redrawWarning" class="redraw-warning" hidden></div>
+          <div class="panel-title">
+            <h2>Team draw</h2>
+            <p>Enter the total players and players per team, then generate random teams.</p>
+          </div>
+
+          <div class="setup-grid">
+            <label>
+              Total players
+              <input id="totalPlayers" type="number" inputmode="numeric" min="0" max="200" value="">
+            </label>
+
+            <label>
+              Players per group
+              <input id="playersPerGroup" type="number" inputmode="numeric" min="1" max="16" value="2">
+            </label>
+          </div>
+
+          <section class="name-editor" aria-labelledby="namesTitle">
+            <div class="name-editor-title">
+              <h3 id="namesTitle">Player names</h3>
+              <button id="refreshNames" class="secondary" type="button">Update list</button>
+            </div>
+            <div id="nameList" class="name-list"></div>
+            <details class="name-backup-history">
+              <summary>Saved player names</summary>
+              <div id="nameBackupList" class="backup-list empty">No player name backups yet.</div>
+            </details>
+          </section>
+
+          <label class="player-list-label">
+            Teams for bracket
+            <span id="teamDrawWarning" class="team-draw-warning" hidden></span>
+            <textarea id="playerList" rows="8" spellcheck="false"></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="generatePlayers" type="button">Generate teams</button>
+            <!-- <button id="drawGroups" type="button">Randomize teams</button> -->
+            <button id="buildBracket" type="button">Build bracket</button>
+          </div>
+
+          <p id="message" class="message" aria-live="polite"></p>
+        </section>
+
+        <section class="panel groups-panel" aria-labelledby="groupsTitle">
+          <div class="panel-title">
+            <h2 id="groupsTitle">Randomized groups</h2>
+            <p>Teams are shuffled each time you draw.</p>
+          </div>
+          <div id="groupsOutput" class="groups empty">No groups drawn yet.</div>
+        </section>
+      </div>
+
+      <div class="top-side-stack">
+        <section class="panel out-shot-panel" aria-labelledby="outSheetTitle">
+          <div class="panel-title">
+            <div>
+              <h2 id="outSheetTitle">Out Shots</h2>
+              <p>Record player and number hit.</p>
+            </div>
+          </div>
+
+          <div id="outShotSheet" class="out-shot-sheet"></div>
+
+          <div class="out-shot-actions">
+            <button id="saveOutShots" type="button">Save</button>
+            <button id="clearOutShots" class="danger" type="button">Clear</button>
+          </div>
+        </section>
+
+        <section class="panel dice-roller" aria-labelledby="diceRollerTitle">
+          <div class="dice-roller-heading">
+            <h3 id="diceRollerTitle">D20 roller</h3>
+            <div id="diceTotal" class="dice-total">Total: 2</div>
+          </div>
+          <div class="dice-tray" aria-live="polite">
+            <button id="dieOne" class="die-button die-steel" type="button" data-die-index="0" aria-label="Roll die one">
+              <span class="die-label">Triple</span>
+              <span class="die-value">1</span>
+            </button>
+            <button id="dieTwo" class="die-button die-soft" type="button" data-die-index="1" aria-label="Roll die two">
+              <span class="die-label">Double</span>
+              <span class="die-value">1</span>
+            </button>
+          </div>
+          <button id="rollDice" type="button">Roll both dice</button>
+        </section>
+
+        <section class="panel mystery-out-card" aria-labelledby="mysteryOutTitle">
+          <div class="mystery-out-heading">
+            <h3 id="mysteryOutTitle">Mystery Out</h3>
+          </div>
+          <div class="mystery-out-modes" aria-label="Mystery out mode">
+            <label class="mystery-out-mode">
+              <input type="radio" name="mysteryOutMode" data-mystery-out-mode="open">
+              Open
+            </label>
+            <label class="mystery-out-mode">
+              <input type="radio" name="mysteryOutMode" data-mystery-out-mode="double" checked>
+              Double
+            </label>
+            <label class="mystery-out-mode">
+              <input type="radio" name="mysteryOutMode" data-mystery-out-mode="master">
+              Master
+            </label>
+          </div>
+          <div id="mysteryOutValue" class="mystery-out-value">--</div>
+          <div class="mystery-out-actions">
+            <button id="generateMysteryOut" type="button">Generate mystery out</button>
+            <button id="resetMysteryOut" class="secondary" type="button" hidden>Fix</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section class="bracket-shell" aria-labelledby="bracketTitle">
+      <div class="panel-title bracket-heading">
+        <div>
+          <h2 id="bracketTitle">Interactive bracket</h2>
+          <p>Tap the winner in each match. The loser moves to the correct losers bracket spot.</p>
+        </div>
+        <div id="champion" class="champion">Champion: pending</div>
+      </div>
+
+      <div id="bracket" class="bracket empty">Build a bracket to start.</div>
+    </section>
+
+    <section class="panel" aria-labelledby="backupsTitle">
+      <div class="panel-title">
+        <div>
+          <h2 id="backupsTitle">Bracket backups</h2>
+          <p>A new backup is saved before every bracket click.</p>
+        </div>
+      </div>
+      <div class="backup-actions">
+        <button id="saveCurrentBackup" type="button">Save current backup</button>
+        <button id="printPaperBackup" class="secondary" type="button">Print paper bracket</button>
+        <button id="deleteBackups" class="danger" type="button">Delete all backups</button>
+      </div>
+      <pre id="paperBackup" class="paper-backup">Build a bracket to create a paper backup.</pre>
+      <details class="backup-history">
+        <summary>Backup history</summary>
+        <div id="backupList" class="backup-list empty">No bracket backups yet.</div>
+      </details>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
