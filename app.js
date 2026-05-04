@@ -739,6 +739,10 @@ function renderPdfColumnGroup(title, columnsText) {
 }
 
 function createBracketGraph(players) {
+  if (players.length === 3) {
+    return createThreeTeamBracketGraph(players);
+  }
+
   if (players.length === 9) {
     return createNineTeamBracketGraph(players);
   }
@@ -809,6 +813,65 @@ function createBracketGraph(players) {
   wireGraphLoserDestinations(bracketState);
   settleGraphByesAndSources(bracketState);
 
+  return bracketState;
+}
+
+function createThreeTeamBracketGraph(players) {
+  const definitions = [
+    { id: 1, type: "winner", roundIndex: 0, matchIndex: 0, players: ["T1", "T2"], winnerTo: [2, 1], loserTo: [3, 0] },
+    { id: 2, type: "winner", roundIndex: 1, matchIndex: 0, players: ["T3", "winner_of_1"], winnerTo: [4, 0], loserTo: [3, 1] },
+    { id: 3, type: "loser", roundIndex: 0, matchIndex: 0, players: ["loser_of_1", "loser_of_2"], winnerTo: [4, 1] },
+    { id: 4, type: "final", roundIndex: 0, matchIndex: 0, players: ["winner_of_2", "winner_of_3"] },
+    { id: 5, type: "resetFinal", roundIndex: 1, matchIndex: 0, players: ["", ""] },
+  ];
+  const matches = definitions.map((definition) => createTemplateMatch(definition, players));
+  matches.forEach((match) => {
+    if (match.type === "final") {
+      match.title = `Game ${match.id} - Grand Final`;
+    }
+    if (match.type === "resetFinal") {
+      match.title = `Game ${match.id} - Reset Final`;
+    }
+  });
+
+  const rounds = { winner: [], loser: [] };
+  const matchesById = {};
+  const templateSources = {};
+
+  matches.forEach((match) => {
+    matchesById[match.id] = match;
+    templateSources[match.id] = [...match.slotSources];
+    if (match.type === "winner") {
+      if (!rounds.winner[match.roundIndex]) {
+        rounds.winner[match.roundIndex] = [];
+      }
+      rounds.winner[match.roundIndex].push(match);
+    }
+    if (match.type === "loser") {
+      if (!rounds.loser[match.roundIndex]) {
+        rounds.loser[match.roundIndex] = [];
+      }
+      rounds.loser[match.roundIndex].push(match);
+    }
+  });
+
+  rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+  rounds.loser.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size: 3,
+    matches,
+    matchesById,
+    templateSources,
+    rounds,
+    final: matchesById[4],
+    resetFinal: matchesById[5],
+    champion: "",
+  };
+
+  settleGraphByesAndSources(bracketState);
   return bracketState;
 }
 
