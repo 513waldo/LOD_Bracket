@@ -1,0 +1,145 @@
+:root {
+  --bg: #0d1b20;
+  --bg-soft: #17313a;
+  --panel: rgba(245, 239, 227, 0.94);
+  --ink: #142126;
+  --muted: #5d6a70;
+  --gold: #d7a446;
+  --teal: #0f7d74;
+  --teal-deep: #0a5c56;
+  --line: rgba(20, 33, 38, 0.12);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(215, 164, 70, 0.25), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 125, 116, 0.24), transparent 28%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 52%, #efe5d6 52%, #efe5d6 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  font-family: Rockwell, "Roboto Slab", Georgia, serif;
+  letter-spacing: -0.03em;
+}
+
+.home-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.home-hero {
+  padding: clamp(24px, 4vw, 40px);
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    linear-gradient(120deg, rgba(215, 164, 70, 0.14), rgba(255, 255, 255, 0.02)),
+    #102026;
+  color: #f8f2e7;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow,
+.card-tag {
+  margin-bottom: 10px;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.home-hero h1 {
+  max-width: 10ch;
+  margin-bottom: 14px;
+  font-size: clamp(3rem, 8vw, 5.8rem);
+  line-height: 0.95;
+}
+
+.lead {
+  max-width: 62ch;
+  color: rgba(248, 242, 231, 0.84);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.tool-card {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.tool-card p:not(.card-tag) {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.tool-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 10px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-deep));
+  color: #fff;
+  font-weight: 800;
+}
+
+.secondary-link {
+  background: linear-gradient(135deg, #b84a29, #8d3117);
+}
+
+@media (max-width: 780px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-shell {
+    width: min(100% - 20px, 1120px);
+    padding-top: 18px;
+  }
+
+  .home-hero,
+  .tool-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .home-hero h1 {
+    max-width: none;
+    font-size: 2.8rem;
+  }
+}

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoardFlow League Scheduler</title>
+  <link rel="stylesheet" href="scheduler.css">
+</head>
+<body>
+  <main class="page-shell">
+    <p class="eyebrow"><a href="index.html">Home</a> / Board Scheduler</p>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Remote flex darts scheduling</p>
+        <h1>One place to book boards across every bar in the league.</h1>
+        <p class="hero-text">
+          Built around a relegation-style darts system with Premier, Challenger, and feeder leagues.
+          Bar owners set board counts and blocked times. Players claim open slots before they drive across town and wait in line.
+        </p>
+        <div class="hero-actions">
+          <a class="button-link" href="#booking">Book a board</a>
+          <a class="button-link secondary-link" href="#admin">Manage bars</a>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <div class="stat-grid">
+          <article>
+            <strong>6</strong>
+            <span>connected leagues</span>
+          </article>
+          <article>
+            <strong>60</strong>
+            <span>remote players at once</span>
+          </article>
+          <article>
+            <strong>15</strong>
+            <span>bars in rotation</span>
+          </article>
+          <article>
+            <strong>0</strong>
+            <span>guesswork bookings</span>
+          </article>
+        </div>
+        <p class="hero-note">
+          The problem this solves: four people showing up for one board while another location still has open lanes.
+        </p>
+      </aside>
+    </section>
+
+    <section class="feature-band">
+      <article class="feature-tile">
+        <h2>League structure stays intact</h2>
+        <p>Premier and Challenger move players up and down while contender leagues feed the system. Scheduling stops being the weak link.</p>
+      </article>
+      <article class="feature-tile">
+        <h2>Bars control availability</h2>
+        <p>Each venue can set board count, post league-night blackouts, and show when in-house play makes boards unavailable.</p>
+      </article>
+      <article class="feature-tile">
+        <h2>Players self-book fast</h2>
+        <p>Pick a bar, see open windows, reserve a board, and add matchup notes so everyone knows where the remote match is happening.</p>
+      </article>
+    </section>
+
+    <section class="league-strip" aria-labelledby="leagueModelTitle">
+      <div class="section-heading">
+        <p class="eyebrow">How it works</p>
+        <h2 id="leagueModelTitle">Designed for promotion, relegation, and busy weeknight traffic.</h2>
+      </div>
+      <div class="league-flow">
+        <article class="league-card premier">
+          <span class="league-label">Premier League</span>
+          <strong>10 players</strong>
+          <p>Bottom three drop to Challenger.</p>
+        </article>
+        <article class="league-card challenger">
+          <span class="league-label">Challenger League</span>
+          <strong>10 players</strong>
+          <p>Top three go up. Bottom three drop out.</p>
+        </article>
+        <article class="league-card contender">
+          <span class="league-label">Contender Feeders</span>
+          <strong>4 groups of 10</strong>
+          <p>Feed the Challenger replacements.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="workspace-grid">
+      <section class="panel control-panel" id="admin" aria-labelledby="adminTitle">
+        <div class="section-heading compact">
+          <p class="eyebrow">Admin setup</p>
+          <h2 id="adminTitle">Venue and blackout manager</h2>
+        </div>
+
+        <form id="barForm" class="stack-form">
+          <div class="field-grid">
+            <label>
+              Bar name
+              <input id="barName" name="barName" type="text" placeholder="Bullseye Taproom" required>
+            </label>
+            <label>
+              Area
+              <input id="barArea" name="barArea" type="text" placeholder="Downtown" required>
+            </label>
+            <label>
+              Boards
+              <input id="boardCount" name="boardCount" type="number" min="1" max="12" value="2" required>
+            </label>
+          </div>
+          <button type="submit">Add bar</button>
+        </form>
+
+        <form id="blackoutForm" class="stack-form subdued">
+          <div class="field-grid">
+            <label>
+              Bar
+              <select id="blackoutBar" name="blackoutBar"></select>
+            </label>
+            <label>
+              Time block
+              <select id="blackoutSlot" name="blackoutSlot"></select>
+            </label>
+            <label>
+              Reason
+              <input id="blackoutReason" name="blackoutReason" type="text" placeholder="In-house blind draw" required>
+            </label>
+          </div>
+          <button type="submit" class="secondary">Block full venue</button>
+        </form>
+
+        <div id="adminMessage" class="flash-message" aria-live="polite"></div>
+        <div id="barRoster" class="roster-grid"></div>
+      </section>
+
+      <section class="panel booking-panel" id="booking" aria-labelledby="bookingTitle">
+        <div class="section-heading compact">
+          <p class="eyebrow">Player booking</p>
+          <h2 id="bookingTitle">Reserve a board before match time</h2>
+        </div>
+
+        <form id="bookingForm" class="stack-form">
+          <div class="field-grid">
+            <label>
+              Player name
+              <input id="playerName" name="playerName" type="text" placeholder="Chris M." required>
+            </label>
+            <label>
+              League
+              <select id="leagueSelect" name="leagueSelect">
+                <option>Premier</option>
+                <option>Challenger</option>
+                <option>Contender North</option>
+                <option>Contender South</option>
+                <option>Contender East</option>
+                <option>Contender West</option>
+              </select>
+            </label>
+            <label>
+              Opponent
+              <input id="opponentName" name="opponentName" type="text" placeholder="Dana K." required>
+            </label>
+            <label>
+              Bar
+              <select id="bookingBar" name="bookingBar"></select>
+            </label>
+            <label>
+              Time
+              <select id="bookingSlot" name="bookingSlot"></select>
+            </label>
+            <label>
+              Duration
+              <select id="bookingLength" name="bookingLength">
+                <option value="1">1 hour</option>
+                <option value="2" selected>2 hours</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Match notes
+            <textarea id="bookingNotes" name="bookingNotes" rows="3" placeholder="Remote flex match, first to 7, home setup confirmed."></textarea>
+          </label>
+          <button type="submit">Reserve board</button>
+        </form>
+
+        <div id="bookingMessage" class="flash-message" aria-live="polite"></div>
+
+        <div class="queue-shell">
+          <div class="queue-heading">
+            <h3>Upcoming reservations</h3>
+            <button id="clearBookings" type="button" class="secondary">Clear demo bookings</button>
+          </div>
+          <div id="bookingList" class="booking-list"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel availability-panel" aria-labelledby="availabilityTitle">
+      <div class="section-heading compact">
+        <p class="eyebrow">Live view</p>
+        <h2 id="availabilityTitle">Board availability by bar</h2>
+      </div>
+      <div id="availabilityGrid" class="availability-grid"></div>
+    </section>
+  </main>
+
+  <script src="scheduler.js"></script>
+</body>
+</html>

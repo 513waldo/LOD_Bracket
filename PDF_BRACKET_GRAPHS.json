@@ -1,0 +1,8068 @@
+{
+  "3": {
+    "pdf": "3teamdouble.pdf",
+    "teams": 3,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 2,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 3,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 4,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 3,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1
+          },
+          {
+            "kind": "loser",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 4,
+          "slot": 1
+        },
+        "loserTo": null,
+        "note": "printed label without detected connector"
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "printed label without detected connector",
+        "resetTo": {
+          "game": 5,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      5
+    ],
+    "firstFinal": 4,
+    "resetFinal": 5
+  },
+  "4": {
+    "pdf": "4teamDouble.pdf",
+    "teams": 4,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 3,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 4,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 3,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 4,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 5,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 1
+        },
+        "loserTo": null,
+        "note": "printed label without detected connector"
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "printed label without detected connector",
+        "resetTo": {
+          "game": 7,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      7
+    ],
+    "firstFinal": 6,
+    "resetFinal": 7
+  },
+  "5": {
+    "pdf": "5teamDouble.pdf",
+    "teams": 5,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 3,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 4,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 4,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 9,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      9
+    ],
+    "firstFinal": 8,
+    "resetFinal": 9
+  },
+  "6": {
+    "pdf": "6teamDouble.pdf",
+    "teams": 6,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 3,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 4,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 5,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 5,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 9
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 11,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      11
+    ],
+    "firstFinal": 10,
+    "resetFinal": 11
+  },
+  "7": {
+    "pdf": "7teamDouble.pdf",
+    "teams": 7,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 4,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 8
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 13,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 12,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      13
+    ],
+    "firstFinal": 12,
+    "resetFinal": 13
+  },
+  "8": {
+    "pdf": "8teamDouble.pdf",
+    "teams": 8,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 5,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 5,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 11,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 15,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 14,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      15
+    ],
+    "firstFinal": 14,
+    "resetFinal": 15
+  },
+  "9": {
+    "pdf": "9teamdouble.pdf",
+    "teams": 9,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 6,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 13,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "winner",
+            "game": 15
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 17,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 16,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      17
+    ],
+    "firstFinal": 16,
+    "resetFinal": 17
+  },
+  "10": {
+    "pdf": "10teamDouble.pdf",
+    "teams": 10,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 7,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 12,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 9
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "loser",
+            "game": 11,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 15,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 17
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 19,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 18,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      19
+    ],
+    "firstFinal": 18,
+    "resetFinal": 19
+  },
+  "11": {
+    "pdf": "11teamdouble.pdf",
+    "teams": 11,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 8,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 8
+          },
+          {
+            "kind": "winner",
+            "game": 9
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "loser",
+            "game": 13,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 14,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 19,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 16
+          },
+          {
+            "kind": "winner",
+            "game": 15
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 17,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 19
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 21,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 20,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      21
+    ],
+    "firstFinal": 20,
+    "resetFinal": 21
+  },
+  "12": {
+    "pdf": "12teamdouble.pdf",
+    "teams": 12,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 5,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 18,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 14,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 15
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 16
+          },
+          {
+            "kind": "loser",
+            "game": 13,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 21,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 19,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 21
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 23,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 22,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      23
+    ],
+    "firstFinal": 22,
+    "resetFinal": 23
+  },
+  "13": {
+    "pdf": "13teamdouble.pdf",
+    "teams": 13,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 6,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 20,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 19,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 14
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 16,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 17
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 18
+          },
+          {
+            "kind": "loser",
+            "game": 15,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 23,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 21,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 23
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 25,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 24,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      25
+    ],
+    "firstFinal": 24,
+    "resetFinal": 25
+  },
+  "14": {
+    "pdf": "14teamdouble.pdf",
+    "teams": 14,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 7,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 22,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 21,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 14
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 18,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 19
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 20
+          },
+          {
+            "kind": "loser",
+            "game": 17,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 25,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 23,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 25
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 27,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 26,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      27
+    ],
+    "firstFinal": 26,
+    "resetFinal": 27
+  },
+  "15": {
+    "pdf": "15teamdouble.pdf",
+    "teams": 15,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 8,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 2
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 18,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 6
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 11,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 8
+          },
+          {
+            "kind": "winner",
+            "game": 9
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 24,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 23,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 16
+          },
+          {
+            "kind": "winner",
+            "game": 17
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 20,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 21
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 22
+          },
+          {
+            "kind": "loser",
+            "game": 19,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 27,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 25,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 25
+          },
+          {
+            "kind": "winner",
+            "game": 27
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 29,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 28,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 28
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      29
+    ],
+    "firstFinal": 28,
+    "resetFinal": 29
+  },
+  "16": {
+    "pdf": "16teamdouble.pdf",
+    "teams": 16,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 13,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 9,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 1
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 20,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 19,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 18,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 16,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 9
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 15,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 10
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 14,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 13,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 25,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 26,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 21,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 23
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 24
+          },
+          {
+            "kind": "loser",
+            "game": 22,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 29,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 25
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 27,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 28
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 30,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 27
+          },
+          {
+            "kind": "winner",
+            "game": 29
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 31,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 31,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 30,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 30
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      31
+    ],
+    "firstFinal": 30,
+    "resetFinal": 31
+  },
+  "17": {
+    "pdf": "17-team-double.pdf",
+    "teams": 17,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 10,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 14,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 19,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 3
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 20,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 21,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 22,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 15,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 16,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 11
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 17,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 12
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 18,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 28,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 27,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 24,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 25
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 26
+          },
+          {
+            "kind": "loser",
+            "game": 23,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 31,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 30,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 27
+          },
+          {
+            "kind": "winner",
+            "game": 28
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 31,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 29,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 30
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 32,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 29
+          },
+          {
+            "kind": "winner",
+            "game": 31
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 33,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 33,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 32,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 32
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      33
+    ],
+    "firstFinal": 32,
+    "resetFinal": 33
+  },
+  "18": {
+    "pdf": "18-team-double.pdf",
+    "teams": 18,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 11,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 15,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 21,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 4
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 22,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 23,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 7
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 24,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 17,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 15
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 18,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 13
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 19,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 20,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 14
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 17
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 30,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 29,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 26,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 27
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 30,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 28
+          },
+          {
+            "kind": "loser",
+            "game": 25,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 31,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 25
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": {
+          "game": 34,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 33,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 32,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 29
+          },
+          {
+            "kind": "winner",
+            "game": 30
+          }
+        ],
+        "winnerTo": {
+          "game": 33,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 33,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 31,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 32
+          }
+        ],
+        "winnerTo": {
+          "game": 34,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 34,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 31
+          },
+          {
+            "kind": "winner",
+            "game": 33
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 35,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 35,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 34,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 34
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      35
+    ],
+    "firstFinal": 34,
+    "resetFinal": 35
+  },
+  "19": {
+    "pdf": "19-team-double.pdf",
+    "teams": 19,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 18,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 12,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 16,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 11,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 14
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 23,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 5
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 24,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 25,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 26,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 19,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 16
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 20,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 15
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 21,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 17
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 22,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 19
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 33,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 32,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 33,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 31,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 30,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 25
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 31,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 28,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 29
+          }
+        ],
+        "winnerTo": {
+          "game": 34,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 32,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 30
+          },
+          {
+            "kind": "loser",
+            "game": 27,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 34,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 33,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 27
+          },
+          {
+            "kind": "winner",
+            "game": 28
+          }
+        ],
+        "winnerTo": {
+          "game": 36,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 35,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 34,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 31
+          },
+          {
+            "kind": "winner",
+            "game": 32
+          }
+        ],
+        "winnerTo": {
+          "game": 35,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 35,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 33,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 34
+          }
+        ],
+        "winnerTo": {
+          "game": 36,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 36,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 33
+          },
+          {
+            "kind": "winner",
+            "game": 35
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 37,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 37,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 36,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 36
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      37
+    ],
+    "firstFinal": 36,
+    "resetFinal": 37
+  },
+  "20": {
+    "pdf": "20-team-double.pdf",
+    "teams": 20,
+    "matches": [
+      {
+        "id": 1,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 9,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 2,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 10,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 3,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 11,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 4,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 12,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 5,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 19,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 6,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 20,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 7,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 17,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 8,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "seed"
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 18,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 9,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 1
+          }
+        ],
+        "winnerTo": {
+          "game": 21,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 15,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 10,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 2
+          }
+        ],
+        "winnerTo": {
+          "game": 22,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 16,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 11,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 3
+          }
+        ],
+        "winnerTo": {
+          "game": 23,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 13,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 12,
+        "inputs": [
+          {
+            "kind": "seed"
+          },
+          {
+            "kind": "winner",
+            "game": 4
+          }
+        ],
+        "winnerTo": {
+          "game": 24,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 14,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 13,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 1,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 11,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 17,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 14,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 2,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 12,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 18,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 15,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 3,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 9,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 19,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 16,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 4,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "loser",
+            "game": 10,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 20,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 17,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 13
+          },
+          {
+            "kind": "loser",
+            "game": 7,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 25,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 18,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 14
+          },
+          {
+            "kind": "loser",
+            "game": 8,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 26,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 19,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 15
+          },
+          {
+            "kind": "loser",
+            "game": 5,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 27,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 20,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 16
+          },
+          {
+            "kind": "loser",
+            "game": 6,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 28,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 21,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 9
+          },
+          {
+            "kind": "winner",
+            "game": 5
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 25,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 22,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 10
+          },
+          {
+            "kind": "winner",
+            "game": 6
+          }
+        ],
+        "winnerTo": {
+          "game": 29,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 26,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 23,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 11
+          },
+          {
+            "kind": "winner",
+            "game": 7
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 27,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 24,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 12
+          },
+          {
+            "kind": "winner",
+            "game": 8
+          }
+        ],
+        "winnerTo": {
+          "game": 30,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 28,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 25,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 21,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 17
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 26,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 22,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 18
+          }
+        ],
+        "winnerTo": {
+          "game": 31,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 27,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 23,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 19
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 28,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 24,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 20
+          }
+        ],
+        "winnerTo": {
+          "game": 32,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 29,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 21
+          },
+          {
+            "kind": "winner",
+            "game": 22
+          }
+        ],
+        "winnerTo": {
+          "game": 35,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 34,
+          "slot": 1,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 30,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 23
+          },
+          {
+            "kind": "winner",
+            "game": 24
+          }
+        ],
+        "winnerTo": {
+          "game": 35,
+          "slot": 1
+        },
+        "loserTo": {
+          "game": 33,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 31,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 25
+          },
+          {
+            "kind": "winner",
+            "game": 26
+          }
+        ],
+        "winnerTo": {
+          "game": 33,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 32,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 27
+          },
+          {
+            "kind": "winner",
+            "game": 28
+          }
+        ],
+        "winnerTo": {
+          "game": 34,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 33,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 30,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 31
+          }
+        ],
+        "winnerTo": {
+          "game": 36,
+          "slot": 0
+        },
+        "loserTo": null
+      },
+      {
+        "id": 34,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 32
+          },
+          {
+            "kind": "loser",
+            "game": 29,
+            "ifFirstLoss": false
+          }
+        ],
+        "winnerTo": {
+          "game": 36,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 35,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 29
+          },
+          {
+            "kind": "winner",
+            "game": 30
+          }
+        ],
+        "winnerTo": {
+          "game": 38,
+          "slot": 0
+        },
+        "loserTo": {
+          "game": 37,
+          "slot": 0,
+          "ifFirstLoss": false
+        }
+      },
+      {
+        "id": 36,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 33
+          },
+          {
+            "kind": "winner",
+            "game": 34
+          }
+        ],
+        "winnerTo": {
+          "game": 37,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 37,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 35,
+            "ifFirstLoss": false
+          },
+          {
+            "kind": "winner",
+            "game": 36
+          }
+        ],
+        "winnerTo": {
+          "game": 38,
+          "slot": 1
+        },
+        "loserTo": null
+      },
+      {
+        "id": 38,
+        "inputs": [
+          {
+            "kind": "winner",
+            "game": 35
+          },
+          {
+            "kind": "winner",
+            "game": 37
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "resetTo": {
+          "game": 39,
+          "condition": "if winners-bracket finalist takes first loss"
+        }
+      },
+      {
+        "id": 39,
+        "inputs": [
+          {
+            "kind": "loser",
+            "game": 38,
+            "ifFirstLoss": true
+          },
+          {
+            "kind": "winner",
+            "game": 38
+          }
+        ],
+        "winnerTo": null,
+        "loserTo": null,
+        "note": "reset final, played only if the winners-bracket finalist loses first final"
+      }
+    ],
+    "unmatchedGameLabels": [
+      39
+    ],
+    "firstFinal": 38,
+    "resetFinal": 39
+  }
+}
