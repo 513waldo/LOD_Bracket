@@ -678,7 +678,7 @@ function renderGroups(groups) {
   groupsOutput.className = "groups";
   groupsOutput.innerHTML = groups.map((group, index) => `
     <article class="group-card">
-      <h3>Team ${index + 1}</h3>
+      <h3>T${index + 1} Team ${index + 1}</h3>
       <div class="team-members">${escapeHtml(Array.isArray(group) ? formatTeam(group) : group)}</div>
     </article>
   `).join("");
