@@ -2228,13 +2228,28 @@ function renderGraphFinal() {
   return `
     <section class="bracket-section final-section">
       <h3>Final</h3>
-      <div class="rounds">
-        <div class="round">
-          ${renderFinalMatchBlock(state.final, "Game 1")}
-          ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Game 2") : ""}
+      <div class="final-layout">
+        <div class="rounds">
+          <div class="round">
+            ${renderFinalMatchBlock(state.final, "Game 1")}
+            ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Game 2") : ""}
+          </div>
         </div>
+        ${renderChampionBox()}
       </div>
     </section>
+  `;
+}
+
+function renderChampionBox() {
+  const champion = state.champion || "Pending";
+
+  return `
+    <aside class="champion-box" aria-label="Tournament winner">
+      <p class="champion-box-title">Winner</p>
+      <div class="champion-box-name">${escapeHtml(champion)}</div>
+      <p class="champion-box-note">${state.champion ? "Tournament champion" : "Waiting for final result"}</p>
+    </aside>
   `;
 }
 
