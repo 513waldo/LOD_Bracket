@@ -2230,8 +2230,8 @@ function renderGraphFinal() {
       <h3>Final</h3>
       <div class="rounds">
         <div class="round">
-          ${renderFinalMatchBlock(state.final, "Grand Final")}
-          ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Reset Final") : ""}
+          ${renderFinalMatchBlock(state.final, "Game 1")}
+          ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Game 2") : ""}
         </div>
       </div>
     </section>
