@@ -787,6 +787,10 @@ function createBracketGraph(players) {
     return createFiveTeamBracketGraph(players);
   }
 
+  if (players.length === 7) {
+    return createSevenTeamBracketGraph(players);
+  }
+
   if (players.length === 9) {
     return createNineTeamBracketGraph(players);
   }
@@ -1091,6 +1095,73 @@ function createFiveTeamBracketGraph(players) {
     rounds,
     final: matchesById[8],
     resetFinal: matchesById[9],
+    champion: "",
+  };
+
+  settleGraphByesAndSources(bracketState);
+  return bracketState;
+}
+
+function createSevenTeamBracketGraph(players) {
+  const definitions = [
+    { id: 1, type: "winner", roundIndex: 0, matchIndex: 0, players: ["T1", "T2"], winnerTo: [4, 1], loserTo: [7, 0] },
+    { id: 2, type: "winner", roundIndex: 0, matchIndex: 1, players: ["T3", "T4"], winnerTo: [5, 0], loserTo: [6, 0] },
+    { id: 3, type: "winner", roundIndex: 0, matchIndex: 2, players: ["T5", "T6"], winnerTo: [5, 1], loserTo: [6, 1] },
+    { id: 4, type: "winner", roundIndex: 1, matchIndex: 0, players: ["T7", "winner_of_1"], winnerTo: [9, 0], loserTo: [8, 0] },
+    { id: 5, type: "winner", roundIndex: 1, matchIndex: 1, players: ["winner_of_2", "winner_of_3"], winnerTo: [9, 1], loserTo: [7, 1] },
+    { id: 6, type: "loser", roundIndex: 0, matchIndex: 0, players: ["loser_of_2", "loser_of_3"], winnerTo: [8, 1] },
+    { id: 7, type: "loser", roundIndex: 0, matchIndex: 1, players: ["loser_of_1", "winner_of_6"], winnerTo: [10, 1] },
+    { id: 8, type: "loser", roundIndex: 1, matchIndex: 0, players: ["loser_of_4", "winner_of_6"], winnerTo: [10, 0] },
+    { id: 9, type: "winner", roundIndex: 2, matchIndex: 0, players: ["winner_of_4", "winner_of_5"], winnerTo: [12, 0], loserTo: [11, 0] },
+    { id: 10, type: "loser", roundIndex: 2, matchIndex: 0, players: ["winner_of_7", "winner_of_8"], winnerTo: [11, 1] },
+    { id: 11, type: "loser", roundIndex: 3, matchIndex: 0, players: ["loser_of_9", "winner_of_10"], winnerTo: [12, 1] },
+    { id: 12, type: "final", roundIndex: 0, matchIndex: 0, players: ["winner_of_9", "winner_of_11"] },
+    { id: 13, type: "resetFinal", roundIndex: 1, matchIndex: 0, players: ["", ""] },
+  ];
+  const matches = definitions.map((definition) => createTemplateMatch(definition, players));
+  matches.forEach((match) => {
+    if (match.type === "final") {
+      match.title = `Game ${match.id} - Grand Final`;
+    }
+    if (match.type === "resetFinal") {
+      match.title = `Game ${match.id} - Reset Final`;
+    }
+  });
+
+  const rounds = { winner: [], loser: [] };
+  const matchesById = {};
+  const templateSources = {};
+
+  matches.forEach((match) => {
+    matchesById[match.id] = match;
+    templateSources[match.id] = [...match.slotSources];
+    if (match.type === "winner") {
+      if (!rounds.winner[match.roundIndex]) {
+        rounds.winner[match.roundIndex] = [];
+      }
+      rounds.winner[match.roundIndex].push(match);
+    }
+    if (match.type === "loser") {
+      if (!rounds.loser[match.roundIndex]) {
+        rounds.loser[match.roundIndex] = [];
+      }
+      rounds.loser[match.roundIndex].push(match);
+    }
+  });
+
+  rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+  rounds.loser.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size: 7,
+    matches,
+    matchesById,
+    templateSources,
+    rounds,
+    final: matchesById[12],
+    resetFinal: matchesById[13],
     champion: "",
   };
 
