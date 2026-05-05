@@ -1536,13 +1536,12 @@ function chooseWinner(matchId, winnerName) {
     applyGraphFinalResult(state, match, winnerName, loserName);
   } else if (match.type === "resetFinal") {
     applyGraphFinalResult(state, match, winnerName, loserName);
+    if (winnerName !== match.players[0]) {
+      advancingMatchId = ensureDoubleDipFinal(state, match, match.players[0], match.players[1]).id;
+    }
   } else {
     placeGraphPlayer(state, match.winnerTo, winnerName);
     placeGraphPlayer(state, match.loserTo, loserName);
-  }
-
-  if (match.type === "resetFinal" && winnerName !== match.players[0] && state.doubleDipFinal) {
-    advancingMatchId = state.doubleDipFinal.id;
   }
 
   settleGraphByesAndSources(state);
@@ -1576,22 +1575,7 @@ function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
       return;
     }
 
-    const doubleDipFinal = bracketState.doubleDipFinal || createGraphMatch(
-      Math.max(...bracketState.matches.map((candidate) => candidate.id)) + 1,
-      "doubleDipFinal",
-      2,
-      0,
-    );
-
-    doubleDipFinal.gameNumber = (bracketState.resetFinal?.gameNumber || bracketState.final.gameNumber || 0) + 1;
-    doubleDipFinal.title = `Game ${doubleDipFinal.gameNumber}`;
-    doubleDipFinal.players = [loserName, winnerName];
-    doubleDipFinal.slotSources = ["", ""];
-    bracketState.doubleDipFinal = doubleDipFinal;
-    if (!bracketState.matchesById[doubleDipFinal.id]) {
-      bracketState.matches.push(doubleDipFinal);
-      bracketState.matchesById[doubleDipFinal.id] = doubleDipFinal;
-    }
+    ensureDoubleDipFinal(bracketState, match, loserName, winnerName);
     return;
   }
 
@@ -1602,6 +1586,31 @@ function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
 
   bracketState.resetFinal.players = [loserName, winnerName];
   bracketState.resetFinal.slotSources = ["", ""];
+}
+
+function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, losersSidePlayer) {
+  if (bracketState.doubleDipFinal) {
+    return bracketState.doubleDipFinal;
+  }
+
+  const doubleDipFinal = createGraphMatch(
+    Math.max(...bracketState.matches.map((candidate) => candidate.id)) + 1,
+    "doubleDipFinal",
+    2,
+    0,
+  );
+
+  doubleDipFinal.gameNumber = (sourceMatch?.gameNumber || bracketState.final.gameNumber || 0) + 1;
+  doubleDipFinal.title = `Game ${doubleDipFinal.gameNumber}`;
+  doubleDipFinal.players = [winnersSidePlayer, losersSidePlayer];
+  doubleDipFinal.slotSources = ["", ""];
+  bracketState.doubleDipFinal = doubleDipFinal;
+  if (!bracketState.matchesById[doubleDipFinal.id]) {
+    bracketState.matches.push(doubleDipFinal);
+    bracketState.matchesById[doubleDipFinal.id] = doubleDipFinal;
+  }
+
+  return doubleDipFinal;
 }
 
 function resetMatchResult(matchId) {
@@ -2588,6 +2597,10 @@ function renderGraphSection(title, rounds) {
 }
 
 function renderGraphFinal() {
+  const doubleDipFinal = state.resetFinal && state.resetFinal.winner && state.resetFinal.winner !== state.resetFinal.players[0]
+    ? ensureDoubleDipFinal(state, state.resetFinal, state.resetFinal.players[0], state.resetFinal.players[1])
+    : state.doubleDipFinal;
+
   return `
     <section class="bracket-section final-section">
       <h3>Final</h3>
@@ -2596,7 +2609,7 @@ function renderGraphFinal() {
           <div class="round">
             ${renderFinalMatchBlock(state.final, state.final.title)}
             ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, state.resetFinal.title) : ""}
-            ${state.doubleDipFinal ? renderFinalMatchBlock(state.doubleDipFinal, state.doubleDipFinal.title) : ""}
+            ${doubleDipFinal ? renderFinalMatchBlock(doubleDipFinal, doubleDipFinal.title) : ""}
           </div>
         </div>
         ${renderChampionBox()}
@@ -2675,6 +2688,10 @@ function renderBracketSection(title, rounds) {
 }
 
 function renderFinal() {
+  const doubleDipFinal = state.resetFinal && state.resetFinal.winner && state.resetFinal.winner !== state.resetFinal.players[0]
+    ? ensureDoubleDipFinal(state, state.resetFinal, state.resetFinal.players[0], state.resetFinal.players[1])
+    : state.doubleDipFinal;
+
   return `
     <section class="bracket-section">
       <h3>Final</h3>
@@ -2683,7 +2700,7 @@ function renderFinal() {
           <p class="round-title">Championship</p>
           ${renderMatch(state.final)}
           ${state.resetFinal ? renderMatch(state.resetFinal) : ""}
-          ${state.doubleDipFinal ? renderMatch(state.doubleDipFinal) : ""}
+          ${doubleDipFinal ? renderMatch(doubleDipFinal) : ""}
         </div>
       </div>
     </section>
