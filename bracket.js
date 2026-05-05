@@ -2225,18 +2225,22 @@ function renderGraphSection(title, rounds) {
 }
 
 function renderGraphFinal() {
-  const finalMatch = state.resetFinal?.players.some((player) => player)
-    ? state.resetFinal
-    : state.final;
-  const title = finalMatch.type === "resetFinal" ? "Reset Final" : "Grand Final";
-
   return `
     <section class="bracket-section">
       <h3>Final</h3>
       <div class="rounds">
         <div class="round">
-          <p class="round-title">${title}</p>
-          ${renderMatch(finalMatch)}
+          <p class="round-title">Ultimate winner</p>
+          <article class="match final-outcome">
+            <div class="match-header">
+              <p class="match-title">${state.champion ? "Champion" : "Pending"}</p>
+            </div>
+            <div class="slots">
+              <button class="player-button ${state.champion ? "winner" : "waiting"}" type="button" disabled>
+                ${escapeHtml(state.champion || "Waiting for final result")}
+              </button>
+            </div>
+          </article>
         </div>
       </div>
     </section>
