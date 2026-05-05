@@ -2130,7 +2130,7 @@ function renderFinal() {
 }
 
 function renderMatch(match) {
-  if (shouldHideThreeTeamPendingMatch(match)) {
+  if (shouldHidePendingGraphMatch(match)) {
     return "";
   }
 
@@ -2167,8 +2167,8 @@ function renderMatch(match) {
   `;
 }
 
-function shouldHideThreeTeamPendingMatch(match) {
-  if (state?.mode !== "graph" || state.originalPlayers?.length !== 3 || match.id === 1 || match.winner) {
+function shouldHidePendingGraphMatch(match) {
+  if (state?.mode !== "graph" || match.winner) {
     return false;
   }
 
