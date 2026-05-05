@@ -872,6 +872,7 @@ function createBracketGraph(players) {
     rounds,
     final,
     resetFinal,
+    doubleDipFinal: null,
     champion: "",
   };
 
@@ -1540,6 +1541,10 @@ function chooseWinner(matchId, winnerName) {
     placeGraphPlayer(state, match.loserTo, loserName);
   }
 
+  if (match.type === "resetFinal" && winnerName !== match.players[0] && state.doubleDipFinal) {
+    advancingMatchId = state.doubleDipFinal.id;
+  }
+
   settleGraphByesAndSources(state);
   renderBracket();
 }
@@ -1551,7 +1556,8 @@ function getGraphAdvanceAnimationTarget(bracketState, match, winnerName) {
   }
 
   if (match.type === "resetFinal") {
-    return null;
+    const winnersSidePlayer = match.players[0];
+    return winnerName === winnersSidePlayer ? null : bracketState.doubleDipFinal?.id || null;
   }
 
   return match.winnerTo?.matchId || null;
@@ -1559,15 +1565,42 @@ function getGraphAdvanceAnimationTarget(bracketState, match, winnerName) {
 
 function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
   const winnersSidePlayer = match.players[0];
-  const resetFinal = bracketState.resetFinal;
-
-  if (winnerName === winnersSidePlayer || !resetFinal) {
+  if (match.type === "doubleDipFinal") {
     bracketState.champion = winnerName;
     return;
   }
 
-  resetFinal.players = [loserName, winnerName];
-  resetFinal.slotSources = ["", ""];
+  if (match.type === "resetFinal") {
+    if (winnerName === winnersSidePlayer) {
+      bracketState.champion = winnerName;
+      return;
+    }
+
+    const doubleDipFinal = bracketState.doubleDipFinal || createGraphMatch(
+      Math.max(...bracketState.matches.map((candidate) => candidate.id)) + 1,
+      "doubleDipFinal",
+      2,
+      0,
+    );
+
+    doubleDipFinal.title = `Game ${doubleDipFinal.id} - Double Dip`;
+    doubleDipFinal.players = [loserName, winnerName];
+    doubleDipFinal.slotSources = ["", ""];
+    bracketState.doubleDipFinal = doubleDipFinal;
+    if (!bracketState.matchesById[doubleDipFinal.id]) {
+      bracketState.matches.push(doubleDipFinal);
+      bracketState.matchesById[doubleDipFinal.id] = doubleDipFinal;
+    }
+    return;
+  }
+
+  if (winnerName === winnersSidePlayer || !bracketState.resetFinal) {
+    bracketState.champion = winnerName;
+    return;
+  }
+
+  bracketState.resetFinal.players = [loserName, winnerName];
+  bracketState.resetFinal.slotSources = ["", ""];
 }
 
 function resetMatchResult(matchId) {
@@ -1729,6 +1762,7 @@ function rebuildGraphMatchIndex(bracketState) {
     bracketState.matchesById[match.id] = match;
   });
   bracketState.resetFinal = bracketState.resetFinal || bracketState.matches.find((match) => match.type === "resetFinal") || null;
+  bracketState.doubleDipFinal = bracketState.doubleDipFinal || bracketState.matches.find((match) => match.type === "doubleDipFinal") || null;
 }
 
 function addGraphSource(bracketState, destination, label) {
@@ -1762,6 +1796,8 @@ function createBracket(players) {
     winnerRounds,
     loserRounds,
     final: createMatch("final", 0, 0, "Final"),
+    resetFinal: null,
+    doubleDipFinal: null,
     champion: "",
   };
 
@@ -1988,9 +2024,47 @@ function applyWinner(match, winnerName) {
   match.winner = winnerName;
   match.loser = loserName;
   match.autoAdvanced = false;
+
+  if (match.type === "final") {
+    applyLegacyFinalResult(match, winnerName, loserName);
+    return true;
+  }
+
+  if (match.type === "resetFinal") {
+    applyLegacyResetFinalResult(match, winnerName, loserName);
+    return true;
+  }
+
+  if (match.type === "doubleDipFinal") {
+    state.champion = winnerName;
+    return true;
+  }
+
   advanceWinner(match, winnerName);
   dropLoser(match, loserName);
   return true;
+}
+
+function applyLegacyFinalResult(match, winnerName, loserName) {
+  if (winnerName === match.players[0] || !state.resetFinal) {
+    state.champion = winnerName;
+    return;
+  }
+
+  state.resetFinal = state.resetFinal || createMatch("resetFinal", 0, 0, "Game 2");
+  state.resetFinal.players = [loserName, winnerName];
+  state.resetFinal.slotSources = ["", ""];
+}
+
+function applyLegacyResetFinalResult(match, winnerName, loserName) {
+  if (winnerName === match.players[0]) {
+    state.champion = winnerName;
+    return;
+  }
+
+  state.doubleDipFinal = state.doubleDipFinal || createMatch("doubleDipFinal", 0, 0, "Game 3");
+  state.doubleDipFinal.players = [loserName, winnerName];
+  state.doubleDipFinal.slotSources = ["", ""];
 }
 
 function advanceWinner(match, winnerName) {
@@ -2117,6 +2191,14 @@ function getMatch(type, roundIndex, matchIndex) {
     return state.loserRounds[roundIndex].matches[matchIndex];
   }
 
+  if (type === "resetFinal") {
+    return state.resetFinal;
+  }
+
+  if (type === "doubleDipFinal") {
+    return state.doubleDipFinal;
+  }
+
   return state.final;
 }
 
@@ -2150,7 +2232,9 @@ function getAllMatches(bracketState) {
     ...bracketState.winnerRounds.flatMap((round) => round.matches),
     ...bracketState.loserRounds.flatMap((round) => round.matches),
     bracketState.final,
-  ];
+    bracketState.resetFinal,
+    bracketState.doubleDipFinal,
+  ].filter(Boolean);
 }
 
 function renderBracket() {
@@ -2469,9 +2553,15 @@ function bracketToText(bracketState, title) {
     "LOSERS BRACKET",
     ...roundsToText(bracketState.loserRounds),
     "",
-    "FINAL",
-    matchToText(bracketState.final),
-  ];
+      "FINAL",
+      matchToText(bracketState.final),
+      ...(bracketState.resetFinal && !isGraphHiddenMatch(bracketState.resetFinal)
+        ? [matchToText(bracketState.resetFinal)]
+        : []),
+      ...(bracketState.doubleDipFinal && !isGraphHiddenMatch(bracketState.doubleDipFinal)
+        ? [matchToText(bracketState.doubleDipFinal)]
+        : []),
+    ];
 
   return lines.join("\n");
 }
@@ -2501,6 +2591,7 @@ function renderGraphFinal() {
           <div class="round">
             ${renderFinalMatchBlock(state.final, "Game 1")}
             ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Game 2") : ""}
+            ${state.doubleDipFinal ? renderFinalMatchBlock(state.doubleDipFinal, "Game 3") : ""}
           </div>
         </div>
         ${renderChampionBox()}
@@ -2586,6 +2677,8 @@ function renderFinal() {
         <div class="round">
           <p class="round-title">Championship</p>
           ${renderMatch(state.final)}
+          ${state.resetFinal ? renderMatch(state.resetFinal) : ""}
+          ${state.doubleDipFinal ? renderMatch(state.doubleDipFinal) : ""}
         </div>
       </div>
     </section>
@@ -2642,7 +2735,8 @@ function buildMatchMeta(match) {
     const winnerTarget = winnerMatch
       ? `Winner to Game ${winnerMatch.id} ${formatGraphSlot(match.winnerTo.slot)}`
       : match.type === "final" ? "Winner is champion or forces reset"
-        : match.type === "resetFinal" ? "Winner is champion" : "";
+        : match.type === "resetFinal" ? "Winner is champion or forces double dip"
+          : match.type === "doubleDipFinal" ? "Winner is champion" : "";
     const loserTarget = loserMatch && match.type === "winner"
       ? `Loser to L${match.id} in Game ${loserMatch.id} ${formatGraphSlot(match.loserTo.slot)}`
       : "";
@@ -2654,7 +2748,9 @@ function buildMatchMeta(match) {
   const destination = state ? getWinnerAdvanceDestination(match, state) : null;
   const winnerTarget = destination?.match?.gameNumber
     ? `Winner to Game ${destination.match.gameNumber}`
-    : match.type === "final" ? "Winner is champion" : "";
+    : match.type === "final" ? "Winner is champion"
+      : match.type === "resetFinal" ? "Winner is champion or forces double dip"
+        : match.type === "doubleDipFinal" ? "Winner is champion" : "";
   const loserTarget = match.type === "winner"
     ? getLoserDestinationLabel(match)
     : "";
