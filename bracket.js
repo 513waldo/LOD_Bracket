@@ -2257,7 +2257,10 @@ function renderBracket() {
     return;
   }
 
-  championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
+  const winnerBoxName = state.mode === "graph"
+    ? state.champion || getLatestFinalWinner(state)
+    : state.champion;
+  championOutput.textContent = winnerBoxName ? `Champion: ${winnerBoxName}` : "Champion: pending";
   bracketOutput.className = "bracket";
   if (state.mode === "graph") {
     bracketOutput.innerHTML = `
