@@ -1464,6 +1464,7 @@ function createGraphMatch(id, type, roundIndex, matchIndex) {
     winnerTo: null,
     loserTo: null,
     autoAdvanced: false,
+    isPlayIn: false,
     gameNumber: id,
   };
 }
@@ -1720,6 +1721,43 @@ function settleGraphByesAndSources(bracketState) {
   }
 
   refreshGraphSources(bracketState);
+  markGraphPlayInMatches(bracketState);
+}
+
+function markGraphPlayInMatches(bracketState) {
+  bracketState.matches.forEach((match) => {
+    if (isGraphPlayInMatch(match, bracketState)) {
+      match.isPlayIn = true;
+    }
+  });
+}
+
+function isGraphPlayInMatch(match, bracketState) {
+  if (!match || match.type !== "winner") {
+    return false;
+  }
+
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  if (realPlayerCount < 2) {
+    return false;
+  }
+
+  if (!bracketState.templateSources && match.roundIndex === 0 && bracketState.originalPlayers.length !== bracketState.size) {
+    return true;
+  }
+
+  const destination = match.winnerTo;
+  const target = destination ? bracketState.matchesById[destination.matchId] : null;
+  if (!target || target.type !== "winner") {
+    return false;
+  }
+
+  const otherSlot = destination.slot === 0 ? 1 : 0;
+  const targetSources = bracketState.templateSources?.[target.id] || target.slotSources;
+  return targetSources[destination.slot] === `Winner of Game ${match.id}` &&
+    Boolean(target.players[otherSlot]) &&
+    target.players[otherSlot] !== "BYE" &&
+    !targetSources[otherSlot];
 }
 
 function autoAdvanceGraphByes(bracketState) {
@@ -2781,7 +2819,7 @@ function renderMatch(match) {
   return `
     <article class="match ${advancingMatchId === match.id ? "match-advance" : ""}">
       <div class="match-header">
-        <p class="match-title">${match.title}${match.autoAdvanced ? " - bye" : ""}</p>
+        <p class="match-title">${formatMatchTitle(match)}</p>
         ${match.winner && !match.autoAdvanced ? `
           <button
             class="reset-match"
@@ -2797,6 +2835,28 @@ function renderMatch(match) {
       </div>
     </article>
   `;
+}
+
+function formatMatchTitle(match) {
+  const playInLabel = isPlayInMatch(match) ? "PLAY IN - " : "";
+  const byeLabel = match.autoAdvanced ? " - BYE" : "";
+  return `${playInLabel}${match.title}${byeLabel}`;
+}
+
+function isPlayInMatch(match) {
+  if (state?.mode === "graph") {
+    return Boolean(match?.isPlayIn) || isGraphPlayInMatch(match, state);
+  }
+
+  if (!match || match.type !== "winner") {
+    return false;
+  }
+
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  return Boolean(state) &&
+    realPlayerCount >= 2 &&
+    match.roundIndex === 0 &&
+    state.originalPlayers.length !== state.size;
 }
 
 function shouldDisablePendingGraphMatch(match) {
