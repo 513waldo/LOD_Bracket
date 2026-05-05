@@ -24,6 +24,10 @@ Extraction used Poppler `pdftotext -bbox-layout` plus Poppler rendering for conn
 | 18 | `18-team-double.pdf` | `G1,G2` / `G9,G3,G4,G5,G10,G6,G7,G8` / `G17,G18,G19,G20` / `G25,G26` / `G31` / `G34` | `G11,G12` / `G15,G13,G16,G14` / `G21,G22,G23,G24` / `G27,G28` / `G29,G30` / `G32` / `G33` / `G35` | `G34`, reset `G35` from `L34` |
 | 19 | `19-team-double.pdf` | `G1,G2,G3` / `G9,G4,G5,G6,G10,G7,G11,G8` / `G19,G20,G21,G22` / `G27,G28` / `G33` / `G36` | `G12,G13,G14` / `G16,G15,G17,G18` / `G23,G24,G25,G26` / `G29,G30` / `G31,G32` / `G34` / `G35` / `G37` | `G36`, reset `G37` from `L36` |
 | 20 | `20-team-double.pdf` | `G1,G2,G3,G4` / `G9,G5,G10,G6,G11,G7,G12,G8` / `G21,G22,G23,G24` / `G29,G30` / `G35` / `G38` | `G13,G14,G15,G16` / `G17,G18,G19,G20` / `G25,G26,G27,G28` / `G31,G32` / `G33,G34` / `G36` / `G37` / `G39` | `G38`, reset `G39` from `L38` |
+| 21 | `21-team-double.pdf` | `G1,G2,G3,G4,G5` / `G9,G6,G10,G11,G12,G7,G13,G8` / `G23,G24,G25,G26` / `G31,G32` / `G37` / `G40` | `G14,G15,G16,G17,G18` / `G19,G22,G20,G21` / `G27,G28,G29,G30` / `G33,G34` / `G35,G36` / `G38` / `G39` / `G41` | `G40`, reset `G41` from `L40` |
+| 22 | `22teamdouble.pdf` | `G1,G2,G3,G4,G5,G6` / `G9,G7,G10,G11,G12,G8,G13,G14` / `G25,G26,G27,G28` / `G33,G34` / `G39` / `G42` | `G15,G16,G17,G18,G19,G20` / `G21,G23,G22,G24` / `G29,G30,G31,G32` / `G35,G36` / `G37,G38` / `G40` / `G41` / `G43` | `G42`, reset `G43` from `L42` |
+| 23 | `23teamdouble.pdf` | `G1,G2,G3,G4,G5,G6,G7` / `G9,G8,G10,G11,G12,G13,G14,G15` / `G27,G28,G29,G30` / `G35,G36` / `G41` / `G44` | `G16,G17,G18,G19,G20,G21,G22` / `G23,G24,G25,G26` / `G31,G32,G33,G34` / `G37,G38` / `G39,G40` / `G42` / `G43` / `G45` | `G44`, reset `G45` from `L44` |
+| 24 | `24teamdouble.pdf` | `G1,G2,G3,G4,G5,G6,G7,G8` / `G9,G10,G11,G12,G13,G14,G15,G16` / `G29,G30,G31,G32` / `G37,G38` / `G43` / `G46` | `G17,G18,G19,G20,G21,G22,G23,G24` / `G25,G26,G27,G28` / `G33,G34,G35,G36` / `G39,G40` / `G41,G42` / `G44` / `G45` / `G47` | `G46`, reset `G47` from `L46` |
 
 ## Notes
 

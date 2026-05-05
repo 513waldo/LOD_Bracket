@@ -73,6 +73,10 @@ const pdfBracketLayouts = {
   18: { pdf: "18-team-double.pdf", winner: "G1,G2 / G9,G3,G4,G5,G10,G6,G7,G8 / G17,G18,G19,G20 / G25,G26 / G31 / G34", loser: "G11,G12 / G15,G13,G16,G14 / G21,G22,G23,G24 / G27,G28 / G29,G30 / G32 / G33 / G35", final: "G34", reset: "G35 from L34" },
   19: { pdf: "19-team-double.pdf", winner: "G1,G2,G3 / G9,G4,G5,G6,G10,G7,G11,G8 / G19,G20,G21,G22 / G27,G28 / G33 / G36", loser: "G12,G13,G14 / G16,G15,G17,G18 / G23,G24,G25,G26 / G29,G30 / G31,G32 / G34 / G35 / G37", final: "G36", reset: "G37 from L36" },
   20: { pdf: "20-team-double.pdf", winner: "G1,G2,G3,G4 / G9,G5,G10,G6,G11,G7,G12,G8 / G21,G22,G23,G24 / G29,G30 / G35 / G38", loser: "G13,G14,G15,G16 / G17,G18,G19,G20 / G25,G26,G27,G28 / G31,G32 / G33,G34 / G36 / G37 / G39", final: "G38", reset: "G39 from L38" },
+  21: { pdf: "21-team-double.pdf", winner: "G1,G2,G3,G4,G5 / G9,G6,G10,G11,G12,G7,G13,G8 / G23,G24,G25,G26 / G31,G32 / G37 / G40", loser: "G14,G15,G16,G17,G18 / G19,G22,G20,G21 / G27,G28,G29,G30 / G33,G34 / G35,G36 / G38 / G39 / G41", final: "G40", reset: "G41 from L40" },
+  22: { pdf: "22teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6 / G9,G7,G10,G11,G12,G8,G13,G14 / G25,G26,G27,G28 / G33,G34 / G39 / G42", loser: "G15,G16,G17,G18,G19,G20 / G21,G23,G22,G24 / G29,G30,G31,G32 / G35,G36 / G37,G38 / G40 / G41 / G43", final: "G42", reset: "G43 from L42" },
+  23: { pdf: "23teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7 / G9,G8,G10,G11,G12,G13,G14,G15 / G27,G28,G29,G30 / G35,G36 / G41 / G44", loser: "G16,G17,G18,G19,G20,G21,G22 / G23,G24,G25,G26 / G31,G32,G33,G34 / G37,G38 / G39,G40 / G42 / G43 / G45", final: "G44", reset: "G45 from L44" },
+  24: { pdf: "24teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7,G8 / G9,G10,G11,G12,G13,G14,G15,G16 / G29,G30,G31,G32 / G37,G38 / G43 / G46", loser: "G17,G18,G19,G20,G21,G22,G23,G24 / G25,G26,G27,G28 / G33,G34,G35,G36 / G39,G40 / G41,G42 / G44 / G45 / G47", final: "G46", reset: "G47 from L46" },
 };
 let learnedPdfGraphs = null;
 let learnedPdfGraphsPromise = null;
@@ -235,7 +239,7 @@ document.querySelector("#buildBracket").addEventListener("click", async () => {
   }
 
   const pdfGraphs = await loadPdfBracketGraphs();
-  if (players.length >= 3 && players.length <= 20 && !pdfGraphs?.[players.length]) {
+  if (players.length >= 3 && players.length <= 24 && !pdfGraphs?.[players.length]) {
     showMessage("The learned PDF bracket graph could not be loaded. Try refreshing the page.");
     return;
   }
@@ -710,7 +714,7 @@ function renderPdfColumnMirror(teamCount) {
 
   const layout = pdfBracketLayouts[teamCount];
   if (!layout) {
-    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 20 teams.</p>`;
+    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 24 teams.</p>`;
     return;
   }
 
@@ -754,7 +758,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=final-blocks-visible", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-24", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
