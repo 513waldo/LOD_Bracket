@@ -752,7 +752,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-graph-game1", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-graph-losers-visible", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
@@ -2284,10 +2284,6 @@ function renderFinal() {
 }
 
 function renderMatch(match) {
-  if (shouldHidePendingGraphMatch(match)) {
-    return "";
-  }
-
   if (state?.mode === "graph" && isGraphHiddenMatch(match)) {
     return "";
   }
@@ -2295,7 +2291,7 @@ function renderMatch(match) {
   if (
     match.players.every((player) => player === "BYE") ||
     match.autoAdvanced ||
-    !hasMatchInput(match)
+    (!hasMatchInput(match) && state?.mode !== "graph")
   ) {
     return "";
   }
@@ -2315,13 +2311,13 @@ function renderMatch(match) {
       </div>
       ${buildMatchMeta(match)}
       <div class="slots">
-        ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex)).join("")}
+        ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
       </div>
     </article>
   `;
 }
 
-function shouldHidePendingGraphMatch(match) {
+function shouldDisablePendingGraphMatch(match) {
   if (state?.mode !== "graph" || match.winner) {
     return false;
   }
@@ -2372,7 +2368,7 @@ function getLoserDestinationLabel(match) {
   return `Loser to Game ${destination.match.gameNumber}`;
 }
 
-function renderPlayerButton(match, player, slotIndex) {
+function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
   const sourceLabel = match.slotSources[slotIndex];
   const label = player || sourceLabel || "Waiting";
   const isWinner = player && match.winner === player;
@@ -2386,7 +2382,7 @@ function renderPlayerButton(match, player, slotIndex) {
     isLoser ? "loser" : "",
     isBye ? "bye" : "",
   ].filter(Boolean).join(" ");
-  const disabled = !player || isBye || Boolean(match.winner);
+  const disabled = forceDisabled || !player || isBye || Boolean(match.winner);
 
   return `
     <button
