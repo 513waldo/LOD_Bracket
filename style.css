@@ -476,6 +476,13 @@ textarea {
   text-transform: uppercase;
 }
 
+.champion-box-game {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
 .champion-box-name {
   color: var(--ink);
   font-size: 1.45rem;
