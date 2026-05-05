@@ -2331,11 +2331,11 @@ function buildMatchMeta(match) {
     const winnerMatch = match.winnerTo ? state.matchesById[match.winnerTo.matchId] : null;
     const loserMatch = match.loserTo ? state.matchesById[match.loserTo.matchId] : null;
     const winnerTarget = winnerMatch
-      ? `Winner to Game ${winnerMatch.id}`
+      ? `Winner to Game ${winnerMatch.id} ${formatGraphSlot(match.winnerTo.slot)}`
       : match.type === "final" ? "Winner is champion or forces reset"
         : match.type === "resetFinal" ? "Winner is champion" : "";
     const loserTarget = loserMatch && match.type === "winner"
-      ? `Loser to Game ${loserMatch.id}`
+      ? `Loser to Game ${loserMatch.id} ${formatGraphSlot(match.loserTo.slot)}`
       : "";
     const labels = [winnerTarget, loserTarget].filter(Boolean);
 
@@ -2356,6 +2356,10 @@ function buildMatchMeta(match) {
   }
 
   return `<p class="match-meta">${labels.join(" | ")}</p>`;
+}
+
+function formatGraphSlot(slot) {
+  return slot === 0 ? "(top slot)" : "(bottom slot)";
 }
 
 function getLoserDestinationLabel(match) {
