@@ -2617,7 +2617,8 @@ function renderGraphFinal() {
 }
 
 function renderChampionBox() {
-  const champion = state.champion || "Pending";
+  const finalWinner = getLatestFinalWinner(state);
+  const champion = state.champion || finalWinner || "Pending";
   const finalGame = state.final?.title || "Final pending";
 
   return `
@@ -2625,9 +2626,16 @@ function renderChampionBox() {
       <p class="champion-box-title">Winner</p>
       <p class="champion-box-game">${escapeHtml(finalGame)}</p>
       <div class="champion-box-name">${escapeHtml(champion)}</div>
-      <p class="champion-box-note">${state.champion ? "Tournament champion" : "Waiting for final result"}</p>
+      <p class="champion-box-note">${state.champion ? "Tournament champion" : finalWinner ? "Final game winner" : "Waiting for final result"}</p>
     </aside>
   `;
+}
+
+function getLatestFinalWinner(bracketState) {
+  return bracketState.doubleDipFinal?.winner ||
+    bracketState.resetFinal?.winner ||
+    bracketState.final?.winner ||
+    "";
 }
 
 function renderFinalMatchBlock(match, title) {
