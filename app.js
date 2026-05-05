@@ -1535,7 +1535,7 @@ function chooseWinner(matchId, winnerName) {
   if (match.type === "final") {
     applyGraphFinalResult(state, match, winnerName, loserName);
   } else if (match.type === "resetFinal") {
-    state.champion = winnerName;
+    applyGraphFinalResult(state, match, winnerName, loserName);
   } else {
     placeGraphPlayer(state, match.winnerTo, winnerName);
     placeGraphPlayer(state, match.loserTo, loserName);
@@ -1583,7 +1583,8 @@ function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
       0,
     );
 
-    doubleDipFinal.title = `Game ${doubleDipFinal.id} - Double Dip`;
+    doubleDipFinal.gameNumber = (bracketState.resetFinal?.gameNumber || bracketState.final.gameNumber || 0) + 1;
+    doubleDipFinal.title = `Game ${doubleDipFinal.gameNumber}`;
     doubleDipFinal.players = [loserName, winnerName];
     doubleDipFinal.slotSources = ["", ""];
     bracketState.doubleDipFinal = doubleDipFinal;
