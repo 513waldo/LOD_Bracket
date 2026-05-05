@@ -2130,6 +2130,10 @@ function renderFinal() {
 }
 
 function renderMatch(match) {
+  if (shouldHideThreeTeamPendingMatch(match)) {
+    return "";
+  }
+
   if (state?.mode === "graph" && isGraphHiddenMatch(match)) {
     return "";
   }
@@ -2161,6 +2165,15 @@ function renderMatch(match) {
       </div>
     </article>
   `;
+}
+
+function shouldHideThreeTeamPendingMatch(match) {
+  if (state?.mode !== "graph" || state.originalPlayers?.length !== 3 || match.id === 1 || match.winner) {
+    return false;
+  }
+
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  return realPlayerCount < 2;
 }
 
 function buildMatchMeta(match) {
