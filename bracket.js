@@ -2225,21 +2225,41 @@ function renderGraphSection(title, rounds) {
 }
 
 function renderGraphFinal() {
-  const finalMatch = state.resetFinal?.players.some((player) => player)
-    ? state.resetFinal
-    : state.final;
-  const title = finalMatch.type === "resetFinal" ? "Reset Final" : "Grand Final";
-
   return `
-    <section class="bracket-section">
+    <section class="bracket-section final-section">
       <h3>Final</h3>
       <div class="rounds">
         <div class="round">
-          <p class="round-title">${title}</p>
-          ${renderMatch(finalMatch)}
+          ${renderFinalMatchBlock(state.final, "Grand Final")}
+          ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Reset Final") : ""}
         </div>
       </div>
     </section>
+  `;
+}
+
+function renderFinalMatchBlock(match, title) {
+  return `
+    <div class="final-match-block">
+      <p class="round-title">${title}</p>
+      <article class="match ${advancingMatchId === match.id ? "match-advance" : ""}">
+        <div class="match-header">
+          <p class="match-title">${match.title}</p>
+          ${match.winner && !match.autoAdvanced ? `
+            <button
+              class="reset-match"
+              type="button"
+              data-reset-match="${escapeAttribute(match.id)}"
+              data-match-id="${match.id}"
+            >Fix</button>
+          ` : ""}
+        </div>
+        ${buildMatchMeta(match)}
+        <div class="slots">
+          ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
+        </div>
+      </article>
+    </div>
   `;
 }
 

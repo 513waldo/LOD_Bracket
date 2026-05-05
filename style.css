@@ -437,6 +437,19 @@ textarea {
   text-transform: uppercase;
 }
 
+.final-section .round {
+  width: min(100%, 280px);
+}
+
+.final-match-block {
+  display: grid;
+  gap: 10px;
+}
+
+.final-match-block + .final-match-block {
+  margin-top: 14px;
+}
+
 .match {
   position: relative;
   border: 1px solid var(--line);
