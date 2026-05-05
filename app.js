@@ -102,9 +102,11 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
   renderNameInputs(Number(totalPlayers.value));
 });
 
-pdfLayoutSelect.addEventListener("change", () => {
-  renderPdfColumnMirror(Number(pdfLayoutSelect.value));
-});
+if (pdfLayoutSelect) {
+  pdfLayoutSelect.addEventListener("change", () => {
+    renderPdfColumnMirror(Number(pdfLayoutSelect.value));
+  });
+}
 
 document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
   if (!state) {
