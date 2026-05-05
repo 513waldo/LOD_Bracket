@@ -2225,14 +2225,18 @@ function renderGraphSection(title, rounds) {
 }
 
 function renderGraphFinal() {
+  const finalMatch = state.resetFinal?.players.some((player) => player)
+    ? state.resetFinal
+    : state.final;
+  const title = finalMatch.type === "resetFinal" ? "Reset Final" : "Grand Final";
+
   return `
     <section class="bracket-section">
       <h3>Final</h3>
       <div class="rounds">
         <div class="round">
-          <p class="round-title">Grand Final</p>
-          ${renderMatch(state.final)}
-          ${state.resetFinal ? renderMatch(state.resetFinal) : ""}
+          <p class="round-title">${title}</p>
+          ${renderMatch(finalMatch)}
         </div>
       </div>
     </section>
