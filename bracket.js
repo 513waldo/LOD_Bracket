@@ -1539,6 +1539,8 @@ function chooseWinner(matchId, winnerName) {
     if (winnerName !== match.players[0]) {
       advancingMatchId = ensureDoubleDipFinal(state, match, match.players[0], match.players[1]).id;
     }
+  } else if (match.type === "doubleDipFinal") {
+    applyGraphFinalResult(state, match, winnerName, loserName);
   } else {
     placeGraphPlayer(state, match.winnerTo, winnerName);
     placeGraphPlayer(state, match.loserTo, loserName);
@@ -1563,29 +1565,36 @@ function getGraphAdvanceAnimationTarget(bracketState, match, winnerName) {
 }
 
 function applyGraphFinalResult(bracketState, match, winnerName, loserName) {
-  const winnersSidePlayer = match.players[0];
   if (match.type === "doubleDipFinal") {
     bracketState.champion = winnerName;
     return;
   }
 
   if (match.type === "resetFinal") {
-    if (winnerName === winnersSidePlayer) {
-      bracketState.champion = winnerName;
+    if (getFinalSeriesWins(bracketState, match.players[0]) >= 2) {
+      bracketState.champion = match.players[0];
       return;
     }
 
-    ensureDoubleDipFinal(bracketState, match, loserName, winnerName);
+    ensureDoubleDipFinal(bracketState, match, match.players[0], match.players[1]);
     return;
   }
 
-  if (winnerName === winnersSidePlayer || !bracketState.resetFinal) {
+  if (!bracketState.resetFinal) {
     bracketState.champion = winnerName;
     return;
   }
 
-  bracketState.resetFinal.players = [loserName, winnerName];
+  bracketState.resetFinal.players = [...match.players];
   bracketState.resetFinal.slotSources = ["", ""];
+}
+
+function getFinalSeriesWins(bracketState, playerName) {
+  return [
+    bracketState.final,
+    bracketState.resetFinal,
+    bracketState.doubleDipFinal,
+  ].filter((match) => match?.winner === playerName).length;
 }
 
 function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, losersSidePlayer) {
@@ -2257,10 +2266,7 @@ function renderBracket() {
     return;
   }
 
-  const winnerBoxName = state.mode === "graph"
-    ? state.champion || getLatestFinalWinner(state)
-    : state.champion;
-  championOutput.textContent = winnerBoxName ? `Champion: ${winnerBoxName}` : "Champion: pending";
+  championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
   bracketOutput.className = "bracket";
   if (state.mode === "graph") {
     bracketOutput.innerHTML = `
@@ -2620,8 +2626,7 @@ function renderGraphFinal() {
 }
 
 function renderChampionBox() {
-  const finalWinner = getLatestFinalWinner(state);
-  const champion = state.champion || finalWinner || "Pending";
+  const champion = state.champion || "Pending";
   const finalGame = state.final?.title || "Final pending";
 
   return `
@@ -2629,16 +2634,9 @@ function renderChampionBox() {
       <p class="champion-box-title">Winner</p>
       <p class="champion-box-game">${escapeHtml(finalGame)}</p>
       <div class="champion-box-name">${escapeHtml(champion)}</div>
-      <p class="champion-box-note">${state.champion ? "Tournament champion" : finalWinner ? "Final game winner" : "Waiting for final result"}</p>
+      <p class="champion-box-note">${state.champion ? "Tournament champion" : "Waiting for final result"}</p>
     </aside>
   `;
-}
-
-function getLatestFinalWinner(bracketState) {
-  return bracketState.doubleDipFinal?.winner ||
-    bracketState.resetFinal?.winner ||
-    bracketState.final?.winner ||
-    "";
 }
 
 function renderFinalMatchBlock(match, title) {
