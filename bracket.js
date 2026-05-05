@@ -47,6 +47,56 @@ const mysteryOutExclusions = {
   double: [159, 162, 163, 165, 166, 168, 169],
   master: [163, 166, 169, 172, 173, 175, 176, 178, 179],
 };
+const defaultPlayerNames = [
+  "Alex Carter",
+  "Blake Turner",
+  "Casey Morgan",
+  "Drew Bennett",
+  "Evan Brooks",
+  "Finn Parker",
+  "Gavin Reed",
+  "Hayden Scott",
+  "Isaac Kelly",
+  "Jordan Hayes",
+  "Kai Mitchell",
+  "Logan Price",
+  "Mason Ward",
+  "Noah Foster",
+  "Owen Cooper",
+  "Parker Bell",
+  "Quinn Hughes",
+  "Riley Stone",
+  "Sawyer Wells",
+  "Taylor Grant",
+  "Avery Collins",
+  "Bailey Ross",
+  "Cameron Gray",
+  "Dakota Reed",
+  "Emerson Lane",
+  "Finley James",
+  "Harper Quinn",
+  "Jamie Cole",
+  "Kendall Blake",
+  "Morgan Chase",
+  "Peyton Ellis",
+  "Reese Walker",
+  "Rowan Pierce",
+  "Skyler Hart",
+  "Terry Vaughn",
+  "Devin Shaw",
+  "Jesse Knight",
+  "Robin Miles",
+  "Sam Hudson",
+  "Shawn Rivers",
+  "Aiden West",
+  "Brady King",
+  "Connor Flynn",
+  "Dylan Cross",
+  "Eli Bishop",
+  "Henry Miles",
+  "Liam Porter",
+  "Wyatt Stone",
+];
 const mysteryOutRanges = {
   open: { min: 1, max: 180 },
   double: { min: 2, max: 170 },
@@ -585,7 +635,7 @@ function renderNameInputs(count) {
 
   nameList.innerHTML = Array.from({ length: count }, (_, index) => {
     const number = String(index + 1);
-    const value = existingNames[number] || "";
+    const value = existingNames[number] || defaultPlayerNames[index] || "";
 
     return `
       <label class="name-row">
