@@ -74,6 +74,8 @@ const pdfBracketLayouts = {
   19: { pdf: "19-team-double.pdf", winner: "G1,G2,G3 / G9,G4,G5,G6,G10,G7,G11,G8 / G19,G20,G21,G22 / G27,G28 / G33 / G36", loser: "G12,G13,G14 / G16,G15,G17,G18 / G23,G24,G25,G26 / G29,G30 / G31,G32 / G34 / G35 / G37", final: "G36", reset: "G37 from L36" },
   20: { pdf: "20-team-double.pdf", winner: "G1,G2,G3,G4 / G9,G5,G10,G6,G11,G7,G12,G8 / G21,G22,G23,G24 / G29,G30 / G35 / G38", loser: "G13,G14,G15,G16 / G17,G18,G19,G20 / G25,G26,G27,G28 / G31,G32 / G33,G34 / G36 / G37 / G39", final: "G38", reset: "G39 from L38" },
 };
+let learnedPdfGraphs = null;
+let learnedPdfGraphsPromise = null;
 
 let state = null;
 let currentTeams = [];
@@ -217,7 +219,7 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
 //   showMessage(`Redrew ${currentTeams.length} random team${currentTeams.length === 1 ? "" : "s"}.`);
 // });
 
-document.querySelector("#buildBracket").addEventListener("click", () => {
+document.querySelector("#buildBracket").addEventListener("click", async () => {
   const players = getPlayers();
 
   if (players.length < 2) {
@@ -227,6 +229,12 @@ document.querySelector("#buildBracket").addEventListener("click", () => {
 
   if (players.length > 100) {
     showMessage("Bracket supports up to 100 teams.");
+    return;
+  }
+
+  const pdfGraphs = await loadPdfBracketGraphs();
+  if (players.length >= 3 && players.length <= 20 && !pdfGraphs?.[players.length]) {
+    showMessage("The learned PDF bracket graph could not be loaded. Try refreshing the page.");
     return;
   }
 
@@ -738,7 +746,37 @@ function renderPdfColumnGroup(title, columnsText) {
   `;
 }
 
+function loadPdfBracketGraphs() {
+  if (learnedPdfGraphs) {
+    return Promise.resolve(learnedPdfGraphs);
+  }
+
+  if (!learnedPdfGraphsPromise) {
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((graphs) => {
+        learnedPdfGraphs = graphs;
+        return learnedPdfGraphs;
+      })
+      .catch(() => {
+        learnedPdfGraphs = null;
+        return null;
+      });
+  }
+
+  return learnedPdfGraphsPromise;
+}
+
 function createBracketGraph(players) {
+  if (learnedPdfGraphs?.[players.length]) {
+    return createPdfLearnedBracketGraph(players, learnedPdfGraphs[players.length]);
+  }
+
   if (players.length === 3) {
     return createThreeTeamBracketGraph(players);
   }
@@ -814,6 +852,122 @@ function createBracketGraph(players) {
   settleGraphByesAndSources(bracketState);
 
   return bracketState;
+}
+
+function createPdfLearnedBracketGraph(players, learnedGraph) {
+  const layout = pdfBracketLayouts[players.length];
+  if (!layout) {
+    return null;
+  }
+
+  const firstFinal = learnedGraph.firstFinal;
+  const resetFinal = learnedGraph.resetFinal;
+  const winnerPositions = mapPdfColumnPositions(layout.winner, firstFinal);
+  const loserPositions = mapPdfColumnPositions(layout.loser, resetFinal);
+  const matches = [];
+  const rounds = { winner: [], loser: [] };
+  const matchesById = {};
+  const templateSources = {};
+  let seedIndex = 0;
+
+  learnedGraph.matches
+    .slice()
+    .sort((a, b) => a.id - b.id)
+    .forEach((definition) => {
+      const winnerPosition = winnerPositions.get(definition.id);
+      const loserPosition = loserPositions.get(definition.id);
+      const type = definition.id === firstFinal
+        ? "final"
+        : definition.id === resetFinal
+          ? "resetFinal"
+          : winnerPosition ? "winner" : "loser";
+      const position = winnerPosition || loserPosition || { roundIndex: 0, matchIndex: 0 };
+      const match = createGraphMatch(definition.id, type, position.roundIndex, position.matchIndex);
+      match.players = definition.inputs.map((input) => {
+        if (input.kind !== "seed") {
+          return "";
+        }
+        const player = players[seedIndex] || "";
+        seedIndex += 1;
+        return player;
+      });
+      match.slotSources = definition.inputs.map((input) => formatPdfInputSource(input));
+      match.winnerTo = definition.winnerTo
+        ? { matchId: definition.winnerTo.game, slot: definition.winnerTo.slot }
+        : null;
+      match.loserTo = definition.loserTo
+        ? { matchId: definition.loserTo.game, slot: definition.loserTo.slot }
+        : null;
+
+      if (match.type === "final") {
+        match.title = `Game ${match.id} - Grand Final`;
+      }
+      if (match.type === "resetFinal") {
+        match.title = `Game ${match.id} - Reset Final`;
+      }
+
+      matches.push(match);
+      matchesById[match.id] = match;
+      templateSources[match.id] = [...match.slotSources];
+      if (match.type === "winner") {
+        if (!rounds.winner[match.roundIndex]) {
+          rounds.winner[match.roundIndex] = [];
+        }
+        rounds.winner[match.roundIndex].push(match);
+      }
+      if (match.type === "loser") {
+        if (!rounds.loser[match.roundIndex]) {
+          rounds.loser[match.roundIndex] = [];
+        }
+        rounds.loser[match.roundIndex].push(match);
+      }
+    });
+
+  rounds.winner = rounds.winner.filter(Boolean);
+  rounds.loser = rounds.loser.filter(Boolean);
+  rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+  rounds.loser.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size: players.length,
+    matches,
+    matchesById,
+    templateSources,
+    rounds,
+    final: matchesById[firstFinal],
+    resetFinal: matchesById[resetFinal],
+    champion: "",
+  };
+
+  settleGraphByesAndSources(bracketState);
+  return bracketState;
+}
+
+function mapPdfColumnPositions(columnsText, excludedGameId) {
+  const positions = new Map();
+  columnsText.split(" / ").forEach((column, roundIndex) => {
+    column.split(",").forEach((game, matchIndex) => {
+      const gameId = Number(game.trim().replace(/^G/, ""));
+      if (gameId && gameId !== excludedGameId) {
+        positions.set(gameId, { roundIndex, matchIndex });
+      }
+    });
+  });
+  return positions;
+}
+
+function formatPdfInputSource(input) {
+  if (input.kind === "winner") {
+    return `Winner of Game ${input.game}`;
+  }
+  if (input.kind === "loser") {
+    return input.ifFirstLoss
+      ? `Loser of Game ${input.game} if first loss`
+      : `Loser of Game ${input.game}`;
+  }
+  return "";
 }
 
 function createThreeTeamBracketGraph(players) {
