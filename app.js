@@ -2051,7 +2051,9 @@ function applyLegacyFinalResult(match, winnerName, loserName) {
     return;
   }
 
-  state.resetFinal = state.resetFinal || createMatch("resetFinal", 0, 0, "Game 2");
+  state.resetFinal = state.resetFinal || createMatch("resetFinal", 0, 0, "Game 0");
+  state.resetFinal.gameNumber = (state.final.gameNumber || 0) + 1;
+  state.resetFinal.title = `Game ${state.resetFinal.gameNumber}`;
   state.resetFinal.players = [loserName, winnerName];
   state.resetFinal.slotSources = ["", ""];
 }
@@ -2062,7 +2064,9 @@ function applyLegacyResetFinalResult(match, winnerName, loserName) {
     return;
   }
 
-  state.doubleDipFinal = state.doubleDipFinal || createMatch("doubleDipFinal", 0, 0, "Game 3");
+  state.doubleDipFinal = state.doubleDipFinal || createMatch("doubleDipFinal", 0, 0, "Game 0");
+  state.doubleDipFinal.gameNumber = (state.resetFinal?.gameNumber || state.final.gameNumber || 0) + 1;
+  state.doubleDipFinal.title = `Game ${state.doubleDipFinal.gameNumber}`;
   state.doubleDipFinal.players = [loserName, winnerName];
   state.doubleDipFinal.slotSources = ["", ""];
 }
@@ -2589,9 +2593,9 @@ function renderGraphFinal() {
       <div class="final-layout">
         <div class="rounds">
           <div class="round">
-            ${renderFinalMatchBlock(state.final, "Game 1")}
-            ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, "Game 2") : ""}
-            ${state.doubleDipFinal ? renderFinalMatchBlock(state.doubleDipFinal, "Game 3") : ""}
+            ${renderFinalMatchBlock(state.final, state.final.title)}
+            ${state.resetFinal ? renderFinalMatchBlock(state.resetFinal, state.resetFinal.title) : ""}
+            ${state.doubleDipFinal ? renderFinalMatchBlock(state.doubleDipFinal, state.doubleDipFinal.title) : ""}
           </div>
         </div>
         ${renderChampionBox()}
