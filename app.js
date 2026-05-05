@@ -792,6 +792,30 @@ function createBracketGraph(players) {
   }
 
   if (players.length === 9) {
+    return createLearnedNineTeamBracketGraph(players);
+  }
+
+  if (players.length === 11) {
+    return createLearnedElevenTeamBracketGraph(players);
+  }
+
+  if (players.length === 13) {
+    return createLearnedThirteenTeamBracketGraph(players);
+  }
+
+  if (players.length === 15) {
+    return createLearnedFifteenTeamBracketGraph(players);
+  }
+
+  if (players.length === 17) {
+    return createLearnedSeventeenTeamBracketGraph(players);
+  }
+
+  if (players.length === 19) {
+    return createLearnedNineteenTeamBracketGraph(players);
+  }
+
+  if (players.length === 9) {
     return createNineTeamBracketGraph(players);
   }
 
@@ -1166,6 +1190,112 @@ function createSevenTeamBracketGraph(players) {
   };
 
   settleGraphByesAndSources(bracketState);
+  return bracketState;
+}
+
+function createLearnedNineTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[9]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[9])
+    : createNineTeamBracketGraph(players);
+}
+
+function createLearnedElevenTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[11]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[11])
+    : createBracketGraphFallback(players);
+}
+
+function createLearnedThirteenTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[13]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[13])
+    : createBracketGraphFallback(players);
+}
+
+function createLearnedFifteenTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[15]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[15])
+    : createBracketGraphFallback(players);
+}
+
+function createLearnedSeventeenTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[17]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[17])
+    : createBracketGraphFallback(players);
+}
+
+function createLearnedNineteenTeamBracketGraph(players) {
+  return learnedPdfGraphs?.[19]
+    ? createPdfLearnedBracketGraph(players, learnedPdfGraphs[19])
+    : createBracketGraphFallback(players);
+}
+
+function createBracketGraphFallback(players) {
+  const size = nextPowerOfTwo(players.length);
+  const matches = [];
+  const rounds = {
+    winner: [],
+    loser: [],
+  };
+  let nextId = 1;
+
+  const winnerRounds = Math.log2(size);
+  for (let roundIndex = 0; roundIndex < winnerRounds; roundIndex += 1) {
+    const matchCount = size / 2 ** (roundIndex + 1);
+    rounds.winner[roundIndex] = [];
+    for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
+      const match = createGraphMatch(nextId, "winner", roundIndex, matchIndex);
+      nextId += 1;
+      matches.push(match);
+      rounds.winner[roundIndex].push(match);
+    }
+  }
+
+  const loserRoundCount = Math.max(1, winnerRounds * 2 - 2);
+  for (let roundIndex = 0; roundIndex < loserRoundCount; roundIndex += 1) {
+    const roundNumber = roundIndex + 1;
+    const exponent = roundNumber % 2 === 1
+      ? (roundNumber + 3) / 2
+      : roundNumber / 2 + 1;
+    const matchCount = Math.max(1, size / 2 ** exponent);
+    rounds.loser[roundIndex] = [];
+    for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
+      const match = createGraphMatch(nextId, "loser", roundIndex, matchIndex);
+      nextId += 1;
+      matches.push(match);
+      rounds.loser[roundIndex].push(match);
+    }
+  }
+
+  const final = createGraphMatch(nextId, "final", 0, 0);
+  nextId += 1;
+  const resetFinal = createGraphMatch(nextId, "resetFinal", 1, 0);
+  final.title = `Game ${final.id} - Grand Final`;
+  resetFinal.title = `Game ${resetFinal.id} - Reset Final`;
+  matches.push(final);
+  matches.push(resetFinal);
+
+  const bracketState = {
+    mode: "graph",
+    originalPlayers: [...players],
+    size,
+    matches,
+    matchesById: {},
+    rounds,
+    final,
+    resetFinal,
+    champion: "",
+  };
+
+  matches.forEach((match) => {
+    bracketState.matchesById[match.id] = match;
+  });
+
+  seedGraphPlayers(bracketState, players);
+  wireGraphWinnerDestinations(bracketState);
+  autoAdvanceGraphByes(bracketState);
+  wireGraphLoserDestinations(bracketState);
+  settleGraphByesAndSources(bracketState);
+
   return bracketState;
 }
 
