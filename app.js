@@ -2066,28 +2066,23 @@ function applyWinner(match, winnerName) {
 }
 
 function applyLegacyFinalResult(match, winnerName, loserName) {
-  if (winnerName === match.players[0] || !state.resetFinal) {
-    state.champion = winnerName;
-    return;
-  }
-
   state.resetFinal = state.resetFinal || createMatch("resetFinal", 0, 0, "Game 0");
   state.resetFinal.gameNumber = (state.final.gameNumber || 0) + 1;
   state.resetFinal.title = `Game ${state.resetFinal.gameNumber}`;
-  state.resetFinal.players = [loserName, winnerName];
+  state.resetFinal.players = [...match.players];
   state.resetFinal.slotSources = ["", ""];
 }
 
 function applyLegacyResetFinalResult(match, winnerName, loserName) {
-  if (winnerName === match.players[0]) {
-    state.champion = winnerName;
+  if (getFinalSeriesWins(state, match.players[0]) >= 2) {
+    state.champion = match.players[0];
     return;
   }
 
   state.doubleDipFinal = state.doubleDipFinal || createMatch("doubleDipFinal", 0, 0, "Game 0");
   state.doubleDipFinal.gameNumber = (state.resetFinal?.gameNumber || state.final.gameNumber || 0) + 1;
   state.doubleDipFinal.title = `Game ${state.doubleDipFinal.gameNumber}`;
-  state.doubleDipFinal.players = [loserName, winnerName];
+  state.doubleDipFinal.players = [...match.players];
   state.doubleDipFinal.slotSources = ["", ""];
 }
 
