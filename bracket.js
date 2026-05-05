@@ -1789,10 +1789,11 @@ function addGraphSource(bracketState, destination, label) {
 function isGraphHiddenMatch(match) {
   const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
   const sourceCount = match.slotSources.filter(Boolean).length;
+  const templateSourceCount = state?.templateSources?.[match.id]?.filter(Boolean).length || 0;
 
   return match.autoAdvanced ||
     match.players.every((player) => player === "BYE") ||
-    (realPlayerCount === 0 && sourceCount < 2);
+    (realPlayerCount === 0 && sourceCount < 2 && templateSourceCount === 0);
 }
 
 function createBracket(players) {
