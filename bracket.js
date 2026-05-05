@@ -752,7 +752,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-graph-losers-visible", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-losers-l-labels", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
@@ -964,8 +964,8 @@ function formatPdfInputSource(input) {
   }
   if (input.kind === "loser") {
     return input.ifFirstLoss
-      ? `Loser of Game ${input.game} if first loss`
-      : `Loser of Game ${input.game}`;
+      ? `L${input.game} - Loser of Game ${input.game} if first loss`
+      : `L${input.game} - Loser of Game ${input.game}`;
   }
   return "";
 }
@@ -2335,7 +2335,7 @@ function buildMatchMeta(match) {
       : match.type === "final" ? "Winner is champion or forces reset"
         : match.type === "resetFinal" ? "Winner is champion" : "";
     const loserTarget = loserMatch && match.type === "winner"
-      ? `Loser to Game ${loserMatch.id} ${formatGraphSlot(match.loserTo.slot)}`
+      ? `Loser to L${match.id} in Game ${loserMatch.id} ${formatGraphSlot(match.loserTo.slot)}`
       : "";
     const labels = [winnerTarget, loserTarget].filter(Boolean);
 
