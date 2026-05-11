@@ -683,6 +683,10 @@ button.player-button.source-slot {
   font-style: italic;
 }
 
+button.player-button.winner-source {
+  color: var(--dart-red);
+}
+
 .out-shot-sheet {
   display: grid;
   gap: 8px;

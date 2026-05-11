@@ -2923,10 +2923,12 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
   const isWinner = player && match.winner === player;
   const isLoser = player && match.loser === player && player !== "BYE";
   const isBye = player === "BYE";
+  const isWinnerSource = !player && sourceLabel?.startsWith("Winner of Game");
   const classNames = [
     "player-button",
     !player ? "waiting" : "",
     sourceLabel && !player ? "source-slot" : "",
+    isWinnerSource ? "winner-source" : "",
     isWinner ? "winner" : "",
     isLoser ? "loser" : "",
     isBye ? "bye" : "",
