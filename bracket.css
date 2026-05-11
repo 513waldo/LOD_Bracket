@@ -684,8 +684,8 @@ button.player-button.source-slot {
 }
 
 button.player-button.winner-source {
-  color: var(--dart-red);
-  font-weight: 900;
+  color: var(--dart-red) !important;
+  font-weight: 900 !important;
 }
 
 .out-shot-sheet {
