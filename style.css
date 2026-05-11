@@ -692,6 +692,11 @@ button.player-button.winner-source:disabled {
   opacity: 1;
 }
 
+button.player-button .winner-source-text {
+  color: var(--dart-red) !important;
+  font-weight: 900 !important;
+}
+
 .out-shot-sheet {
   display: grid;
   gap: 8px;

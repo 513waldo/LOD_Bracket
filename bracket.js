@@ -2926,6 +2926,9 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
   const winnerSourceMatch = /^winner of game\s+(\d{1,3})\b/i.exec(label);
   const winnerSourceGame = winnerSourceMatch ? Number(winnerSourceMatch[1]) : 0;
   const isWinnerSource = winnerSourceGame >= 1 && winnerSourceGame <= 100;
+  const renderedLabel = isWinnerSource
+    ? `<span class="winner-source-text">${escapeHtml(label)}</span>`
+    : escapeHtml(label);
   const classNames = [
     "player-button",
     !player ? "waiting" : "",
@@ -2947,7 +2950,7 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
       data-match-index="${match.matchIndex}"
       data-match-id="${match.id}"
       data-player="${escapeAttribute(player)}"
-    >${escapeHtml(label)}</button>
+    >${renderedLabel}</button>
   `;
 }
 
