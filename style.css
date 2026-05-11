@@ -697,6 +697,15 @@ button.player-button .winner-source-text {
   font-weight: 900 !important;
 }
 
+button.player-button.loser-source:disabled {
+  opacity: 1;
+}
+
+button.player-button .loser-source-text {
+  color: #00548b !important;
+  font-weight: 900 !important;
+}
+
 .out-shot-sheet {
   display: grid;
   gap: 8px;
