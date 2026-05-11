@@ -688,6 +688,10 @@ button.player-button.winner-source {
   font-weight: 900 !important;
 }
 
+button.player-button.winner-source:disabled {
+  opacity: 1;
+}
+
 .out-shot-sheet {
   display: grid;
   gap: 8px;

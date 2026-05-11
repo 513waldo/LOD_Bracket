@@ -2923,9 +2923,9 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
   const isWinner = player && match.winner === player;
   const isLoser = player && match.loser === player && player !== "BYE";
   const isBye = player === "BYE";
-  const winnerSourceMatch = /^winner of game\s+(\d{1,3})$/i.exec(sourceLabel || "");
+  const winnerSourceMatch = /^winner of game\s+(\d{1,3})\b/i.exec(label);
   const winnerSourceGame = winnerSourceMatch ? Number(winnerSourceMatch[1]) : 0;
-  const isWinnerSource = !player && winnerSourceGame >= 1 && winnerSourceGame <= 100;
+  const isWinnerSource = winnerSourceGame >= 1 && winnerSourceGame <= 100;
   const classNames = [
     "player-button",
     !player ? "waiting" : "",
