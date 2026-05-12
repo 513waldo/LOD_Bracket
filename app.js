@@ -2929,7 +2929,7 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
   const winnerSourceMatch = /^winner of game\s+(\d{1,3})\b/i.exec(label);
   const winnerSourceGame = winnerSourceMatch ? Number(winnerSourceMatch[1]) : 0;
   const isWinnerSource = winnerSourceGame >= 1 && winnerSourceGame <= 100;
-  const loserSourceMatch = /^loser of game\s+(\d{1,3})\b/i.exec(label);
+  const loserSourceMatch = /\bloser of game\s+(\d{1,3})\b/i.exec(label);
   const loserSourceGame = loserSourceMatch ? Number(loserSourceMatch[1]) : 0;
   const isLoserSource = loserSourceGame >= 1 && loserSourceGame <= 100;
   const renderedLabel = isWinnerSource
