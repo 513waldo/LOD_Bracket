@@ -31,7 +31,7 @@ body {
   background-color: #11120f;
   background-image:
     linear-gradient(rgba(9, 10, 8, 0.12), rgba(9, 10, 8, 0.22)),
-    url("assets/background.png");
+    url("assets/background.png?v=5");
   background-position: center top, center top;
   background-repeat: no-repeat, repeat-x;
   background-size: auto, auto 100%;
