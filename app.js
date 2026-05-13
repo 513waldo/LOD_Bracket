@@ -166,6 +166,7 @@ document.querySelector("#clearOutShots").addEventListener("click", () => {
 outShotSheet.addEventListener("input", (event) => {
   preventDuplicateOutShotNumber(event.target);
   updateOutShotWinners();
+  renderMysteryOutWinner();
   saveOutShots();
 });
 
@@ -727,6 +728,7 @@ function clearOutShots() {
   }
 
   renderOutShotSheet();
+  renderMysteryOutWinner();
 }
 
 function seedDefaultOutShotNumbers() {
