@@ -681,6 +681,7 @@ function renderOutShotSheet() {
     `;
   }).join("");
 
+  seedDefaultOutShotNumbers();
   updateOutShotWinners();
 }
 
@@ -722,6 +723,21 @@ function clearOutShots() {
   }
 
   renderOutShotSheet();
+}
+
+function seedDefaultOutShotNumbers() {
+  let changed = false;
+
+  outShotSheet.querySelectorAll('[data-out-field="number"]').forEach((input, index) => {
+    if (!input.value.trim()) {
+      input.value = String(index + 1);
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    saveOutShots();
+  }
 }
 
 function preventDuplicateOutShotNumber(input) {
