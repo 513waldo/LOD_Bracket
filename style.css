@@ -1168,6 +1168,41 @@ button.player-button .loser-source-text {
   gap: 10px;
 }
 
+.mystery-out-winner {
+  display: grid;
+  gap: 8px;
+  min-height: 92px;
+  border: 1px solid rgba(11, 122, 67, 0.34);
+  border-radius: 8px;
+  background: rgba(225, 242, 230, 0.9);
+  padding: 12px;
+  text-align: left;
+}
+
+.mystery-out-winner.no-winner {
+  border-color: rgba(185, 39, 34, 0.34);
+  background: rgba(248, 230, 228, 0.94);
+}
+
+.mystery-out-winner-title {
+  color: var(--primary-dark);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.mystery-out-winner.no-winner .mystery-out-winner-title {
+  color: var(--loss-text);
+}
+
+.mystery-out-winner-body {
+  color: var(--ink);
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .payout-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

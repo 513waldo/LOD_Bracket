@@ -19,6 +19,9 @@ const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
 const resetMysteryOutButton = document.querySelector("#resetMysteryOut");
 const mysteryOutValue = document.querySelector("#mysteryOutValue");
 const mysteryOutModeInputs = Array.from(document.querySelectorAll("[data-mystery-out-mode]"));
+const mysteryOutWinner = document.querySelector("#mysteryOutWinner");
+const mysteryOutWinnerTitle = document.querySelector("#mysteryOutWinnerTitle");
+const mysteryOutWinnerBody = document.querySelector("#mysteryOutWinnerBody");
 const payoutTeams = document.querySelector("#payoutTeams");
 const payoutEntry = document.querySelector("#payoutEntry");
 const payoutAdded = document.querySelector("#payoutAdded");
@@ -683,6 +686,7 @@ function renderOutShotSheet() {
 
   seedDefaultOutShotNumbers();
   updateOutShotWinners();
+  renderMysteryOutWinner();
 }
 
 function getOutShots() {
@@ -775,6 +779,46 @@ function updateOutShotWinners() {
   });
 }
 
+function renderMysteryOutWinner() {
+  const winner = getMysteryOutWinner();
+
+  if (!mysteryOutWinner || !mysteryOutWinnerTitle || !mysteryOutWinnerBody) {
+    return;
+  }
+
+  if (!winner) {
+    mysteryOutWinner.classList.add("no-winner");
+    mysteryOutWinnerTitle.textContent = "No Winner";
+    mysteryOutWinnerBody.textContent = "No out shot has matched yet.";
+    return;
+  }
+
+  mysteryOutWinner.classList.remove("no-winner");
+  mysteryOutWinnerTitle.textContent = "Winner";
+  mysteryOutWinnerBody.textContent = `${winner.player || "Unnamed player"} - ${winner.number}`;
+}
+
+function getMysteryOutWinner() {
+  const winningScore = mysteryOut ? Number(mysteryOut.score) : null;
+  if (!winningScore) {
+    return null;
+  }
+
+  for (const row of Array.from(outShotSheet.querySelectorAll(".out-shot-row"))) {
+    const numberInput = row.querySelector('[data-out-field="number"]');
+    const playerInput = row.querySelector('[data-out-field="player"]');
+    const number = getOutShotNumberValue(numberInput);
+    if (number === winningScore) {
+      return {
+        player: playerInput?.value?.trim() || "",
+        number,
+      };
+    }
+  }
+
+  return null;
+}
+
 function getOutShotNumberValue(input) {
   const value = input?.value?.trim();
   if (!value) {
@@ -857,6 +901,7 @@ function renderMysteryOut() {
     input.disabled = Boolean(mysteryOut);
   });
   updateOutShotWinners();
+  renderMysteryOutWinner();
 }
 
 function resetMysteryOut() {
