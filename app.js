@@ -665,9 +665,17 @@ function clearPlayerNames() {
 
 function renderOutShotSheet() {
   const savedRows = readOutShots();
+  let cleanedRows = false;
 
   outShotSheet.innerHTML = Array.from({ length: outShotSlotCount }, (_, index) => {
     const row = savedRows[index] || {};
+    const defaultNumber = String(index + 1);
+    const savedNumber = String(row.number || row.score || "");
+    const shouldBlankDefault = !String(row.player || "").trim() && savedNumber === defaultNumber;
+
+    if (shouldBlankDefault) {
+      cleanedRows = true;
+    }
 
     return `
       <article class="out-shot-row">
@@ -678,14 +686,17 @@ function renderOutShotSheet() {
         </label>
         <label>
           Number hit
-          <input data-out-field="number" data-out-index="${index}" type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeAttribute(row.number || row.score || index + 1)}">
+          <input data-out-field="number" data-out-index="${index}" type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeAttribute(shouldBlankDefault ? "" : (row.number || row.score || ""))}">
         </label>
         <div class="out-shot-status" data-out-status="${index}" aria-live="polite"></div>
       </article>
     `;
   }).join("");
 
-  seedDefaultOutShotNumbers();
+  if (cleanedRows) {
+    saveOutShots();
+  }
+
   updateOutShotWinners();
   renderMysteryOutWinner();
 }
@@ -729,21 +740,6 @@ function clearOutShots() {
 
   renderOutShotSheet();
   renderMysteryOutWinner();
-}
-
-function seedDefaultOutShotNumbers() {
-  let changed = false;
-
-  outShotSheet.querySelectorAll('[data-out-field="number"]').forEach((input, index) => {
-    if (!input.value.trim()) {
-      input.value = String(index + 1);
-      changed = true;
-    }
-  });
-
-  if (changed) {
-    saveOutShots();
-  }
 }
 
 function preventDuplicateOutShotNumber(input) {
