@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Draw and Bracket</title>
-  <link rel="stylesheet" href="bracket.css?v=source-label-colors-2">
+  <link rel="stylesheet" href="bracket.css?v=payout-top-8">
 </head>
 <body>
   <main class="app">
@@ -75,22 +75,59 @@
       </div>
 
       <div class="top-side-stack">
-        <section class="panel out-shot-panel" aria-labelledby="outSheetTitle">
+        <section class="panel payout-panel" aria-labelledby="payoutTitle">
           <div class="panel-title">
             <div>
-              <h2 id="outSheetTitle">Out Shots</h2>
-              <p>Record player and number hit.</p>
+              <h2 id="payoutTitle">Payout Calculator</h2>
+              <p>Calculate prize money from the current team count.</p>
             </div>
           </div>
 
-          <div id="outShotSheet" class="out-shot-sheet"></div>
+          <div class="payout-grid">
+            <label>
+              Teams
+              <input id="payoutTeams" type="number" inputmode="numeric" min="0" max="200" value="0">
+            </label>
 
-          <div class="out-shot-actions">
-            <button id="saveOutShots" type="button">Save</button>
-            <button id="clearOutShots" class="danger" type="button">Clear</button>
+            <label>
+              Entry per team
+              <input id="payoutEntry" type="number" inputmode="decimal" min="0" step="1" value="20">
+            </label>
+
+            <label>
+              Added money
+              <input id="payoutAdded" type="number" inputmode="decimal" min="0" step="1" value="0">
+            </label>
+
+            <label>
+              Paid places
+              <select id="payoutPlaces">
+                <option value="auto">Auto</option>
+                <option value="1">1 place</option>
+                <option value="2">2 places</option>
+                <option value="3">3 places</option>
+                <option value="4">4 places</option>
+                <option value="5">5 places</option>
+                <option value="6">6 places</option>
+                <option value="7">7 places</option>
+                <option value="8">8 places</option>
+              </select>
+            </label>
           </div>
-        </section>
 
+          <button id="clearPayout" class="secondary" type="button">Clear payout inputs</button>
+
+          <div class="payout-percent-panel">
+            <div class="payout-percent-title">
+              <strong>Custom percentages</strong>
+              <span id="payoutPercentStatus">Using automatic split</span>
+            </div>
+            <div id="payoutPercentInputs" class="payout-percent-inputs"></div>
+          </div>
+
+          <div id="payoutSummary" class="payout-summary"></div>
+          <div id="payoutResults" class="payout-results"></div>
+        </section>
         <section class="panel dice-roller" aria-labelledby="diceRollerTitle">
           <div class="dice-roller-heading">
             <h3 id="diceRollerTitle">D20 roller</h3>
@@ -107,6 +144,39 @@
             </button>
           </div>
           <button id="rollDice" type="button">Roll both dice</button>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="bracket-workspace">
+      <section class="bracket-shell" aria-labelledby="bracketTitle">
+        <div class="panel-title bracket-heading">
+          <div>
+            <h2 id="bracketTitle">Interactive bracket</h2>
+            <p>Tap the winner in each match. The loser moves to the correct losers bracket spot.</p>
+          </div>
+          <div id="champion" class="champion">Champion: pending</div>
+        </div>
+
+        <div id="bracket" class="bracket empty">Build a bracket to start.</div>
+      </section>
+
+      <div class="bracket-side-stack">
+        <section class="panel out-shot-panel" aria-labelledby="outSheetTitle">
+          <div class="panel-title">
+            <div>
+              <h2 id="outSheetTitle">Out Shots</h2>
+              <p>Record player and number hit.</p>
+            </div>
+          </div>
+
+          <div id="outShotSheet" class="out-shot-sheet"></div>
+
+          <div class="out-shot-actions">
+            <button id="saveOutShots" type="button">Save</button>
+            <button id="clearOutShots" class="danger" type="button">Clear</button>
+          </div>
         </section>
 
         <section class="panel mystery-out-card" aria-labelledby="mysteryOutTitle">
@@ -136,18 +206,6 @@
       </div>
     </div>
 
-    <section class="bracket-shell" aria-labelledby="bracketTitle">
-      <div class="panel-title bracket-heading">
-        <div>
-          <h2 id="bracketTitle">Interactive bracket</h2>
-          <p>Tap the winner in each match. The loser moves to the correct losers bracket spot.</p>
-        </div>
-        <div id="champion" class="champion">Champion: pending</div>
-      </div>
-
-      <div id="bracket" class="bracket empty">Build a bracket to start.</div>
-    </section>
-
     <section class="panel" aria-labelledby="backupsTitle">
       <div class="panel-title">
         <div>
@@ -168,6 +226,6 @@
     </section>
   </main>
 
-  <script src="bracket.js?v=source-label-colors-2"></script>
+  <script src="bracket.js?v=payout-top-8"></script>
 </body>
 </html>

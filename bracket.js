@@ -19,6 +19,15 @@ const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
 const resetMysteryOutButton = document.querySelector("#resetMysteryOut");
 const mysteryOutValue = document.querySelector("#mysteryOutValue");
 const mysteryOutModeInputs = Array.from(document.querySelectorAll("[data-mystery-out-mode]"));
+const payoutTeams = document.querySelector("#payoutTeams");
+const payoutEntry = document.querySelector("#payoutEntry");
+const payoutAdded = document.querySelector("#payoutAdded");
+const payoutPlaces = document.querySelector("#payoutPlaces");
+const clearPayoutButton = document.querySelector("#clearPayout");
+const payoutPercentInputs = document.querySelector("#payoutPercentInputs");
+const payoutPercentStatus = document.querySelector("#payoutPercentStatus");
+const payoutSummary = document.querySelector("#payoutSummary");
+const payoutResults = document.querySelector("#payoutResults");
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
@@ -26,7 +35,7 @@ const backupKeyPrefix = "dartsTournamentBracketBackup:";
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
-const outShotSlotCount = 25;
+const outShotSlotCount = 100;
 const dartScores = [
   ...Array.from({ length: 20 }, (_, index) => index + 1),
   ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
@@ -144,12 +153,21 @@ renderNameBackups();
 renderOutShotSheet();
 renderDice();
 renderMysteryOut();
+syncPayoutTeamsFromPlayerCount();
+updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 
 totalPlayers.addEventListener("change", () => {
   renderNameInputs(Number(totalPlayers.value));
   syncPdfLayoutToTeamCount(Number(totalPlayers.value));
+  syncPayoutTeamsFromPlayerCount();
+  updatePayoutCalculator();
+});
+
+playersPerGroup.addEventListener("change", () => {
+  syncPayoutTeamsFromPlayerCount();
+  updatePayoutCalculator();
 });
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
@@ -192,7 +210,9 @@ document.querySelector("#clearOutShots").addEventListener("click", () => {
   showMessage("Out shot sheet cleared.");
 });
 
-outShotSheet.addEventListener("input", () => {
+outShotSheet.addEventListener("input", (event) => {
+  preventDuplicateOutShotNumber(event.target);
+  updateOutShotWinners();
   saveOutShots();
 });
 
@@ -220,6 +240,23 @@ mysteryOutModeInputs.forEach((input) => {
       setMysteryOutMode(mysteryOut.mode);
     }
   });
+});
+
+[payoutTeams, payoutEntry, payoutAdded, payoutPlaces].forEach((input) => {
+  input?.addEventListener("input", updatePayoutCalculator);
+  input?.addEventListener("change", updatePayoutCalculator);
+});
+
+payoutPercentInputs?.addEventListener("input", (event) => {
+  rebalancePayoutPercentages(event.target);
+  updatePayoutCalculator();
+});
+
+clearPayoutButton?.addEventListener("click", clearPayoutInputs);
+
+playerList.addEventListener("input", () => {
+  syncPayoutTeams();
+  updatePayoutCalculator();
 });
 
 document.querySelector("#generatePlayers").addEventListener("click", () => {
@@ -251,6 +288,8 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
   blockedGenerateCount = 0;
   hideTeamDrawWarning();
   renderTeams(currentTeams);
+  syncPayoutTeams(teams.length);
+  updatePayoutCalculator();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
 });
 
@@ -297,6 +336,8 @@ document.querySelector("#buildBracket").addEventListener("click", async () => {
   state = createBracketGraph(players);
   renderBracket();
   syncPdfLayoutToTeamCount(players.length);
+  syncPayoutTeams(players.length);
+  updatePayoutCalculator();
   showMessage(`Bracket built for ${players.length} player${players.length === 1 ? "" : "s"}.`);
 });
 
@@ -393,6 +434,244 @@ function renderTeams(teams) {
   playerList.value = teams.map(formatTeam).join("\n");
   renderGroups(teams);
   syncPdfLayoutToTeamCount(teams.length);
+  syncPayoutTeams(teams.length);
+  updatePayoutCalculator();
+}
+
+function syncPayoutTeams(teamCount = getPlayers().length) {
+  if (!payoutTeams) {
+    return;
+  }
+
+  payoutTeams.value = String(teamCount || 0);
+}
+
+function syncPayoutTeamsFromPlayerCount() {
+  const playerCount = Math.max(0, Number(totalPlayers.value) || 0);
+  const groupSize = Math.max(1, Number(playersPerGroup.value) || 1);
+  syncPayoutTeams(Math.ceil(playerCount / groupSize));
+}
+
+function clearPayoutInputs() {
+  if (payoutEntry) {
+    payoutEntry.value = "";
+  }
+  if (payoutAdded) {
+    payoutAdded.value = "";
+  }
+  if (payoutPlaces) {
+    payoutPlaces.value = "auto";
+  }
+  if (payoutPercentInputs) {
+    payoutPercentInputs.dataset.placeCount = "";
+  }
+  updatePayoutCalculator();
+}
+
+function updatePayoutCalculator() {
+  if (!payoutSummary || !payoutResults) {
+    return;
+  }
+
+  const teams = Math.max(0, Number(payoutTeams?.value) || 0);
+  const entry = Math.max(0, Number(payoutEntry?.value) || 0);
+  const added = Math.max(0, Number(payoutAdded?.value) || 0);
+  const pot = teams * entry + added;
+  const placeCount = getPaidPlaces(teams, payoutPlaces?.value || "auto");
+  renderPayoutPercentInputs(placeCount);
+  const customSplit = getCustomPayoutSplit(placeCount);
+  const split = customSplit || getPayoutSplit(teams, payoutPlaces?.value || "auto");
+
+  payoutSummary.innerHTML = `
+    <div>
+      <span>Total pot</span>
+      <strong>${formatMoney(pot)}</strong>
+    </div>
+    <div>
+      <span>Teams</span>
+      <strong>${teams}</strong>
+    </div>
+  `;
+
+  if (!teams || !pot) {
+    payoutResults.innerHTML = `<p class="payout-empty">Enter teams and entry money to calculate payouts.</p>`;
+    return;
+  }
+
+  const splitTotal = split.reduce((sum, percent) => sum + percent, 0);
+  const shouldBalanceToPot = Math.abs(splitTotal - 1) <= 0.0005;
+  const amounts = shouldBalanceToPot
+    ? getBalancedPayoutAmounts(pot, split)
+    : split.map((percent) => Math.round(pot * percent));
+  payoutResults.innerHTML = split.map((percent, index) => {
+    const amount = amounts[index];
+    return `
+      <div class="payout-row">
+        <span>${formatPlace(index + 1)}</span>
+        <strong>${formatMoney(amount)}</strong>
+        <small>${formatPercentValue(percent * 100)}%</small>
+      </div>
+    `;
+  }).join("");
+}
+
+function getBalancedPayoutAmounts(pot, split) {
+  const roundedPot = Math.round(pot);
+  const amounts = split.map((percent) => Math.floor(pot * percent));
+  const allocated = amounts.reduce((sum, amount) => sum + amount, 0);
+  amounts[0] += roundedPot - allocated;
+  return amounts;
+}
+
+function getPayoutSplit(teamCount, placeSetting) {
+  const places = getPaidPlaces(teamCount, placeSetting);
+
+  return getPayoutSplitByPlaces(places);
+}
+
+function getPaidPlaces(teamCount, placeSetting) {
+  const places = placeSetting === "auto" ? getAutoPaidPlaces(teamCount) : Number(placeSetting);
+  return Math.max(1, Math.min(8, Number.isFinite(places) ? places : 1));
+}
+
+function getPayoutSplitByPlaces(places) {
+  if (places >= 8) {
+    return [0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125];
+  }
+  if (places === 7) {
+    return [0.38, 0.22, 0.15, 0.1, 0.07, 0.05, 0.03];
+  }
+  if (places === 6) {
+    return [0.42, 0.24, 0.15, 0.09, 0.06, 0.04];
+  }
+  if (places === 5) {
+    return [0.46, 0.25, 0.14, 0.09, 0.06];
+  }
+  if (places >= 4) {
+    return [0.5, 0.25, 0.15, 0.1];
+  }
+  if (places === 3) {
+    return [0.5, 0.3, 0.2];
+  }
+  if (places === 2) {
+    return [0.7, 0.3];
+  }
+  return [1];
+}
+
+function getAutoPaidPlaces(teamCount) {
+  if (teamCount >= 65) {
+    return 8;
+  }
+  if (teamCount >= 49) {
+    return 7;
+  }
+  if (teamCount >= 33) {
+    return 6;
+  }
+  if (teamCount >= 25) {
+    return 5;
+  }
+  if (teamCount >= 17) {
+    return 4;
+  }
+  if (teamCount >= 9) {
+    return 3;
+  }
+  if (teamCount >= 4) {
+    return 2;
+  }
+  return 1;
+}
+
+function renderPayoutPercentInputs(placeCount) {
+  if (!payoutPercentInputs) {
+    return;
+  }
+
+  const currentCount = Number(payoutPercentInputs.dataset.placeCount) || 0;
+  if (currentCount === placeCount) {
+    return;
+  }
+
+  const defaultSplit = getPayoutSplitByPlaces(placeCount);
+  payoutPercentInputs.dataset.placeCount = String(placeCount);
+  payoutPercentInputs.innerHTML = defaultSplit.map((percent, index) => `
+    <label>
+      ${formatPlace(index + 1)}
+      <input
+        type="number"
+        inputmode="decimal"
+        min="0"
+        max="100"
+        step="0.1"
+        value="${formatPercentValue(percent * 100)}"
+        data-payout-index="${index}"
+        data-payout-percent
+      >
+    </label>
+  `).join("");
+}
+
+function rebalancePayoutPercentages(changedInput) {
+  if (!changedInput?.matches?.("[data-payout-percent]")) {
+    return;
+  }
+
+  const inputs = Array.from(document.querySelectorAll("[data-payout-percent]"));
+  if (inputs.length <= 1) {
+    changedInput.value = "100";
+    return;
+  }
+
+  const changedValue = Math.max(0, Math.min(100, Number(changedInput.value) || 0));
+  changedInput.value = formatPercentValue(changedValue);
+  const remainingInputs = inputs.filter((input) => input !== changedInput);
+  const remainingPercent = Math.max(0, 100 - changedValue);
+  const sharedPercent = remainingPercent / remainingInputs.length;
+  remainingInputs.forEach((input) => {
+    input.value = formatPercentValue(sharedPercent);
+  });
+}
+
+function getCustomPayoutSplit(placeCount) {
+  const inputs = Array.from(document.querySelectorAll("[data-payout-percent]"));
+  if (!inputs.length || inputs.length !== placeCount) {
+    setPayoutPercentStatus("Using automatic split");
+    return null;
+  }
+
+  const values = inputs.map((input) => Math.max(0, Number(input.value) || 0));
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (!total) {
+    setPayoutPercentStatus("Using automatic split");
+    return null;
+  }
+
+  setPayoutPercentStatus(
+    Math.abs(total - 100) <= 0.05
+      ? "Using custom split"
+      : `Using custom split. Current total: ${formatPercentValue(total)}%`
+  );
+  return values.map((value) => value / 100);
+}
+
+function setPayoutPercentStatus(text) {
+  if (payoutPercentStatus) {
+    payoutPercentStatus.textContent = text;
+  }
+}
+
+function formatPercentValue(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+}
+
+function formatPlace(place) {
+  return `${place}${place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th"} place`;
+}
+
+function formatMoney(value) {
+  return `$${Math.round(value).toLocaleString()}`;
 }
 
 function showTeamDrawWarning(text) {
@@ -447,9 +726,12 @@ function renderOutShotSheet() {
           Number hit
           <input data-out-field="number" data-out-index="${index}" type="number" inputmode="numeric" min="2" max="170" value="${escapeAttribute(row.number || row.score || "")}">
         </label>
+        <div class="out-shot-status" data-out-status="${index}" aria-live="polite"></div>
       </article>
     `;
   }).join("");
+
+  updateOutShotWinners();
 }
 
 function getOutShots() {
@@ -490,6 +772,51 @@ function clearOutShots() {
   }
 
   renderOutShotSheet();
+}
+
+function preventDuplicateOutShotNumber(input) {
+  if (!input?.matches?.('[data-out-field="number"]')) {
+    return;
+  }
+
+  const numberHit = getOutShotNumberValue(input);
+  if (numberHit === null) {
+    return;
+  }
+
+  const duplicate = Array.from(outShotSheet.querySelectorAll('[data-out-field="number"]')).some((otherInput) => {
+    return otherInput !== input && getOutShotNumberValue(otherInput) === numberHit;
+  });
+
+  if (duplicate) {
+    input.value = "";
+    showMessage(`Out shot ${numberHit} is already listed.`);
+  }
+}
+
+function updateOutShotWinners() {
+  const winningScore = mysteryOut ? Number(mysteryOut.score) : null;
+
+  outShotSheet.querySelectorAll(".out-shot-row").forEach((row) => {
+    const numberInput = row.querySelector('[data-out-field="number"]');
+    const status = row.querySelector("[data-out-status]");
+    const isWinner = Boolean(winningScore && getOutShotNumberValue(numberInput) === winningScore);
+
+    row.classList.toggle("out-shot-winner", isWinner);
+    if (status) {
+      status.textContent = isWinner ? "Winner" : "";
+    }
+  });
+}
+
+function getOutShotNumberValue(input) {
+  const value = input?.value?.trim();
+  if (!value) {
+    return null;
+  }
+
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
 }
 
 function rollDice() {
@@ -563,6 +890,7 @@ function renderMysteryOut() {
   mysteryOutModeInputs.forEach((input) => {
     input.disabled = Boolean(mysteryOut);
   });
+  updateOutShotWinners();
 }
 
 function resetMysteryOut() {
@@ -2356,11 +2684,7 @@ function renderBracket() {
   championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
   bracketOutput.className = "bracket";
   if (state.mode === "graph") {
-    bracketOutput.innerHTML = `
-      ${renderGraphSection("Winners bracket", state.rounds.winner)}
-      ${renderGraphSection("Losers bracket", state.rounds.loser)}
-      ${renderGraphFinal()}
-    `;
+    bracketOutput.innerHTML = renderPdfVisualBracket();
     updatePaperBackup();
     return;
   }
@@ -2687,6 +3011,62 @@ function renderGraphSection(title, rounds) {
         `).join("")}
       </div>
     </section>
+  `;
+}
+
+function renderPdfVisualBracket() {
+  const doubleDipFinal = state.resetFinal && state.resetFinal.winner && state.resetFinal.winner !== state.resetFinal.players[0]
+    ? ensureDoubleDipFinal(state, state.resetFinal, state.resetFinal.players[0], state.resetFinal.players[1])
+    : state.doubleDipFinal;
+  const finalMatches = [state.final, state.resetFinal, doubleDipFinal].filter(Boolean);
+  const maxColumns = Math.max(state.rounds.winner.length, state.rounds.loser.length, finalMatches.length ? 1 : 0);
+
+  return `
+    <section class="bracket-section pdf-visual-section">
+      <div class="pdf-visual-heading">
+        <div>
+          <h3>PDF bracket</h3>
+          <p>${escapeHtml(state.originalPlayers.length)} teams - printed game layout</p>
+        </div>
+        <span>${escapeHtml(pdfBracketLayouts[state.originalPlayers.length]?.pdf || "Generated bracket")}</span>
+      </div>
+      <div class="pdf-visual-scroll">
+        <div class="pdf-visual-grid" style="--pdf-columns: ${maxColumns};">
+          ${renderPdfVisualBand("Winners bracket", state.rounds.winner, "winner")}
+          ${renderPdfVisualBand("Losers bracket", state.rounds.loser, "loser")}
+          <div class="pdf-visual-band final-band">
+            <p class="pdf-band-title">Final</p>
+            <div class="pdf-visual-columns">
+              <div class="pdf-visual-column final-column">
+                ${finalMatches.map((match) => renderFinalMatchBlock(match, match.title)).join("")}
+                ${renderChampionBox()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderPdfVisualBand(title, rounds, type) {
+  const hasPlayIn = type === "winner" && state.matches.some((match) => match.type === "winner" && isPlayInMatch(match));
+  const greyColumnIndex = type === "winner" ? (hasPlayIn ? 2 : 1) : -1;
+
+  return `
+    <div class="pdf-visual-band ${type}-band">
+      <p class="pdf-band-title">${title}</p>
+      <div class="pdf-visual-columns">
+        ${rounds.map((round, index) => `
+          <div class="pdf-visual-column ${type}-column ${index === greyColumnIndex ? "grey-column" : ""}" style="--column-index: ${index};">
+            <p class="round-title">${type === "winner" ? "W" : "L"}${index + 1}</p>
+            <div class="pdf-column-matches" style="--match-count: ${Math.max(round.length, 1)};">
+              ${round.map(renderMatch).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
   `;
 }
 
