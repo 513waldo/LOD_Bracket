@@ -674,7 +674,7 @@ function renderOutShotSheet() {
         </label>
         <label>
           Number hit
-          <input data-out-field="number" data-out-index="${index}" type="number" inputmode="numeric" min="1" max="100" value="${escapeAttribute(row.number || row.score || index + 1)}">
+          <input data-out-field="number" data-out-index="${index}" type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeAttribute(row.number || row.score || index + 1)}">
         </label>
         <div class="out-shot-status" data-out-status="${index}" aria-live="polite"></div>
       </article>
