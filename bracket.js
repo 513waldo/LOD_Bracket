@@ -156,6 +156,15 @@ document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
   showMessage("Current bracket backup saved.");
 });
 
+document.querySelector("#publishPortalSnapshot")?.addEventListener("click", () => {
+  if (!state) {
+    showMessage("Build a bracket before publishing the live view.");
+    return;
+  }
+
+  publishPortalSnapshot();
+});
+
 document.querySelector("#downloadPortalSnapshot").addEventListener("click", () => {
   if (!state) {
     showMessage("Build a bracket before downloading a portal snapshot.");
@@ -2782,6 +2791,18 @@ function savePortalSnapshotToLocalStorage() {
   queuePortalSnapshotPublish(snapshot);
 }
 
+function publishPortalSnapshot() {
+  if (!state) {
+    return;
+  }
+
+  const snapshot = buildPortalSnapshot();
+  if (canUseLocalStorage()) {
+    localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
+  }
+  publishPortalSnapshotToApi(snapshot);
+}
+
 function clearPortalSnapshotStorage() {
   if (canUseLocalStorage()) {
     localStorage.removeItem(getPortalSnapshotStorageKey());
@@ -2815,34 +2836,41 @@ function queuePortalSnapshotPublish(snapshot) {
     return;
   }
 
+  if (portalPublishTimer) {
+    clearTimeout(portalPublishTimer);
+  }
+
+  portalPublishTimer = setTimeout(() => {
+    portalPublishTimer = null;
+    publishPortalSnapshotToApi(snapshot);
+  }, API_PUBLISH_DEBOUNCE_MS);
+}
+
+async function publishPortalSnapshotToApi(snapshot) {
+  if (!API_BASE_URL || !snapshot || !snapshot.lodCode) {
+    return;
+  }
+
   const serialized = JSON.stringify(snapshot);
   if (serialized === lastPublishedPortalSnapshot) {
     return;
   }
 
-  if (portalPublishTimer) {
-    clearTimeout(portalPublishTimer);
-  }
+  try {
+    const response = await fetch(getApiSnapshotUrl(snapshot.lodCode), {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: serialized,
+    });
 
-  portalPublishTimer = setTimeout(async () => {
-    portalPublishTimer = null;
-
-    try {
-      const response = await fetch(getApiSnapshotUrl(snapshot.lodCode), {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: serialized,
-      });
-
-      if (response.ok) {
-        lastPublishedPortalSnapshot = serialized;
-      }
-    } catch {
-      // Ignore publish failures; the local snapshot remains available.
+    if (response.ok) {
+      lastPublishedPortalSnapshot = serialized;
     }
-  }, API_PUBLISH_DEBOUNCE_MS);
+  } catch {
+    // Ignore publish failures; the local snapshot remains available.
+  }
 }
 
 function saveBracketBackup(action) {

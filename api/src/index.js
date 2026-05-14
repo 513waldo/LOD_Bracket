@@ -4,7 +4,12 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-export class BracketRoom extends DurableObject {
+export class BracketRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
   async fetch(request) {
     const method = request.method.toUpperCase();
 
@@ -13,7 +18,7 @@ export class BracketRoom extends DurableObject {
     }
 
     if (method === "GET") {
-      const snapshot = await this.ctx.storage.get("snapshot");
+      const snapshot = await this.state.storage.get("snapshot");
 
       if (!snapshot) {
         return jsonResponse({ error: "Snapshot not found" }, 404);
@@ -30,12 +35,12 @@ export class BracketRoom extends DurableObject {
         return jsonResponse({ error: "Invalid snapshot" }, 400);
       }
 
-      await this.ctx.storage.put("snapshot", snapshot);
+      await this.state.storage.put("snapshot", snapshot);
       return jsonResponse(snapshot);
     }
 
     if (method === "DELETE") {
-      await this.ctx.storage.delete("snapshot");
+      await this.state.storage.delete("snapshot");
       return jsonResponse({ ok: true });
     }
 
