@@ -37,7 +37,7 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
 const backupKeyPrefix = "dartsTournamentBracketBackup:";
@@ -2788,12 +2788,14 @@ function clearPortalSnapshotStorage() {
     localStorage.removeItem(getPortalSnapshotStorageKey());
   }
 
-  if (!API_BASE_URL || !lodCode) {
+  if (!API_BASE_URLS.length || !lodCode) {
     return;
   }
 
-  fetch(getApiSnapshotUrl(lodCode), { method: "DELETE" }).catch(() => {
-    // Ignore cleanup failures; the next publish will overwrite the old snapshot.
+  API_BASE_URLS.forEach((baseUrl) => {
+    fetch(getApiSnapshotUrl(baseUrl, lodCode), { method: "DELETE" }).catch(() => {
+      // Ignore cleanup failures; the next publish will overwrite the old snapshot.
+    });
   });
 }
 
@@ -2812,7 +2814,7 @@ function downloadPortalSnapshot() {
 }
 
 function queuePortalSnapshotPublish(snapshot) {
-  if (!API_BASE_URL || !snapshot || !snapshot.lodCode) {
+  if (!API_BASE_URLS.length || !snapshot || !snapshot.lodCode) {
     return;
   }
 
@@ -2827,7 +2829,7 @@ function queuePortalSnapshotPublish(snapshot) {
 }
 
 async function publishPortalSnapshotToApi(snapshot) {
-  if (!API_BASE_URL || !snapshot || !snapshot.lodCode) {
+  if (!API_BASE_URLS.length || !snapshot || !snapshot.lodCode) {
     return;
   }
 
@@ -2836,20 +2838,22 @@ async function publishPortalSnapshotToApi(snapshot) {
     return;
   }
 
-  try {
-    const response = await fetch(getApiSnapshotUrl(snapshot.lodCode), {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: serialized,
-    });
+  for (const baseUrl of API_BASE_URLS) {
+    try {
+      const response = await fetch(getApiSnapshotUrl(baseUrl, snapshot.lodCode), {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: serialized,
+      });
 
-    if (response.ok) {
-      lastPublishedPortalSnapshot = serialized;
+      if (response.ok) {
+        lastPublishedPortalSnapshot = serialized;
+      }
+    } catch {
+      // Ignore publish failures; the local snapshot remains available.
     }
-  } catch {
-    // Ignore publish failures; the local snapshot remains available.
   }
 }
 
@@ -3149,8 +3153,14 @@ function getPortalLink() {
   return url.toString();
 }
 
-function getApiBaseUrl() {
-  return normalizeApiBaseUrl(window.BRACKET_API_BASE_URL || "");
+function getApiBaseUrls() {
+  const configuredUrls = Array.isArray(window.BRACKET_API_BASE_URLS)
+    ? window.BRACKET_API_BASE_URLS
+    : [window.BRACKET_API_BASE_URL];
+
+  return configuredUrls
+    .map(normalizeApiBaseUrl)
+    .filter(Boolean);
 }
 
 function normalizeApiBaseUrl(value) {
@@ -3162,8 +3172,8 @@ function normalizeApiBaseUrl(value) {
   return trimmed.replace(/\/+$/, "");
 }
 
-function getApiSnapshotUrl(code) {
-  return `${API_BASE_URL}/api/lod/${encodeURIComponent(normalizeLodCode(code))}`;
+function getApiSnapshotUrl(baseUrl, code) {
+  return `${baseUrl}/api/lod/${encodeURIComponent(normalizeLodCode(code))}`;
 }
 
 function renderPortalLink() {

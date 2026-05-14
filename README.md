@@ -21,22 +21,28 @@ The admin page shows the code, a copyable portal link, and a QR code for that sa
 
 To publish bracket updates, download the code-specific snapshot from the admin page. The file name will be `lod-ABC123.json`, and the portal will load that file for the matching code.
 
-For live updates, the repo also includes a small Cloudflare Worker API in [`api/`](api/). Deploy it with Wrangler, set `window.BRACKET_API_BASE_URL` in [`config.js`](config.js), and the admin page will publish bracket changes while the portal polls and refreshes automatically.
+For live updates, the repo includes both a Cloudflare Worker API in [`api/`](api/) and a Cloudflare Pages Function API in [`functions/`](functions/). You can point the front end at one or both by setting `window.BRACKET_API_BASE_URLS` in [`config.js`](config.js), and the admin page will publish bracket changes while the portal polls and refreshes automatically.
 
 ## Live updates
 
-GitHub Pages only hosts the front end. To make the QR-linked portal update live, deploy the Worker in `api/` to Cloudflare and then set `window.BRACKET_API_BASE_URL` in `config.js` to the deployed Worker URL, for example:
+GitHub Pages only hosts the front end. To make the QR-linked portal update live, deploy one or both Cloudflare backends and then set `window.BRACKET_API_BASE_URLS` in `config.js`, for example:
 
 ```js
-window.BRACKET_API_BASE_URL = "https://bracket-api.your-subdomain.workers.dev";
+window.BRACKET_API_BASE_URLS = [
+  "https://lod-bracket.pages.dev",
+  "https://lod-bracket.workers.dev"
+];
+window.BRACKET_API_BASE_URL = window.BRACKET_API_BASE_URLS[0];
 window.BRACKET_API_POLL_MS = 5000;
 ```
 
 Then:
 
-1. Deploy the Worker with `npx wrangler deploy` from `api/`.
-2. Paste the Worker URL into `config.js`.
-3. Commit and push the repo to GitHub.
-4. Keep using the same QR code; the portal URL stays `portal.html?lod=ABC123`.
+1. Deploy the Worker with `npx wrangler deploy` from `api/` if you want the Worker fallback.
+2. Create a Cloudflare Pages project for the repo if you want the Pages API.
+3. Bind a KV namespace named `BRACKET_STATE` to the Pages project.
+4. Put the Pages URL first in `window.BRACKET_API_BASE_URLS`, then keep the Worker URL as fallback.
+5. Commit and push the repo to GitHub.
+6. Keep using the same QR code; the portal URL stays `portal.html?lod=ABC123`.
 
-The admin page will publish bracket state to the Worker automatically, and the portal will poll for changes.
+The admin page will publish bracket state to every configured host, and the portal will poll until one of them responds.

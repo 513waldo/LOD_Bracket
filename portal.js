@@ -1,6 +1,6 @@
 const LOCAL_SNAPSHOT_KEY_PREFIX = "dartsTournamentPortalSnapshot:";
 const DEFAULT_SNAPSHOT_FILE = "bracket-state.json";
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
@@ -94,51 +94,46 @@ async function loadPublishedSnapshot(code, announceFailure) {
     renderSnapshot(localSnapshot, normalizedCode ? `Local LOD ${normalizedCode}` : "Local snapshot");
   }
 
-  try {
-    const response = await fetch(getSnapshotUrl(normalizedCode), { cache: "no-store" });
+  for (const baseUrl of getCandidateBaseUrls(normalizedCode)) {
+    try {
+      const response = await fetch(getSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
 
-    if (!response.ok) {
-      if (announceFailure && !activeSnapshot) {
-        setMessage(normalizedCode
-          ? `No published snapshot found for LOD ${normalizedCode}.`
-          : "No published snapshot found.");
+      if (!response.ok) {
+        continue;
       }
-      return;
-    }
 
-    const snapshot = normalizeSnapshot(await response.json());
-    if (!snapshot) {
-      if (announceFailure && !activeSnapshot) {
-        setMessage(normalizedCode
-          ? `The published snapshot for LOD ${normalizedCode} is not usable.`
-          : "The published snapshot is not usable.");
+      const snapshot = normalizeSnapshot(await response.json());
+      if (!snapshot) {
+        continue;
       }
+
+      if (snapshot.lodCode && !normalizedCode) {
+        activeLodCode = normalizeLodCode(snapshot.lodCode);
+      } else if (normalizedCode) {
+        activeLodCode = normalizedCode;
+      }
+
+      if (lodCodeInput) {
+        lodCodeInput.value = activeLodCode || "";
+      }
+
+      renderSnapshot(snapshot, activeLodCode ? `LOD ${activeLodCode}` : "Published snapshot");
+      storeSnapshot(activeLodCode, snapshot);
       return;
+    } catch {
+      // Try the next configured host.
     }
+  }
 
-    if (snapshot.lodCode && !normalizedCode) {
-      activeLodCode = normalizeLodCode(snapshot.lodCode);
-    } else if (normalizedCode) {
-      activeLodCode = normalizedCode;
-    }
-
-    if (lodCodeInput) {
-      lodCodeInput.value = activeLodCode || "";
-    }
-
-    renderSnapshot(snapshot, activeLodCode ? `LOD ${activeLodCode}` : "Published snapshot");
-    storeSnapshot(activeLodCode, snapshot);
-  } catch {
-    if (announceFailure && !activeSnapshot) {
-      setMessage(normalizedCode
-        ? `Unable to load the published snapshot for LOD ${normalizedCode}.`
-        : "Unable to load the published snapshot.");
-    }
+  if (announceFailure && !activeSnapshot) {
+    setMessage(normalizedCode
+      ? `Unable to load the published snapshot for LOD ${normalizedCode}.`
+      : "Unable to load the published snapshot.");
   }
 }
 
 function startAutoRefresh() {
-  if (!API_BASE_URL) {
+  if (!API_BASE_URLS.length) {
     return;
   }
 
@@ -405,18 +400,24 @@ function getSnapshotFileName(code) {
   return normalized ? `lod-${normalized}.json` : DEFAULT_SNAPSHOT_FILE;
 }
 
-function getSnapshotUrl(code) {
-  const normalized = normalizeLodCode(code);
-
-  if (API_BASE_URL && normalized) {
-    return `${API_BASE_URL}/api/lod/${encodeURIComponent(normalized)}`;
-  }
-
-  return normalized ? `lod-${normalized}.json` : DEFAULT_SNAPSHOT_FILE;
+function getCandidateBaseUrls(code) {
+  const urls = API_BASE_URLS.length ? API_BASE_URLS : [""];
+  return urls.filter(Boolean);
 }
 
-function getApiBaseUrl() {
-  return normalizeApiBaseUrl(window.BRACKET_API_BASE_URL || "");
+function getSnapshotUrl(baseUrl, code) {
+  const normalized = normalizeLodCode(code);
+  return normalized ? `${baseUrl}/api/lod/${encodeURIComponent(normalized)}` : DEFAULT_SNAPSHOT_FILE;
+}
+
+function getApiBaseUrls() {
+  const configuredUrls = Array.isArray(window.BRACKET_API_BASE_URLS)
+    ? window.BRACKET_API_BASE_URLS
+    : [window.BRACKET_API_BASE_URL];
+
+  return configuredUrls
+    .map(normalizeApiBaseUrl)
+    .filter(Boolean);
 }
 
 function normalizeApiBaseUrl(value) {
