@@ -3104,9 +3104,10 @@ function renderGraphFinal() {
 function renderChampionBox() {
   const champion = state.champion || "Pending";
   const finalGame = state.final?.title || "Final pending";
+  const className = state.champion ? "champion-box winner" : "champion-box";
 
   return `
-    <aside class="champion-box" aria-label="Tournament winner">
+    <aside class="${className}" aria-label="Tournament winner">
       <p class="champion-box-title">Winner</p>
       <p class="champion-box-game">${escapeHtml(finalGame)}</p>
       <div class="champion-box-name">${escapeHtml(champion)}</div>

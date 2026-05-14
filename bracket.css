@@ -559,6 +559,17 @@ textarea {
   padding: 16px;
 }
 
+.champion-box.winner {
+  border-color: rgba(11, 122, 67, 0.72);
+  background:
+    linear-gradient(180deg, rgba(216, 239, 224, 0.96), rgba(227, 244, 233, 0.88));
+}
+
+.champion-box.winner .champion-box-name,
+.champion-box.winner .champion-box-title {
+  color: var(--primary-dark);
+}
+
 .champion-box-title {
   margin: 0 0 10px;
   color: var(--primary-dark);
@@ -685,9 +696,9 @@ textarea {
 
 .pdf-visual-grid {
   display: grid;
-  grid-template-rows: minmax(380px, auto) minmax(360px, auto) auto;
+  grid-template-rows: minmax(460px, auto) minmax(430px, auto) auto;
   gap: 0;
-  min-width: max(100%, calc(var(--pdf-columns, 6) * 270px + 300px));
+  min-width: max(100%, calc(var(--pdf-columns, 6) * 315px + 340px));
   background: #ffffff;
   color: #111;
   padding: 10px;
@@ -704,12 +715,12 @@ textarea {
 
 .winner-band {
   border-bottom: 2px solid #111;
-  padding-bottom: 16px;
+  padding-bottom: 28px;
 }
 
 .loser-band {
-  padding-top: 16px;
-  padding-bottom: 14px;
+  padding-top: 28px;
+  padding-bottom: 24px;
 }
 
 .pdf-band-title {
@@ -724,31 +735,31 @@ textarea {
 .pdf-visual-columns {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 250px;
-  gap: 30px;
+  grid-auto-columns: 290px;
+  gap: 48px;
   align-items: stretch;
 }
 
 .pdf-visual-column {
   display: grid;
   align-content: start;
-  gap: 8px;
-  min-height: 210px;
+  gap: 14px;
+  min-height: 260px;
 }
 
 .pdf-column-matches {
   display: grid;
   align-content: space-around;
-  gap: clamp(20px, calc(160px / var(--match-count, 1)), 58px);
-  min-height: max(230px, calc(var(--match-count, 1) * 104px));
+  gap: clamp(28px, calc(220px / var(--match-count, 1)), 82px);
+  min-height: max(290px, calc(var(--match-count, 1) * 132px));
 }
 
 .winner-column {
-  padding-top: calc(var(--column-index, 0) * 20px);
+  padding-top: calc(var(--column-index, 0) * 34px);
 }
 
 .loser-column {
-  padding-top: calc(var(--column-index, 0) * 10px);
+  padding-top: calc(var(--column-index, 0) * 20px);
 }
 
 .pdf-visual-column.grey-column {
@@ -774,7 +785,7 @@ textarea {
 }
 
 .final-band .pdf-visual-columns {
-  grid-auto-columns: 280px;
+  grid-auto-columns: 320px;
 }
 
 .final-band {
@@ -784,7 +795,7 @@ textarea {
 
 .final-column {
   display: grid;
-  gap: 12px;
+  gap: 18px;
   min-height: 0;
 }
 
@@ -798,8 +809,8 @@ textarea {
 }
 
 .pdf-visual-section .match-header {
-  min-height: 16px;
-  margin-bottom: 2px;
+  min-height: 20px;
+  margin-bottom: 6px;
 }
 
 .pdf-visual-section .match-title {
@@ -829,7 +840,7 @@ textarea {
 }
 
 .pdf-visual-section button.player-button + button.player-button {
-  margin-top: 3px;
+  margin-top: 6px;
 }
 
 .pdf-visual-section button.player-button:not(:disabled):hover,
@@ -876,6 +887,11 @@ textarea {
   border: 2px solid #111;
   background: #ffffff;
   box-shadow: none;
+}
+
+.pdf-visual-section .champion-box.winner {
+  border-color: rgba(11, 122, 67, 0.72);
+  background: #dfeee5;
 }
 
 .pdf-mirror-panel {
