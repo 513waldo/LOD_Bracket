@@ -754,15 +754,8 @@ textarea {
   margin-bottom: 8px;
 }
 
-.board-assignment-panel {
-  display: grid;
-  gap: 14px;
+.board-assignments-slot {
   margin-bottom: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--blue-panel);
-  box-shadow: var(--shadow);
-  padding: 16px;
 }
 
 .board-assignment-select {

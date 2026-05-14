@@ -3583,7 +3583,7 @@ function buildMatchMeta(match) {
 function renderBoardAssignmentsPanel() {
   if (!state?.matches?.length) {
     return `
-      <section class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
+      <div class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
         <div class="panel-title board-assignment-title">
           <div>
             <p class="step-label">Boards</p>
@@ -3591,7 +3591,7 @@ function renderBoardAssignmentsPanel() {
           </div>
           <p>Build a bracket to assign boards.</p>
         </div>
-      </section>
+      </div>
     `;
   }
 
@@ -3613,7 +3613,7 @@ function renderBoardAssignmentsPanel() {
     });
 
   return `
-    <section class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
+    <div class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
       <div class="panel-title board-assignment-title">
         <div>
           <p class="step-label">Boards</p>
@@ -3624,7 +3624,7 @@ function renderBoardAssignmentsPanel() {
       <div class="board-assignment-grid">
         ${matches.map((match) => renderBoardAssignmentRow(match)).join("")}
       </div>
-    </section>
+    </div>
   `;
 }
 
