@@ -20,7 +20,7 @@
   </main>
 
   <script src="config.js?v=1"></script>
-  <script src="qr.js?v=2"></script>
+  <script src="qr.js?v=3"></script>
   <script>
     (function () {
       const code = new URLSearchParams(window.location.search).get("lod") || "";
@@ -31,7 +31,7 @@
       }
 
       const qr = document.getElementById("landingQrCode");
-      qr.src = createPortalQrDataUrl(portalUrl.toString(), 360);
+      qr.src = createPortalQrDataUrl(portalUrl.toString(), 500);
     }());
   </script>
 </body>
