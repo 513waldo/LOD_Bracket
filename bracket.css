@@ -128,9 +128,9 @@ textarea:focus {
 }
 
 .qr-panel {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px 22px;
   align-items: center;
   width: min(100%, 860px);
   margin: 0 auto 18px;
@@ -167,6 +167,12 @@ textarea:focus {
   border-radius: 8px;
   background: #ffffff;
   padding: 10px;
+}
+
+.qr-actions {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
 }
 
 .landing-panel {
@@ -1802,7 +1808,7 @@ button.player-button .loser-source-text {
   }
 
   .qr-panel {
-    display: grid;
+    grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
     width: min(100%, 720px);
@@ -1811,6 +1817,14 @@ button.player-button .loser-source-text {
   .qr-copy {
     justify-items: center;
     text-align: center;
+  }
+
+  .qr-actions {
+    width: 100%;
+  }
+
+  .qr-actions button {
+    width: min(100%, 240px);
   }
 
   .landing-panel {
