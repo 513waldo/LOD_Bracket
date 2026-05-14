@@ -1,13 +1,14 @@
-function createPortalQrDataUrl(text, size = 240) {
+function createPortalQrDataUrl(text, size = 360) {
   const matrix = createQrMatrix(String(text || ""));
-  const scale = Math.max(2, Math.floor(size / matrix.length));
-  const canvasSize = matrix.length * scale;
+  const quietZone = 4;
+  const scale = Math.max(4, Math.floor(size / (matrix.length + quietZone * 2)));
+  const canvasSize = (matrix.length + quietZone * 2) * scale;
   const modules = [];
 
   for (let y = 0; y < matrix.length; y += 1) {
     for (let x = 0; x < matrix.length; x += 1) {
       if (matrix[y][x]) {
-        modules.push(`<rect x="${x * scale}" y="${y * scale}" width="${scale}" height="${scale}" fill="#111111"/>`);
+        modules.push(`<rect x="${(x + quietZone) * scale}" y="${(y + quietZone) * scale}" width="${scale}" height="${scale}" fill="#111111"/>`);
       }
     }
   }
@@ -23,10 +24,10 @@ function createPortalQrDataUrl(text, size = 240) {
 }
 
 function createQrMatrix(text) {
-  const version = 4;
+  const version = 5;
   const size = 17 + version * 4;
-  const dataCodewords = 80;
-  const eccCodewords = 20;
+  const dataCodewords = 108;
+  const eccCodewords = 26;
   const matrix = Array.from({ length: size }, () => Array(size).fill(null));
   const reserved = Array.from({ length: size }, () => Array(size).fill(false));
   const bytes = new TextEncoder().encode(text);
@@ -128,7 +129,7 @@ function drawFunctionPatterns(matrix, reserved, version) {
     setModule(matrix, reserved, 6, index, bit, true);
   }
 
-  const centers = [6, 26];
+  const centers = [6, 30];
   for (const row of centers) {
     for (const col of centers) {
       if (!(row === 6 && col === 6)) {

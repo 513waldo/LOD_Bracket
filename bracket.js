@@ -3163,7 +3163,7 @@ function renderPortalLink() {
   const link = getPortalLink();
 
   if (portalQrCode) {
-    portalQrCode.src = createPortalQrDataUrl(link, 240);
+    portalQrCode.src = createPortalQrDataUrl(link, 360);
   }
 }
 
