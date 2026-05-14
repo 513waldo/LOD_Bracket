@@ -1,0 +1,2 @@
+window.BRACKET_API_BASE_URL = "";
+window.BRACKET_API_POLL_MS = 5000;

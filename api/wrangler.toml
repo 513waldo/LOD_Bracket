@@ -1,0 +1,11 @@
+name = "lod-bracket-api"
+main = "src/index.js"
+compatibility_date = "2026-05-14"
+
+[[durable_objects.bindings]]
+name = "BRACKET_ROOMS"
+class_name = "BracketRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BracketRoom"]

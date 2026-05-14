@@ -1,5 +1,7 @@
 const LOCAL_SNAPSHOT_KEY_PREFIX = "dartsTournamentPortalSnapshot:";
 const DEFAULT_SNAPSHOT_FILE = "bracket-state.json";
+const API_BASE_URL = getApiBaseUrl();
+const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
 const publishedAt = document.querySelector("#publishedAt");
@@ -14,6 +16,7 @@ const reloadSnapshotButton = document.querySelector("#reloadSnapshot");
 
 let activeSnapshot = null;
 let activeLodCode = getRequestedLodCode();
+let refreshTimer = null;
 
 reloadSnapshotButton.addEventListener("click", () => {
   loadPublishedSnapshot(activeLodCode, true);
@@ -60,6 +63,7 @@ snapshotFile.addEventListener("change", async () => {
 });
 
 boot();
+startAutoRefresh();
 
 async function boot() {
   if (activeLodCode) {
@@ -91,9 +95,7 @@ async function loadPublishedSnapshot(code, announceFailure) {
   }
 
   try {
-    const response = normalizedCode
-      ? await fetch(`lod-${normalizedCode}.json`, { cache: "no-store" })
-      : await fetch(DEFAULT_SNAPSHOT_FILE, { cache: "no-store" });
+    const response = await fetch(getSnapshotUrl(normalizedCode), { cache: "no-store" });
 
     if (!response.ok) {
       if (announceFailure && !activeSnapshot) {
@@ -135,17 +137,29 @@ async function loadPublishedSnapshot(code, announceFailure) {
   }
 }
 
+function startAutoRefresh() {
+  if (!API_BASE_URL) {
+    return;
+  }
+
+  refreshTimer = window.setInterval(() => {
+    if (activeLodCode) {
+      loadPublishedSnapshot(activeLodCode, false);
+    }
+  }, Math.max(1000, API_REFRESH_MS));
+}
+
 function normalizeSnapshot(data) {
   if (!data || typeof data !== "object") {
     return null;
   }
 
-  if (data.state && typeof data.state === "object") {
+  if (Object.prototype.hasOwnProperty.call(data, "state")) {
     return {
       version: Number(data.version || 1),
       exportedAt: data.exportedAt || "",
       lodCode: normalizeLodCode(data.lodCode),
-      state: data.state,
+      state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
     };
@@ -389,6 +403,29 @@ function normalizeLodCode(value) {
 function getSnapshotFileName(code) {
   const normalized = normalizeLodCode(code);
   return normalized ? `lod-${normalized}.json` : DEFAULT_SNAPSHOT_FILE;
+}
+
+function getSnapshotUrl(code) {
+  const normalized = normalizeLodCode(code);
+
+  if (API_BASE_URL && normalized) {
+    return `${API_BASE_URL}/api/lod/${encodeURIComponent(normalized)}`;
+  }
+
+  return normalized ? `lod-${normalized}.json` : DEFAULT_SNAPSHOT_FILE;
+}
+
+function getApiBaseUrl() {
+  return normalizeApiBaseUrl(window.BRACKET_API_BASE_URL || "");
+}
+
+function normalizeApiBaseUrl(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.replace(/\/+$/, "");
 }
 
 function getLocalSnapshotKey(code) {

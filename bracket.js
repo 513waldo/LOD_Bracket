@@ -36,6 +36,8 @@ const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
+const API_BASE_URL = getApiBaseUrl();
+const API_PUBLISH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
 const backupKeyPrefix = "dartsTournamentBracketBackup:";
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
@@ -105,6 +107,8 @@ let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
 let lodCode = getStoredLodCode() || generateLodCode();
+let portalPublishTimer = null;
+let lastPublishedPortalSnapshot = "";
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
@@ -696,9 +700,7 @@ function resetTournament() {
   renderMysteryOut();
   hideTeamDrawWarning();
   clearPlayerNames();
-  if (canUseLocalStorage()) {
-    localStorage.removeItem(getPortalSnapshotStorageKey());
-  }
+  clearPortalSnapshotStorage();
   showMessage("Bracket, teams, and player names cleared.");
 }
 
@@ -786,6 +788,7 @@ function clearOutShots() {
 
   renderOutShotSheet();
   renderMysteryOutWinner();
+  savePortalSnapshotToLocalStorage();
 }
 
 function preventDuplicateOutShotNumber(input) {
@@ -934,6 +937,7 @@ function generateMysteryOut() {
     score: availableOuts[Math.floor(Math.random() * availableOuts.length)],
   };
   renderMysteryOut();
+  savePortalSnapshotToLocalStorage();
 }
 
 function renderMysteryOut() {
@@ -951,6 +955,7 @@ function renderMysteryOut() {
 function resetMysteryOut() {
   mysteryOut = "";
   renderMysteryOut();
+  savePortalSnapshotToLocalStorage();
 }
 
 function getAvailableOuts(mode) {
@@ -2754,10 +2759,10 @@ function renderBracket() {
   savePortalSnapshotToLocalStorage();
 }
 
-function buildPortalSnapshot() {
+function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
   return {
     version: 1,
-    exportedAt: new Date().toISOString(),
+    exportedAt,
     lodCode,
     state: state ? JSON.parse(JSON.stringify(state)) : null,
     outShots: getOutShots(),
@@ -2766,11 +2771,29 @@ function buildPortalSnapshot() {
 }
 
 function savePortalSnapshotToLocalStorage() {
-  if (!state || !canUseLocalStorage()) {
+  if (!state) {
     return;
   }
 
-  localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(buildPortalSnapshot()));
+  const snapshot = buildPortalSnapshot();
+  if (canUseLocalStorage()) {
+    localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
+  }
+  queuePortalSnapshotPublish(snapshot);
+}
+
+function clearPortalSnapshotStorage() {
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(getPortalSnapshotStorageKey());
+  }
+
+  if (!API_BASE_URL || !lodCode) {
+    return;
+  }
+
+  fetch(getApiSnapshotUrl(lodCode), { method: "DELETE" }).catch(() => {
+    // Ignore cleanup failures; the next publish will overwrite the old snapshot.
+  });
 }
 
 function downloadPortalSnapshot() {
@@ -2785,6 +2808,41 @@ function downloadPortalSnapshot() {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function queuePortalSnapshotPublish(snapshot) {
+  if (!API_BASE_URL || !snapshot || !snapshot.lodCode) {
+    return;
+  }
+
+  const serialized = JSON.stringify(snapshot);
+  if (serialized === lastPublishedPortalSnapshot) {
+    return;
+  }
+
+  if (portalPublishTimer) {
+    clearTimeout(portalPublishTimer);
+  }
+
+  portalPublishTimer = setTimeout(async () => {
+    portalPublishTimer = null;
+
+    try {
+      const response = await fetch(getApiSnapshotUrl(snapshot.lodCode), {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: serialized,
+      });
+
+      if (response.ok) {
+        lastPublishedPortalSnapshot = serialized;
+      }
+    } catch {
+      // Ignore publish failures; the local snapshot remains available.
+    }
+  }, API_PUBLISH_DEBOUNCE_MS);
 }
 
 function saveBracketBackup(action) {
@@ -3081,6 +3139,23 @@ function getPortalLink() {
   }
 
   return url.toString();
+}
+
+function getApiBaseUrl() {
+  return normalizeApiBaseUrl(window.BRACKET_API_BASE_URL || "");
+}
+
+function normalizeApiBaseUrl(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.replace(/\/+$/, "");
+}
+
+function getApiSnapshotUrl(code) {
+  return `${API_BASE_URL}/api/lod/${encodeURIComponent(normalizeLodCode(code))}`;
 }
 
 function renderPortalLink() {
