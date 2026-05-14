@@ -12,7 +12,8 @@ export async function onRequest(context) {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  if (!env?.BRACKET_STATE) {
+  const bracketState = getBracketStateBinding(env);
+  if (!bracketState) {
     return jsonResponse({ error: "Missing BRACKET_STATE binding" }, 500);
   }
 
@@ -24,7 +25,7 @@ export async function onRequest(context) {
   const key = snapshotKey(code);
 
   if (method === "GET") {
-    const snapshot = await env.BRACKET_STATE.get(key, { type: "json" });
+    const snapshot = await bracketState.get(key, { type: "json" });
     if (!snapshot) {
       return jsonResponse({ error: "Snapshot not found" }, 404);
     }
@@ -38,16 +39,20 @@ export async function onRequest(context) {
       return jsonResponse({ error: "Invalid snapshot" }, 400);
     }
 
-    await env.BRACKET_STATE.put(key, JSON.stringify(snapshot));
+    await bracketState.put(key, JSON.stringify(snapshot));
     return jsonResponse(snapshot);
   }
 
   if (method === "DELETE") {
-    await env.BRACKET_STATE.delete(key);
+    await bracketState.delete(key);
     return jsonResponse({ ok: true });
   }
 
   return jsonResponse({ error: "Method not allowed" }, 405);
+}
+
+function getBracketStateBinding(env) {
+  return env?.BRACKET_STATE || env?.lod_bracket_state || env?.lodBracketState || null;
 }
 
 function snapshotKey(code) {
