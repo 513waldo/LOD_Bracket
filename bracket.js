@@ -36,6 +36,7 @@ const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
+const lodCodeText = document.querySelector("#lodCodeText");
 const API_BASE_URL = getApiBaseUrl();
 const API_PUBLISH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
@@ -3168,6 +3169,10 @@ function getApiSnapshotUrl(code) {
 function renderPortalLink() {
   const code = normalizeLodCode(lodCode) || "------";
   const link = getPortalLink();
+
+  if (lodCodeText) {
+    lodCodeText.textContent = `LOD: ${code}`;
+  }
 
   if (portalQrCode) {
     portalQrCode.src = createPortalQrDataUrl(link, 500);

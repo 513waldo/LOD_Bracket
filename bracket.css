@@ -175,6 +175,19 @@ textarea:focus {
   gap: 10px;
 }
 
+.lod-code-text {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: var(--primary-dark);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 160px;
+  text-align: center;
+}
+
 .landing-panel {
   display: flex;
   justify-content: space-between;
@@ -1824,6 +1837,10 @@ button.player-button .loser-source-text {
   }
 
   .qr-actions button {
+    width: min(100%, 240px);
+  }
+
+  .lod-code-text {
     width: min(100%, 240px);
   }
 
