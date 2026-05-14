@@ -3592,7 +3592,7 @@ function renderBoardAssignmentControl(match) {
         aria-label="Board assignment for ${escapeAttribute(formatMatchTitle(match))}"
       >
         <option value=""${currentValue ? "" : " selected"}>Unassigned</option>
-        ${Array.from({ length: 20 }, (_, index) => {
+        ${Array.from({ length: 10 }, (_, index) => {
           const value = index + 1;
           return `<option value="${value}"${currentValue === value ? " selected" : ""}>${value}</option>`;
         }).join("")}
