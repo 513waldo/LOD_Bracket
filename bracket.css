@@ -754,26 +754,19 @@ textarea {
   margin-bottom: 8px;
 }
 
-.match-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-}
-
-.board-assignment-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 900;
-  text-transform: uppercase;
+.board-assignment-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-panel);
+  box-shadow: var(--shadow);
+  padding: 16px;
 }
 
 .board-assignment-select {
-  min-width: 124px;
+  min-width: 92px;
   min-height: 40px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -782,6 +775,36 @@ textarea {
   padding: 0 10px;
   font: inherit;
   font-weight: 900;
+}
+
+.board-assignment-title {
+  margin-bottom: 0;
+}
+
+.board-assignment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.board-assignment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-surface);
+  padding: 10px;
+}
+
+.board-assignment-row-label {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .match-title {
@@ -966,10 +989,6 @@ textarea {
 }
 
 .pdf-visual-section .match-meta {
-  display: none;
-}
-
-.pdf-visual-section .match-tools {
   display: none;
 }
 
