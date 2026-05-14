@@ -156,15 +156,6 @@ document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
   showMessage("Current bracket backup saved.");
 });
 
-document.querySelector("#publishPortalSnapshot")?.addEventListener("click", () => {
-  if (!state) {
-    showMessage("Build a bracket before publishing the live view.");
-    return;
-  }
-
-  publishPortalSnapshot();
-});
-
 document.querySelector("#downloadPortalSnapshot").addEventListener("click", () => {
   if (!state) {
     showMessage("Build a bracket before downloading a portal snapshot.");
@@ -2789,18 +2780,6 @@ function savePortalSnapshotToLocalStorage() {
     localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
   }
   queuePortalSnapshotPublish(snapshot);
-}
-
-function publishPortalSnapshot() {
-  if (!state) {
-    return;
-  }
-
-  const snapshot = buildPortalSnapshot();
-  if (canUseLocalStorage()) {
-    localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
-  }
-  publishPortalSnapshotToApi(snapshot);
 }
 
 function clearPortalSnapshotStorage() {
