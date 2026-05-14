@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darts Bracket Portal</title>
+  <link rel="stylesheet" href="portal.css?v=1">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><a href="bracket.html">Bracket Builder</a> / Player Portal</p>
+        <h1>Bracket Portal</h1>
+        <p class="intro">Read-only bracket view for players on any browser.</p>
+      </div>
+
+      <div class="portal-actions" aria-label="Portal controls">
+        <button id="reloadSnapshot" class="secondary" type="button">Reload</button>
+        <label class="file-button">
+          Load JSON
+          <input id="snapshotFile" type="file" accept="application/json,.json">
+        </label>
+        <div class="lod-loader">
+          <label class="lod-entry">
+            LOD code
+            <input id="lodCodeInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
+          </label>
+          <button id="loadLodCode" class="secondary" type="button">Load code</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="status-strip" aria-label="Snapshot status">
+      <div class="status-card">
+        <span>Published</span>
+        <strong id="publishedAt">No snapshot loaded</strong>
+      </div>
+      <div class="status-card">
+        <span>LOD code</span>
+        <strong id="lodCodeText">Not set</strong>
+      </div>
+      <div class="status-card">
+        <span>Champion</span>
+        <strong id="championText">Pending</strong>
+      </div>
+      <div class="status-card">
+        <span>Teams</span>
+        <strong id="teamCountText">-</strong>
+      </div>
+    </section>
+
+    <p id="portalMessage" class="message" aria-live="polite"></p>
+
+    <section class="bracket-shell" aria-labelledby="portalBracketTitle">
+      <div class="section-heading">
+        <div>
+          <h2 id="portalBracketTitle">Bracket</h2>
+          <p id="bracketSubtitle">Waiting for a published snapshot.</p>
+        </div>
+      </div>
+      <div id="portalBracket" class="bracket empty">No bracket snapshot available.</div>
+    </section>
+  </main>
+
+  <script src="portal.js?v=1"></script>
+</body>
+</html>

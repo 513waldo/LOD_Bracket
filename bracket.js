@@ -33,11 +33,16 @@ const payoutSummary = document.querySelector("#payoutSummary");
 const payoutResults = document.querySelector("#payoutResults");
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
+const copyPortalLinkButton = document.querySelector("#copyPortalLink");
+const newLodCodeButton = document.querySelector("#newLodCode");
+const portalQrCode = document.querySelector("#portalQrCode");
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
 const backupKeyPrefix = "dartsTournamentBracketBackup:";
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
+const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
+const lodCodeStorageKey = "dartsTournamentLodCode";
 const outShotSlotCount = 100;
 const dartScores = [
   ...Array.from({ length: 20 }, (_, index) => index + 1),
@@ -99,6 +104,10 @@ let hasGeneratedTeams = false;
 let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
+let lodCode = getStoredLodCode() || generateLodCode();
+
+saveStoredLodCode(lodCode);
+renderPortalLink();
 
 renderNameInputs(Number(totalPlayers.value));
 renderBackups();
@@ -141,6 +150,39 @@ document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
 
   saveBracketBackup({ selectedWinner: "", manual: true });
   showMessage("Current bracket backup saved.");
+});
+
+document.querySelector("#downloadPortalSnapshot").addEventListener("click", () => {
+  if (!state) {
+    showMessage("Build a bracket before downloading a portal snapshot.");
+    return;
+  }
+
+  downloadPortalSnapshot();
+  showMessage(`Portal snapshot downloaded as lod-${lodCode}.json.`);
+});
+
+newLodCodeButton?.addEventListener("click", () => {
+  const previousCode = lodCode;
+  lodCode = generateLodCode();
+  saveStoredLodCode(lodCode);
+  renderPortalLink();
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(`${portalSnapshotStorageKey}:${previousCode}`);
+  }
+  savePortalSnapshotToLocalStorage();
+  showMessage(`New LOD code generated: ${lodCode}.`);
+});
+
+copyPortalLinkButton?.addEventListener("click", async () => {
+  const link = getPortalLink();
+
+  try {
+    await navigator.clipboard.writeText(link);
+    showMessage("Portal link copied.");
+  } catch {
+    window.prompt("Copy the portal link:", link);
+  }
 });
 
 document.querySelector("#printPaperBackup").addEventListener("click", () => {
@@ -654,6 +696,9 @@ function resetTournament() {
   renderMysteryOut();
   hideTeamDrawWarning();
   clearPlayerNames();
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(getPortalSnapshotStorageKey());
+  }
   showMessage("Bracket, teams, and player names cleared.");
 }
 
@@ -719,6 +764,7 @@ function saveOutShots() {
   }
 
   localStorage.setItem(outShotStorageKey, JSON.stringify(getOutShots()));
+  savePortalSnapshotToLocalStorage();
 }
 
 function readOutShots() {
@@ -2695,6 +2741,7 @@ function renderBracket() {
   if (state.mode === "graph") {
     bracketOutput.innerHTML = renderPdfVisualBracket();
     updatePaperBackup();
+    savePortalSnapshotToLocalStorage();
     return;
   }
 
@@ -2704,6 +2751,40 @@ function renderBracket() {
     ${renderFinal()}
   `;
   updatePaperBackup();
+  savePortalSnapshotToLocalStorage();
+}
+
+function buildPortalSnapshot() {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    lodCode,
+    state: state ? JSON.parse(JSON.stringify(state)) : null,
+    outShots: getOutShots(),
+    mysteryOut,
+  };
+}
+
+function savePortalSnapshotToLocalStorage() {
+  if (!state || !canUseLocalStorage()) {
+    return;
+  }
+
+  localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(buildPortalSnapshot()));
+}
+
+function downloadPortalSnapshot() {
+  const snapshot = buildPortalSnapshot();
+  const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `lod-${lodCode}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function saveBracketBackup(action) {
@@ -2942,6 +3023,72 @@ function canUseLocalStorage() {
     return typeof localStorage !== "undefined";
   } catch {
     return false;
+  }
+}
+
+function getPortalSnapshotStorageKey() {
+  return `${portalSnapshotStorageKey}:${lodCode}`;
+}
+
+function getStoredLodCode() {
+  if (!canUseLocalStorage()) {
+    return "";
+  }
+
+  try {
+    return normalizeLodCode(localStorage.getItem(lodCodeStorageKey));
+  } catch {
+    return "";
+  }
+}
+
+function saveStoredLodCode(code) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  localStorage.setItem(lodCodeStorageKey, code);
+}
+
+function generateLodCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const values = new Uint32Array(6);
+
+  if (window.crypto?.getRandomValues) {
+    window.crypto.getRandomValues(values);
+  } else {
+    for (let index = 0; index < values.length; index += 1) {
+      values[index] = Math.floor(Math.random() * alphabet.length);
+    }
+  }
+
+  return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}
+
+function normalizeLodCode(value) {
+  return String(value || "")
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase()
+    .slice(0, 12);
+}
+
+function getPortalLink() {
+  const code = normalizeLodCode(lodCode);
+  const url = new URL("portal.html", window.location.href);
+
+  if (code) {
+    url.searchParams.set("lod", code);
+  }
+
+  return url.toString();
+}
+
+function renderPortalLink() {
+  const code = normalizeLodCode(lodCode) || "------";
+  const link = getPortalLink();
+
+  if (portalQrCode) {
+    portalQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
   }
 }
 

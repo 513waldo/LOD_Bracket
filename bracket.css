@@ -127,6 +127,63 @@ textarea:focus {
   color: #fffaf0;
 }
 
+.qr-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  width: min(100%, 720px);
+  margin: 0 auto 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(5px);
+  padding: 16px;
+}
+
+.qr-copy {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  justify-items: start;
+}
+
+.qr-copy h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.qr-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.qr-code {
+  display: block;
+  width: 132px;
+  height: 132px;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.lod-link-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: #78c89a;
@@ -1587,7 +1644,7 @@ button.player-button .loser-source-text {
   }
 
   .backup-actions {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .pdf-mirror-grid {
@@ -1668,6 +1725,8 @@ button.player-button .loser-source-text {
   .app {
     width: 100%;
     padding: 12px;
+    display: grid;
+    gap: 18px;
   }
 
   .topbar,
@@ -1691,6 +1750,50 @@ button.player-button .loser-source-text {
   .top-side-stack {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+  }
+
+  .lod-link-group {
+    justify-content: flex-start;
+  }
+
+  .qr-panel {
+    display: grid;
+    justify-content: space-between;
+    width: min(100%, 720px);
+  }
+
+  .qr-code {
+    width: 116px;
+    height: 116px;
+  }
+
+  .top-workspace,
+  .bracket-workspace {
+    display: contents;
+  }
+
+  .setup-stack {
+    order: 1;
+  }
+
+  .bracket-shell {
+    order: 2;
+  }
+
+  .bracket-side-stack {
+    order: 3;
+  }
+
+  .tools-stack {
+    order: 4;
+  }
+
+  .backups-panel {
+    order: 5;
   }
 
   .bracket-workspace {
