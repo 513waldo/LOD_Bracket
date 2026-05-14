@@ -3415,7 +3415,10 @@ function renderFinalMatchBlock(match, title) {
             >Fix</button>
           ` : ""}
         </div>
-        ${buildMatchMeta(match)}
+        <div class="match-tools">
+          ${renderBoardAssignmentControl(match)}
+          ${buildMatchMeta(match)}
+        </div>
         <div class="slots">
           ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
         </div>
