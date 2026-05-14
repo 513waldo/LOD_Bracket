@@ -327,6 +327,10 @@ function renderMatchMeta(match, mode) {
     labels.push(`Game ${match.gameNumber}`);
   }
 
+  if (Number.isInteger(Number(match.boardAssignment)) && Number(match.boardAssignment) > 0) {
+    labels.push(`Board ${Number(match.boardAssignment)}`);
+  }
+
   if (mode === "graph" && match.type === "winner" && match.loserTo?.matchId) {
     labels.push(`Loser to Game ${match.loserTo.matchId}`);
   }

@@ -372,6 +372,27 @@ bracketOutput.addEventListener("click", (event) => {
   chooseWinner(Number(button.dataset.matchId), button.dataset.player);
 });
 
+bracketOutput.addEventListener("change", (event) => {
+  const boardSelect = event.target.closest("[data-board-assignment]");
+
+  if (!boardSelect || !state?.matchesById) {
+    return;
+  }
+
+  const matchId = Number(boardSelect.dataset.matchId);
+  const match = state.matchesById[matchId];
+  if (!match) {
+    return;
+  }
+
+  match.boardAssignment = boardSelect.value ? Number(boardSelect.value) : null;
+  saveBracketBackup({
+    matchId,
+    boardAssignment: match.boardAssignment,
+  });
+  renderBracket();
+});
+
 backupList.addEventListener("click", (event) => {
   const deleteButton = event.target.closest("[data-delete-backup-id]");
 
@@ -1848,6 +1869,7 @@ function createGraphMatch(id, type, roundIndex, matchIndex) {
     title: `Game ${id}`,
     players: ["", ""],
     slotSources: ["", ""],
+    boardAssignment: null,
     winner: "",
     loser: "",
     winnerTo: null,
@@ -2071,11 +2093,19 @@ function resetMatchResult(matchId) {
     return;
   }
 
+  const boardAssignments = new Map(
+    state.matches.map((match) => [match.id, match.boardAssignment ?? null])
+  );
   const manualResults = state.matches
     .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
     .map((match) => ({ id: match.id, winner: match.winner }));
 
   state = createBracketGraph(state.originalPlayers);
+  state.matches.forEach((match) => {
+    if (boardAssignments.has(match.id)) {
+      match.boardAssignment = boardAssignments.get(match.id);
+    }
+  });
 
   manualResults.forEach((result) => {
     const match = state.matchesById[result.id];
@@ -2376,6 +2406,7 @@ function createMatch(type, roundIndex, matchIndex, title) {
     title,
     players: ["", ""],
     slotSources: ["", ""],
+    boardAssignment: null,
     winner: "",
     loser: "",
     autoAdvanced: false,
@@ -2488,6 +2519,9 @@ function resetMatchResultLegacy(type, roundIndex, matchIndex) {
   }
 
   const targetId = `${type}-${roundIndex}-${matchIndex}`;
+  const boardAssignments = new Map(
+    getAllMatches(state).map((match) => [match.id, match.boardAssignment ?? null])
+  );
   const manualResults = getAllMatches(state)
     .filter((match) => match.winner && !match.autoAdvanced && match.id !== targetId)
     .map((match) => ({
@@ -2499,6 +2533,11 @@ function resetMatchResultLegacy(type, roundIndex, matchIndex) {
 
   const rebuilt = createBracket(state.originalPlayers);
   state = rebuilt;
+  getAllMatches(state).forEach((match) => {
+    if (boardAssignments.has(match.id)) {
+      match.boardAssignment = boardAssignments.get(match.id);
+    }
+  });
   autoAdvanceByes(state);
   refreshGameNumbersAndSources(state);
 
@@ -3459,11 +3498,14 @@ function renderMatch(match) {
             class="reset-match"
             type="button"
             data-reset-match="${escapeAttribute(match.id)}"
-            data-match-id="${match.id}"
-          >Fix</button>
+          data-match-id="${match.id}"
+        >Fix</button>
         ` : ""}
       </div>
-      ${buildMatchMeta(match)}
+      <div class="match-tools">
+        ${renderBoardAssignmentControl(match)}
+        ${buildMatchMeta(match)}
+      </div>
       <div class="slots">
         ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
       </div>
@@ -3535,6 +3577,28 @@ function buildMatchMeta(match) {
   }
 
   return `<p class="match-meta">${labels.join(" | ")}</p>`;
+}
+
+function renderBoardAssignmentControl(match) {
+  const currentValue = Number(match.boardAssignment) || 0;
+
+  return `
+    <label class="board-assignment-field">
+      <span>Board</span>
+      <select
+        class="board-assignment-select"
+        data-board-assignment
+        data-match-id="${match.id}"
+        aria-label="Board assignment for ${escapeAttribute(formatMatchTitle(match))}"
+      >
+        <option value=""${currentValue ? "" : " selected"}>Unassigned</option>
+        ${Array.from({ length: 20 }, (_, index) => {
+          const value = index + 1;
+          return `<option value="${value}"${currentValue === value ? " selected" : ""}>${value}</option>`;
+        }).join("")}
+      </select>
+    </label>
+  `;
 }
 
 function formatGraphSlot(slot) {
