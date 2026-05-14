@@ -11,10 +11,10 @@
   --dart-black: #151512;
   --wire: #b9b4aa;
   --bracket-line: rgba(0, 0, 0, 0.82);
-  --blue-panel: rgba(205, 232, 255, 0.46);
-  --blue-surface: rgba(225, 242, 255, 0.4);
-  --blue-surface-strong: rgba(235, 247, 255, 0.56);
-  --soft: rgba(225, 242, 255, 0.42);
+  --blue-panel: rgba(241, 242, 239, 0.62);
+  --blue-surface: rgba(247, 248, 245, 0.56);
+  --blue-surface-strong: rgba(247, 248, 245, 0.78);
+  --soft: #e3e7df;
   --warn: #fff7e6;
   --warn-text: #704c00;
   --loss: #fae4de;
