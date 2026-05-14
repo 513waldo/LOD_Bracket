@@ -19,6 +19,7 @@
     </section>
   </main>
 
+  <script src="qr.js?v=1"></script>
   <script>
     (function () {
       const code = new URLSearchParams(window.location.search).get("lod") || "";
@@ -29,7 +30,7 @@
       }
 
       const qr = document.getElementById("landingQrCode");
-      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(portalUrl.toString())}`;
+      qr.src = createPortalQrDataUrl(portalUrl.toString(), 240);
     }());
   </script>
 </body>

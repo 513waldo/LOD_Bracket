@@ -3088,7 +3088,7 @@ function renderPortalLink() {
   const link = getPortalLink();
 
   if (portalQrCode) {
-    portalQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
+    portalQrCode.src = createPortalQrDataUrl(link, 240);
   }
 }
 
