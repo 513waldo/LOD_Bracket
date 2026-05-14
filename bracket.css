@@ -132,7 +132,7 @@ textarea:focus {
   justify-content: space-between;
   gap: 18px;
   align-items: center;
-  width: min(100%, 720px);
+  width: min(100%, 860px);
   margin: 0 auto 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -162,11 +162,11 @@ textarea:focus {
 
 .qr-code {
   display: block;
-  width: 132px;
-  height: 132px;
+  width: 192px;
+  height: 192px;
   border-radius: 8px;
   background: #ffffff;
-  padding: 8px;
+  padding: 10px;
 }
 
 .landing-panel {
@@ -203,11 +203,11 @@ textarea:focus {
 
 .landing-qr {
   display: block;
-  width: 168px;
-  height: 168px;
+  width: 208px;
+  height: 208px;
   border-radius: 8px;
   background: #ffffff;
-  padding: 8px;
+  padding: 10px;
 }
 
 .topbar-actions {
@@ -1803,8 +1803,14 @@ button.player-button .loser-source-text {
 
   .qr-panel {
     display: grid;
-    justify-content: space-between;
+    justify-items: center;
+    text-align: center;
     width: min(100%, 720px);
+  }
+
+  .qr-copy {
+    justify-items: center;
+    text-align: center;
   }
 
   .landing-panel {
@@ -1815,13 +1821,13 @@ button.player-button .loser-source-text {
   }
 
   .landing-qr {
-    width: 144px;
-    height: 144px;
+    width: 228px;
+    height: 228px;
   }
 
   .qr-code {
-    width: 116px;
-    height: 116px;
+    width: 236px;
+    height: 236px;
   }
 
   .top-workspace,
@@ -1869,6 +1875,10 @@ button.player-button .loser-source-text {
     grid-auto-columns: 220px;
     gap: 18px;
     padding-bottom: 10px;
+  }
+
+  .qr-panel {
+    width: 100%;
   }
 
   .bracket-section {
