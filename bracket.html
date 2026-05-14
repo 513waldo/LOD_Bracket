@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Draw and Bracket</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-10">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-23">
 </head>
 <body>
   <main class="app">
@@ -22,14 +22,17 @@
         <section class="panel setup-panel">
           <div id="redrawWarning" class="redraw-warning" hidden></div>
           <div class="panel-title">
-            <h2>Team draw</h2>
-            <p>Enter the total players and players per team, then generate random teams.</p>
+            <div>
+              <p class="step-label">Step 1</p>
+              <h2>Players</h2>
+            </div>
+            <p>Enter the player count, team size, and names.</p>
           </div>
 
           <div class="setup-grid">
             <label>
               Total players
-              <input id="totalPlayers" type="number" inputmode="numeric" min="0" max="200" value="48">
+              <input id="totalPlayers" type="number" inputmode="numeric" min="0" max="200" value="0">
             </label>
 
             <label>
@@ -50,40 +53,56 @@
             </details>
           </section>
 
+        </section>
+
+        <section class="panel groups-panel" aria-labelledby="groupsTitle">
+          <div class="panel-title">
+            <div>
+              <p class="step-label">Step 2</p>
+              <h2 id="groupsTitle">Generate Teams</h2>
+            </div>
+            <p>Generate teams from the player list.</p>
+          </div>
           <label class="player-list-label">
             Teams for bracket
             <span id="teamDrawWarning" class="team-draw-warning" hidden></span>
             <textarea id="playerList" rows="8" spellcheck="false"></textarea>
           </label>
-
-          <div class="actions">
+          <div class="actions single-action">
             <button id="generatePlayers" type="button">Generate teams</button>
             <!-- <button id="drawGroups" type="button">Randomize teams</button> -->
-            <button id="buildBracket" type="button">Build bracket</button>
           </div>
-
-          <p id="message" class="message" aria-live="polite"></p>
         </section>
 
-        <section class="panel groups-panel" aria-labelledby="groupsTitle">
+        <section class="panel generated-teams-panel" aria-labelledby="generatedTeamsTitle">
           <div class="panel-title">
-            <h2 id="groupsTitle">Randomized groups</h2>
-            <p>Teams are shuffled each time you draw.</p>
+            <div>
+              <p class="step-label">Step 3</p>
+              <h2 id="generatedTeamsTitle">Review Teams</h2>
+            </div>
+            <p>Review randomized teams before building the bracket.</p>
           </div>
           <div id="groupsOutput" class="groups empty">No groups drawn yet.</div>
+          <div class="actions single-action">
+            <button id="buildBracket" type="button">Build bracket</button>
+          </div>
+          <p id="message" class="message" aria-live="polite"></p>
         </section>
       </div>
 
-      <div class="top-side-stack">
-        <section class="panel payout-panel" aria-labelledby="payoutTitle">
-          <div class="panel-title">
+      <div class="top-side-stack tools-stack" aria-label="Tournament tools">
+        <h2 class="tools-title">Tournament Tools</h2>
+        <details class="panel tool-panel payout-panel">
+          <summary>Payout Calculator</summary>
+          <div class="tool-body">
+            <div class="panel-title">
             <div>
               <h2 id="payoutTitle">Payout Calculator</h2>
               <p>Calculate prize money from the current team count.</p>
             </div>
-          </div>
+            </div>
 
-          <div class="payout-grid">
+            <div class="payout-grid">
             <label>
               Teams
               <input id="payoutTeams" type="number" inputmode="numeric" min="0" max="200" value="0">
@@ -113,22 +132,25 @@
                 <option value="8">8 places</option>
               </select>
             </label>
-          </div>
+            </div>
 
-          <button id="clearPayout" class="secondary" type="button">Clear payout inputs</button>
+            <button id="clearPayout" class="secondary" type="button">Clear payout inputs</button>
 
-          <div class="payout-percent-panel">
+            <div class="payout-percent-panel">
             <div class="payout-percent-title">
               <strong>Custom percentages</strong>
               <span id="payoutPercentStatus">Using automatic split</span>
             </div>
             <div id="payoutPercentInputs" class="payout-percent-inputs"></div>
-          </div>
+            </div>
 
-          <div id="payoutSummary" class="payout-summary"></div>
-          <div id="payoutResults" class="payout-results"></div>
-        </section>
-        <section class="panel dice-roller" aria-labelledby="diceRollerTitle">
+            <div id="payoutSummary" class="payout-summary"></div>
+            <div id="payoutResults" class="payout-results"></div>
+          </div>
+        </details>
+        <details class="panel tool-panel dice-roller">
+          <summary>D20 Roller</summary>
+          <div class="tool-body">
           <div class="dice-roller-heading">
             <h3 id="diceRollerTitle">D20 roller</h3>
             <div id="diceTotal" class="dice-total">Total: 2</div>
@@ -144,7 +166,8 @@
             </button>
           </div>
           <button id="rollDice" type="button">Roll both dice</button>
-        </section>
+          </div>
+        </details>
 
       </div>
     </div>
@@ -210,26 +233,29 @@
       </div>
     </div>
 
-    <section class="panel" aria-labelledby="backupsTitle">
-      <div class="panel-title">
+    <details class="panel tool-panel backups-panel">
+      <summary>Backups</summary>
+      <div class="tool-body">
+        <div class="panel-title">
         <div>
           <h2 id="backupsTitle">Bracket backups</h2>
           <p>A new backup is saved before every bracket click.</p>
         </div>
-      </div>
-      <div class="backup-actions">
+        </div>
+        <div class="backup-actions">
         <button id="saveCurrentBackup" type="button">Save current backup</button>
         <button id="printPaperBackup" class="secondary" type="button">Print paper bracket</button>
         <button id="deleteBackups" class="danger" type="button">Delete all backups</button>
-      </div>
-      <pre id="paperBackup" class="paper-backup">Build a bracket to create a paper backup.</pre>
-      <details class="backup-history">
+        </div>
+        <pre id="paperBackup" class="paper-backup">Build a bracket to create a paper backup.</pre>
+        <details class="backup-history">
         <summary>Backup history</summary>
         <div id="backupList" class="backup-list empty">No bracket backups yet.</div>
-      </details>
-    </section>
+        </details>
+      </div>
+    </details>
   </main>
 
-  <script src="bracket.js?v=interactive-tools-10"></script>
+  <script src="bracket.js?v=interactive-tools-15"></script>
 </body>
 </html>

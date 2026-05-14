@@ -3068,7 +3068,7 @@ function renderPdfVisualBand(title, rounds, type) {
       <div class="pdf-visual-columns">
         ${rounds.map((round, index) => `
           <div class="pdf-visual-column ${type}-column ${index === greyColumnIndex ? "grey-column" : ""}" style="--column-index: ${index};">
-            <p class="round-title">${type === "winner" ? "W" : "L"}${index + 1}</p>
+            <p class="round-title">${type === "winner" ? "Winners" : "Losers"} R${index + 1}</p>
             <div class="pdf-column-matches" style="--match-count: ${Math.max(round.length, 1)};">
               ${round.map(renderMatch).join("")}
             </div>
