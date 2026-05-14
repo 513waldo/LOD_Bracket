@@ -169,6 +169,47 @@ textarea:focus {
   padding: 8px;
 }
 
+.landing-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  width: min(100%, 720px);
+  margin: 9vh auto 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(5px);
+  padding: 20px;
+}
+
+.landing-copy {
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+}
+
+.landing-copy h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+}
+
+.landing-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.landing-qr {
+  display: block;
+  width: 168px;
+  height: 168px;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 8px;
+}
+
 .topbar-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1764,6 +1805,18 @@ button.player-button .loser-source-text {
     display: grid;
     justify-content: space-between;
     width: min(100%, 720px);
+  }
+
+  .landing-panel {
+    display: grid;
+    justify-content: center;
+    width: 100%;
+    margin-top: 18px;
+  }
+
+  .landing-qr {
+    width: 144px;
+    height: 144px;
   }
 
   .qr-code {

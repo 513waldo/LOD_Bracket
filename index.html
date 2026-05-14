@@ -4,18 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LOD Bracket Portal</title>
-  <script>
-    window.location.replace(`portal.html${window.location.search}${window.location.hash}`);
-  </script>
-  <link rel="canonical" href="portal.html">
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-10">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-30">
 </head>
 <body>
   <main class="app">
-    <section class="panel">
-      <h1>Opening player portal...</h1>
-      <p><a href="portal.html">Open player portal</a></p>
+    <section class="landing-panel" aria-labelledby="landingTitle">
+      <div class="landing-copy">
+        <p class="eyebrow">Darts tournament portal</p>
+        <h1 id="landingTitle">Player Access</h1>
+        <p class="landing-note">Scan the QR code to open the view-only bracket portal for this LOD.</p>
+      </div>
+
+      <img id="landingQrCode" class="landing-qr" alt="QR code for the player portal" src="" width="240" height="240">
     </section>
   </main>
+
+  <script>
+    (function () {
+      const code = new URLSearchParams(window.location.search).get("lod") || "";
+      const portalUrl = new URL("portal.html", window.location.href);
+
+      if (code) {
+        portalUrl.searchParams.set("lod", code);
+      }
+
+      const qr = document.getElementById("landingQrCode");
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(portalUrl.toString())}`;
+    }());
+  </script>
 </body>
 </html>
