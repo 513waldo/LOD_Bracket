@@ -202,7 +202,6 @@ mysteryOutModeInputs.forEach((input) => {
 });
 
 payoutPercentInputs?.addEventListener("input", (event) => {
-  rebalancePayoutPercentages(event.target);
   updatePayoutCalculator();
 });
 
@@ -490,13 +489,13 @@ function getPaidPlaces(teamCount, placeSetting) {
 
 function getPayoutSplitByPlaces(places) {
   if (places >= 8) {
-    return [0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125];
+    return [0.36, 0.21, 0.15, 0.1, 0.07, 0.05, 0.03, 0.03];
   }
   if (places === 7) {
     return [0.38, 0.22, 0.15, 0.1, 0.07, 0.05, 0.03];
   }
   if (places === 6) {
-    return [0.42, 0.24, 0.15, 0.09, 0.06, 0.04];
+    return [0.43, 0.23, 0.13, 0.09, 0.06, 0.06];
   }
   if (places === 5) {
     return [0.46, 0.25, 0.14, 0.09, 0.06];
@@ -514,28 +513,19 @@ function getPayoutSplitByPlaces(places) {
 }
 
 function getAutoPaidPlaces(teamCount) {
-  if (teamCount >= 65) {
+  if (teamCount >= 48) {
     return 8;
   }
-  if (teamCount >= 49) {
-    return 7;
-  }
-  if (teamCount >= 33) {
+  if (teamCount >= 24) {
     return 6;
   }
-  if (teamCount >= 25) {
-    return 5;
-  }
-  if (teamCount >= 17) {
+  if (teamCount >= 10) {
     return 4;
   }
-  if (teamCount >= 9) {
+  if (teamCount >= 4) {
     return 3;
   }
-  if (teamCount >= 4) {
-    return 2;
-  }
-  return 1;
+  return 2;
 }
 
 function renderPayoutPercentInputs(placeCount) {
@@ -567,27 +557,6 @@ function renderPayoutPercentInputs(placeCount) {
   `).join("");
 }
 
-function rebalancePayoutPercentages(changedInput) {
-  if (!changedInput?.matches?.("[data-payout-percent]")) {
-    return;
-  }
-
-  const inputs = Array.from(document.querySelectorAll("[data-payout-percent]"));
-  if (inputs.length <= 1) {
-    changedInput.value = "100";
-    return;
-  }
-
-  const changedValue = Math.max(0, Math.min(100, Number(changedInput.value) || 0));
-  changedInput.value = formatPercentValue(changedValue);
-  const remainingInputs = inputs.filter((input) => input !== changedInput);
-  const remainingPercent = Math.max(0, 100 - changedValue);
-  const sharedPercent = remainingPercent / remainingInputs.length;
-  remainingInputs.forEach((input) => {
-    input.value = formatPercentValue(sharedPercent);
-  });
-}
-
 function getCustomPayoutSplit(placeCount) {
   const inputs = Array.from(document.querySelectorAll("[data-payout-percent]"));
   if (!inputs.length || inputs.length !== placeCount) {
@@ -607,7 +576,7 @@ function getCustomPayoutSplit(placeCount) {
       ? "Using custom split"
       : `Using custom split. Current total: ${formatPercentValue(total)}%`
   );
-  return values.map((value) => value / 100);
+  return values.map((value) => value / total);
 }
 
 function setPayoutPercentStatus(text) {
