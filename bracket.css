@@ -175,6 +175,63 @@ textarea:focus {
   gap: 10px;
 }
 
+.lod-registry-panel {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 860px);
+  margin: 0 auto 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-panel);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.lod-registry-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lod-registry-meta,
+.lod-registry-empty {
+  display: grid;
+  gap: 4px;
+}
+
+.lod-registry-meta strong,
+.lod-registry-empty strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.lod-registry-meta span,
+.lod-registry-empty span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.lod-registry-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lod-registry-codes code {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-surface-strong);
+  color: var(--primary-dark);
+  padding: 0 10px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
 .lod-code-text {
   font-size: 0.95rem;
   font-weight: 900;

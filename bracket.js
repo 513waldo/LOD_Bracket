@@ -37,8 +37,11 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
+const lodRegistryList = document.querySelector("#lodRegistryList");
+const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
+const REGISTRY_REFRESH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
 const backupKeyPrefix = "dartsTournamentBracketBackup:";
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
@@ -110,6 +113,7 @@ let mysteryOut = "";
 let lodCode = getStoredLodCode() || generateLodCode();
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
+let registryRefreshTimer = null;
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
@@ -124,6 +128,7 @@ syncPayoutTeamsFromPlayerCount();
 updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
+loadActiveLodCodes();
 
 totalPlayers.addEventListener("change", () => {
   renderNameInputs(Number(totalPlayers.value));
@@ -146,6 +151,10 @@ if (pdfLayoutSelect) {
     renderPdfColumnMirror(Number(pdfLayoutSelect.value));
   });
 }
+
+refreshRegistryButton?.addEventListener("click", () => {
+  loadActiveLodCodes(true);
+});
 
 document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
   if (!state) {
@@ -176,6 +185,7 @@ newLodCodeButton?.addEventListener("click", () => {
     localStorage.removeItem(`${portalSnapshotStorageKey}:${previousCode}`);
   }
   savePortalSnapshotToLocalStorage();
+  queueActiveLodCodesRefresh();
   showMessage(`New LOD code generated: ${lodCode}.`);
 });
 
@@ -336,6 +346,7 @@ document.querySelector("#buildBracket").addEventListener("click", async () => {
 
   state = createBracketGraph(players);
   renderBracket();
+  queueActiveLodCodesRefresh();
   syncPdfLayoutToTeamCount(players.length);
   syncPayoutTeams(players.length);
   updatePayoutCalculator();
@@ -370,6 +381,7 @@ bracketOutput.addEventListener("click", (event) => {
   });
 
   chooseWinner(Number(button.dataset.matchId), button.dataset.player);
+  queueActiveLodCodesRefresh();
 });
 
 bracketOutput.addEventListener("change", (event) => {
@@ -391,6 +403,7 @@ bracketOutput.addEventListener("change", (event) => {
     boardAssignment: match.boardAssignment,
   });
   renderBracket();
+  queueActiveLodCodesRefresh();
 });
 
 backupList.addEventListener("click", (event) => {
@@ -424,6 +437,7 @@ backupList.addEventListener("click", (event) => {
     refreshGameNumbersAndSources(state);
   }
   renderBracket();
+  queueActiveLodCodesRefresh();
   showMessage(`Restored backup from ${formatBackupTime(backup.createdAt)}.`);
 });
 
@@ -2115,6 +2129,7 @@ function resetMatchResult(matchId) {
   });
 
   renderBracket();
+  queueActiveLodCodesRefresh();
   showMessage("Match result cleared. Pick the correct winner.");
 }
 
@@ -2778,6 +2793,7 @@ function getAllMatches(bracketState) {
 
 function renderBracket() {
   if (!state) {
+    queueActiveLodCodesRefresh();
     return;
   }
 
@@ -2787,6 +2803,7 @@ function renderBracket() {
     bracketOutput.innerHTML = renderPdfVisualBracket();
     updatePaperBackup();
     savePortalSnapshotToLocalStorage();
+    queueActiveLodCodesRefresh();
     return;
   }
 
@@ -2797,6 +2814,7 @@ function renderBracket() {
   `;
   updatePaperBackup();
   savePortalSnapshotToLocalStorage();
+  queueActiveLodCodesRefresh();
 }
 
 function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
@@ -2820,6 +2838,105 @@ function savePortalSnapshotToLocalStorage() {
     localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
   }
   queuePortalSnapshotPublish(snapshot);
+}
+
+function queueActiveLodCodesRefresh() {
+  if (!lodRegistryList) {
+    return;
+  }
+
+  if (registryRefreshTimer) {
+    clearTimeout(registryRefreshTimer);
+  }
+
+  registryRefreshTimer = setTimeout(() => {
+    registryRefreshTimer = null;
+    loadActiveLodCodes(false);
+  }, REGISTRY_REFRESH_DEBOUNCE_MS);
+}
+
+async function loadActiveLodCodes(announceFailure = false) {
+  if (!lodRegistryList) {
+    return;
+  }
+
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getRegistryUrl(baseUrl), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const registry = normalizeRegistry(await response.json());
+      renderActiveLodCodes(registry, baseUrl);
+      return;
+    } catch {
+      // Try the next host.
+    }
+  }
+
+  renderActiveLodCodes({ codes: [], updatedAt: "" }, "");
+  if (announceFailure) {
+    showMessage("Unable to load the active LOD registry.");
+  }
+}
+
+function getRegistryUrl(baseUrl) {
+  return `${baseUrl}/api/lod`;
+}
+
+function normalizeRegistry(data) {
+  if (Array.isArray(data)) {
+    return {
+      version: 1,
+      updatedAt: "",
+      codes: data.map(normalizeLodCode).filter(Boolean),
+    };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { version: 1, updatedAt: "", codes: [] };
+  }
+
+  return {
+    version: Number(data.version || 1),
+    updatedAt: data.updatedAt || "",
+    codes: Array.isArray(data.codes) ? data.codes.map(normalizeLodCode).filter(Boolean) : [],
+  };
+}
+
+function renderActiveLodCodes(registry, sourceBaseUrl) {
+  if (!lodRegistryList) {
+    return;
+  }
+
+  const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
+  const updatedLabel = registry?.updatedAt ? `Updated ${formatBackupTime(registry.updatedAt)}` : "No registry timestamp";
+  const sourceLabel = sourceBaseUrl ? `Source: ${sourceBaseUrl}` : "Source unavailable";
+
+  if (!codes.length) {
+    lodRegistryList.innerHTML = `
+      <div class="lod-registry-empty">
+        <strong>No active LODs published yet.</strong>
+        <span>${escapeHtml(sourceLabel)}</span>
+      </div>
+    `;
+    return;
+  }
+
+  lodRegistryList.innerHTML = `
+    <div class="lod-registry-meta">
+      <strong>${escapeHtml(`${codes.length} active LOD${codes.length === 1 ? "" : "s"}`)}</strong>
+      <span>${escapeHtml(updatedLabel)} • ${escapeHtml(sourceLabel)}</span>
+    </div>
+    <div class="lod-registry-codes">
+      ${codes.map((code) => `<code>${escapeHtml(code)}</code>`).join("")}
+    </div>
+  `;
 }
 
 function clearPortalSnapshotStorage() {

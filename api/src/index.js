@@ -56,6 +56,17 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
+    if (isRegistryRequest(url.pathname)) {
+      if (request.method.toUpperCase() !== "GET") {
+        return jsonResponse({ error: "Method not allowed" }, 405);
+      }
+
+      const response = await getRegistryStub(env).fetch(
+        new Request("https://registry/api/lod/index", { method: "GET" }),
+      );
+      return withCors(response);
+    }
+
     const code = extractLodCode(url.pathname, url.searchParams.get("lod"));
     if (!code) {
       return jsonResponse(
@@ -71,16 +82,89 @@ export default {
     const stub = env.BRACKET_ROOMS.get(roomId);
     const targetUrl = new URL(request.url);
     targetUrl.pathname = `/api/lod/${code}`;
+    const method = request.method.toUpperCase();
+    const payload = method === "PUT" || method === "PATCH"
+      ? await request.clone().json().catch(() => null)
+      : null;
 
     const response = await stub.fetch(new Request(targetUrl, request));
+
+    if (method === "PUT" || method === "PATCH") {
+      const snapshot = normalizeSnapshot(payload);
+      if (snapshot) {
+        await updateRegistry(env, snapshot.lodCode || code, true);
+      }
+    } else if (method === "DELETE") {
+      await updateRegistry(env, code, false);
+    }
+
     return withCors(response);
   },
 };
+
+function isRegistryRequest(pathname) {
+  return pathname === "/api/lod" || pathname === "/api/lod/" || pathname === "/api/lod/index";
+}
 
 function extractLodCode(pathname, queryCode) {
   const fromPath = pathname.match(/^\/api\/lod\/([A-Z0-9]+)$/i)?.[1];
   const normalized = normalizeLodCode(fromPath || queryCode);
   return normalized;
+}
+
+function getRegistryStub(env) {
+  const roomId = env.BRACKET_ROOMS.idFromName("__registry__");
+  return env.BRACKET_ROOMS.get(roomId);
+}
+
+async function readRegistry(env) {
+  const response = await getRegistryStub(env).fetch(
+    new Request("https://registry/api/lod/index", { method: "GET" }),
+  );
+
+  if (!response.ok) {
+    return { version: 1, updatedAt: "", codes: [] };
+  }
+
+  const registry = await response.json().catch(() => null);
+  if (!registry || typeof registry !== "object") {
+    return { version: 1, updatedAt: "", codes: [] };
+  }
+
+  return {
+    version: Number(registry.version || 1),
+    updatedAt: registry.updatedAt || "",
+    codes: Array.isArray(registry.codes) ? registry.codes.map(normalizeLodCode).filter(Boolean) : [],
+  };
+}
+
+async function updateRegistry(env, code, add = true) {
+  const normalized = normalizeLodCode(code);
+  if (!normalized) {
+    return;
+  }
+
+  const registry = await readRegistry(env);
+  const codes = new Set(registry.codes || []);
+  if (add) {
+    codes.add(normalized);
+  } else {
+    codes.delete(normalized);
+  }
+
+  const updatedRegistry = {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    codes: Array.from(codes).sort(),
+  };
+
+  await getRegistryStub(env).fetch(
+    new Request("https://registry/api/lod/index", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(updatedRegistry),
+    }),
+  );
 }
 
 function normalizeLodCode(value) {

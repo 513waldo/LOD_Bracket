@@ -40,11 +40,13 @@ export async function onRequest(context) {
     }
 
     await bracketState.put(key, JSON.stringify(snapshot));
+    await updateRegistry(bracketState, snapshot.lodCode || code);
     return jsonResponse(snapshot);
   }
 
   if (method === "DELETE") {
     await bracketState.delete(key);
+    await updateRegistry(bracketState, code, false);
     return jsonResponse({ ok: true });
   }
 
@@ -57,6 +59,51 @@ function getBracketStateBinding(env) {
 
 function snapshotKey(code) {
   return `lod-${code}`;
+}
+
+async function updateRegistry(bracketState, code, add = true) {
+  const normalized = normalizeLodCode(code);
+  if (!normalized) {
+    return;
+  }
+
+  const registry = await readRegistry(bracketState);
+  const existing = new Set(registry.codes || []);
+
+  if (add) {
+    existing.add(normalized);
+  } else {
+    existing.delete(normalized);
+  }
+
+  const updatedRegistry = {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    codes: Array.from(existing).sort(),
+  };
+
+  await bracketState.put(registryKey(), JSON.stringify(updatedRegistry));
+}
+
+async function readRegistry(bracketState) {
+  const registry = await bracketState.get(registryKey(), { type: "json" });
+  if (registry && typeof registry === "object") {
+    return {
+      version: Number(registry.version || 1),
+      updatedAt: registry.updatedAt || "",
+      codes: Array.isArray(registry.codes) ? registry.codes.map(normalizeLodCode).filter(Boolean) : [],
+    };
+  }
+
+  return {
+    version: 1,
+    updatedAt: "",
+    codes: [],
+  };
+}
+
+function registryKey() {
+  return "lod-index";
 }
 
 function normalizeLodCode(value) {
