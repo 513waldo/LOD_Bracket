@@ -184,6 +184,22 @@ textarea:focus {
   gap: 10px;
 }
 
+.portal-notice-field {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 320px);
+  color: #fffaf0;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portal-notice-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
 .lod-registry-panel {
   display: grid;
   gap: 12px;

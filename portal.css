@@ -204,6 +204,23 @@ h1 {
   word-break: break-word;
 }
 
+.portal-notice {
+  margin: 0;
+  border: 1px solid rgba(185, 39, 34, 0.28);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(185, 39, 34, 0.14), rgba(185, 39, 34, 0.08));
+  color: #7a1f17;
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.portal-notice[hidden] {
+  display: none;
+}
+
 .message {
   margin: 0;
   padding: 12px 14px;

@@ -3,6 +3,7 @@ const DEFAULT_SNAPSHOT_FILE = "bracket-state.json";
 const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
+const portalNotice = document.querySelector("#portalNotice");
 const portalMessage = document.querySelector("#portalMessage");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
@@ -219,6 +220,7 @@ function normalizeSnapshot(data) {
       exportedAt: data.exportedAt || "",
       lodCode: normalizeLodCode(data.lodCode),
       expiresAt: Number(data.expiresAt || 0) || 0,
+      portalNotice: String(data.portalNotice || ""),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -230,6 +232,7 @@ function normalizeSnapshot(data) {
     exportedAt: data.exportedAt || "",
     lodCode: normalizeLodCode(data.lodCode),
     expiresAt: Number(data.expiresAt || 0) || 0,
+    portalNotice: String(data.portalNotice || ""),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -253,6 +256,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   championText.textContent = state?.champion || "Pending";
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
+  setPortalNotice(snapshot.portalNotice || "");
 
   if (!state) {
     portalBracket.className = "bracket empty";
@@ -277,6 +281,7 @@ function renderEmptyPortal() {
   championText.textContent = "Pending";
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
+  setPortalNotice("");
 }
 
 function focusActiveMatch(state) {
@@ -515,6 +520,16 @@ function getTeamCount(state) {
 
 function setMessage(text) {
   portalMessage.textContent = text;
+}
+
+function setPortalNotice(text) {
+  if (!portalNotice) {
+    return;
+  }
+
+  const value = String(text || "").trim();
+  portalNotice.hidden = !value;
+  portalNotice.textContent = value;
 }
 
 function getRequestedLodCode() {

@@ -40,6 +40,8 @@ const lodCodeText = document.querySelector("#lodCodeText");
 const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
 const clearLodCodeButton = document.querySelector("#clearLodCode");
+const portalNoticeInput = document.querySelector("#portalNoticeInput");
+const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const API_BASE_URLS = getApiBaseUrls();
@@ -117,6 +119,7 @@ let hasGeneratedTeams = false;
 let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
+let portalNotice = "";
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -241,6 +244,22 @@ clearLodCodeButton?.addEventListener("click", () => {
 
   queueActiveLodCodesRefresh();
   showMessage("LOD code cleared.");
+});
+
+portalNoticeInput?.addEventListener("input", () => {
+  portalNotice = portalNoticeInput.value || "";
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+});
+
+clearPortalNoticeButton?.addEventListener("click", () => {
+  portalNotice = "";
+  if (portalNoticeInput) {
+    portalNoticeInput.value = "";
+  }
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  showMessage("Portal message cleared.");
 });
 
 copyPortalLinkButton?.addEventListener("click", async () => {
@@ -2883,6 +2902,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     state: state ? JSON.parse(JSON.stringify(state)) : null,
     outShots: getOutShots(),
     mysteryOut,
+    portalNotice,
   };
 }
 
@@ -2919,6 +2939,10 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   hasGeneratedTeams = false;
   blockedGenerateCount = 0;
   playerList.value = "";
+  portalNotice = "";
+  if (portalNoticeInput) {
+    portalNoticeInput.value = "";
+  }
   championOutput.textContent = "Champion: pending";
   groupsOutput.className = "groups empty";
   groupsOutput.textContent = "No groups drawn yet.";
@@ -3022,6 +3046,13 @@ function restoreBracketDraft() {
     renderBracket();
     syncPdfLayoutToTeamCount(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
     syncPayoutTeams(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
+  }
+
+  if (typeof draft.portalNotice === "string") {
+    portalNotice = draft.portalNotice;
+    if (portalNoticeInput) {
+      portalNoticeInput.value = portalNotice;
+    }
   }
 
   if (typeof draft.mysteryOut === "string") {
@@ -3128,6 +3159,7 @@ function buildBracketDraft() {
     pdfLayoutValue: pdfLayoutSelect?.value || "",
     lodCode,
     expiresAt: getBracketCleanupAt(lodCode) || "",
+    portalNotice,
   };
 }
 
