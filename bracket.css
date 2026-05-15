@@ -754,10 +754,6 @@ textarea {
   margin-bottom: 8px;
 }
 
-.board-assignments-slot {
-  margin-bottom: 16px;
-}
-
 .board-assignment-select {
   min-width: 92px;
   min-height: 40px;
@@ -770,34 +766,22 @@ textarea {
   font-weight: 900;
 }
 
-.board-assignment-title {
-  margin-bottom: 0;
-}
-
-.board-assignment-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 10px;
-}
-
-.board-assignment-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+.match-tools {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--blue-surface);
-  padding: 10px;
+  gap: 8px 12px;
+  margin-bottom: 8px;
 }
 
-.board-assignment-row-label {
-  min-width: 0;
-  color: var(--ink);
-  font-size: 0.84rem;
+.board-assignment-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
   font-weight: 900;
-  line-height: 1.2;
-  word-break: break-word;
+  text-transform: uppercase;
 }
 
 .match-title {

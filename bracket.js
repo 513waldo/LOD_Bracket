@@ -37,7 +37,6 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
-const boardAssignmentsOutput = document.querySelector("#boardAssignments");
 const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
@@ -2784,9 +2783,6 @@ function renderBracket() {
 
   championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
   bracketOutput.className = "bracket";
-  if (boardAssignmentsOutput) {
-    boardAssignmentsOutput.innerHTML = renderBoardAssignmentsPanel();
-  }
   if (state.mode === "graph") {
     bracketOutput.innerHTML = renderPdfVisualBracket();
     updatePaperBackup();
@@ -3419,6 +3415,9 @@ function renderFinalMatchBlock(match, title) {
             >Fix</button>
           ` : ""}
         </div>
+        <div class="match-tools">
+          ${renderBoardAssignmentControl(match)}
+        </div>
         ${buildMatchMeta(match)}
         <div class="slots">
           ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
@@ -3506,6 +3505,9 @@ function renderMatch(match) {
         >Fix</button>
         ` : ""}
       </div>
+      <div class="match-tools">
+        ${renderBoardAssignmentControl(match)}
+      </div>
       ${buildMatchMeta(match)}
       <div class="slots">
         ${match.players.map((player, slotIndex) => renderPlayerButton(match, player, slotIndex, shouldDisablePendingGraphMatch(match))).join("")}
@@ -3580,66 +3582,17 @@ function buildMatchMeta(match) {
   return `<p class="match-meta">${labels.join(" | ")}</p>`;
 }
 
-function renderBoardAssignmentsPanel() {
-  if (!state?.matches?.length) {
-    return `
-      <div class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
-        <div class="panel-title board-assignment-title">
-          <div>
-            <p class="step-label">Boards</p>
-            <h2 id="boardAssignmentsTitle">Board assignments</h2>
-          </div>
-          <p>Build a bracket to assign boards.</p>
-        </div>
-      </div>
-    `;
-  }
-
-  const matches = state.matches
-    .filter((match) => {
-      if (state.mode === "graph") {
-        return !isGraphHiddenMatch(match);
-      }
-
-      return !match.players.every((player) => player === "BYE") &&
-        !match.autoAdvanced &&
-        (hasMatchInput(match) || state.mode !== "graph");
-    })
-    .slice()
-    .sort((a, b) => {
-      const aGame = Number(a.gameNumber) || Number.MAX_SAFE_INTEGER;
-      const bGame = Number(b.gameNumber) || Number.MAX_SAFE_INTEGER;
-      return aGame - bGame || a.id - b.id;
-    });
-
-  return `
-    <div class="board-assignment-panel" aria-labelledby="boardAssignmentsTitle">
-      <div class="panel-title board-assignment-title">
-        <div>
-          <p class="step-label">Boards</p>
-          <h2 id="boardAssignmentsTitle">Board assignments</h2>
-        </div>
-        <p>Pick a board number for each visible match.</p>
-      </div>
-      <div class="board-assignment-grid">
-        ${matches.map((match) => renderBoardAssignmentRow(match)).join("")}
-      </div>
-    </div>
-  `;
-}
-
-function renderBoardAssignmentRow(match) {
+function renderBoardAssignmentControl(match) {
   const currentValue = Number(match.boardAssignment) || 0;
-  const label = formatMatchTitle(match);
 
   return `
-    <label class="board-assignment-row">
-      <span class="board-assignment-row-label">${escapeHtml(label)}</span>
+    <label class="board-assignment-field">
+      <span>Board</span>
       <select
         class="board-assignment-select"
         data-board-assignment
         data-match-id="${match.id}"
-        aria-label="Board assignment for ${escapeAttribute(label)}"
+        aria-label="Board assignment for ${escapeAttribute(formatMatchTitle(match))}"
       >
         <option value=""${currentValue ? "" : " selected"}>Unassigned</option>
         ${Array.from({ length: 10 }, (_, index) => {
