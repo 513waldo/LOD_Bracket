@@ -127,13 +127,22 @@ textarea:focus {
   color: #fffaf0;
 }
 
+.share-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  gap: 18px;
+  align-items: start;
+  width: min(100%, 1180px);
+  margin: 0 auto 18px;
+}
+
 .qr-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 18px 22px;
   align-items: center;
-  width: min(100%, 860px);
-  margin: 0 auto 18px;
+  width: auto;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--blue-panel);
@@ -178,8 +187,8 @@ textarea:focus {
 .lod-registry-panel {
   display: grid;
   gap: 12px;
-  width: min(100%, 860px);
-  margin: 0 auto 18px;
+  width: auto;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--blue-panel);
@@ -1899,6 +1908,10 @@ button.player-button .loser-source-text {
     display: grid;
   }
 
+  .share-row {
+    grid-template-columns: 1fr;
+  }
+
   .topbar-actions {
     justify-content: flex-start;
   }
@@ -1996,6 +2009,10 @@ button.player-button .loser-source-text {
   }
 
   .qr-panel {
+    width: 100%;
+  }
+
+  .lod-registry-panel {
     width: 100%;
   }
 

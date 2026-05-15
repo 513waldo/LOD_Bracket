@@ -24,6 +24,7 @@ const storedLodCode = getStoredPortalLodCode();
 let activeLodCode = storedLodCode !== null ? storedLodCode : getRequestedLodCode();
 let refreshTimer = null;
 let portalExpiryTimer = null;
+let autoFocusAppliedForCode = "";
 
 reloadSnapshotButton.addEventListener("click", () => {
   loadPublishedSnapshot(activeLodCode, true);
@@ -97,7 +98,7 @@ async function boot() {
   const localSnapshot = readStoredSnapshot(activeLodCode);
   if (localSnapshot) {
     if (shouldExpirePortalSession(activeLodCode, localSnapshot)) {
-      expirePortalSession(activeLodCode);
+      expirePortalSession(activeLodCode, "EXPIRED CODE");
       return;
     }
 
@@ -126,7 +127,7 @@ async function loadPublishedSnapshot(code, announceFailure) {
 
   if (localSnapshot && !activeSnapshot) {
     if (shouldExpirePortalSession(normalizedCode, localSnapshot)) {
-      expirePortalSession(normalizedCode);
+      expirePortalSession(normalizedCode, "EXPIRED CODE");
       return;
     }
 
@@ -136,6 +137,11 @@ async function loadPublishedSnapshot(code, announceFailure) {
   for (const baseUrl of getCandidateBaseUrls(normalizedCode)) {
     try {
       const response = await fetch(getSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
+
+      if (response.status === 410) {
+        expirePortalSession(normalizedCode, "EXPIRED CODE");
+        return;
+      }
 
       if (!response.ok) {
         continue;
@@ -147,7 +153,7 @@ async function loadPublishedSnapshot(code, announceFailure) {
       }
 
       if (shouldExpirePortalSession(normalizedCode, snapshot)) {
-        expirePortalSession(normalizedCode);
+        expirePortalSession(normalizedCode, "EXPIRED CODE");
         return;
       }
 
@@ -182,7 +188,7 @@ function startAutoRefresh() {
   refreshTimer = window.setInterval(() => {
     if (activeLodCode) {
       if (isPortalSessionExpired(activeLodCode)) {
-        expirePortalSession(activeLodCode);
+        expirePortalSession(activeLodCode, "EXPIRED CODE");
         return;
       }
       loadPublishedSnapshot(activeLodCode, false);
@@ -212,6 +218,7 @@ function normalizeSnapshot(data) {
       version: Number(data.version || 1),
       exportedAt: data.exportedAt || "",
       lodCode: normalizeLodCode(data.lodCode),
+      expiresAt: Number(data.expiresAt || 0) || 0,
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -222,6 +229,7 @@ function normalizeSnapshot(data) {
     version: 1,
     exportedAt: data.exportedAt || "",
     lodCode: normalizeLodCode(data.lodCode),
+    expiresAt: Number(data.expiresAt || 0) || 0,
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -255,8 +263,9 @@ function renderSnapshot(snapshot, sourceLabel) {
 
   portalBracket.className = "bracket";
   portalBracket.innerHTML = renderBracket(state);
+  focusActiveMatch(state);
   updateUrlForCode(activeLodCode);
-  updatePortalExpiryFromSnapshot(activeLodCode, state);
+  updatePortalExpiryFromSnapshot(activeLodCode, snapshot.expiresAt, state);
   setMessage("");
 }
 
@@ -268,6 +277,62 @@ function renderEmptyPortal() {
   championText.textContent = "Pending";
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
+}
+
+function focusActiveMatch(state) {
+  const matchId = getActiveMatchId(state);
+  const normalizedCode = normalizeLodCode(activeLodCode);
+
+  if (!matchId || !normalizedCode) {
+    autoFocusAppliedForCode = "";
+    return;
+  }
+
+  const focusKey = `${normalizedCode}:${matchId}`;
+  if (autoFocusAppliedForCode === focusKey) {
+    return;
+  }
+
+  const target = document.querySelector(`.match[data-match-id="${String(matchId)}"]`);
+  if (!target) {
+    autoFocusAppliedForCode = focusKey;
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+  });
+
+  autoFocusAppliedForCode = focusKey;
+}
+
+function getActiveMatchId(state) {
+  if (!state || !Array.isArray(state.matches)) {
+    return "";
+  }
+
+  const match = state.matches.find((entry) => isFocusCandidate(entry));
+  return match ? String(match.id || "") : "";
+}
+
+function isFocusCandidate(match) {
+  if (!match || typeof match !== "object") {
+    return false;
+  }
+
+  const players = Array.isArray(match.players) ? match.players : [];
+  const sources = Array.isArray(match.slotSources) ? match.slotSources : [];
+  const hasContent = players.some((player) => player && player !== "BYE") || sources.some(Boolean);
+
+  return hasContent && !match.winner;
+}
+
+function isCurrentMatch(match) {
+  return String(match?.id || "") === getActiveMatchId(activeSnapshot?.state || null);
 }
 
 function renderBracket(state) {
@@ -376,7 +441,7 @@ function renderMatch(match, mode) {
       : "Pending";
 
   return `
-    <article class="match ${isComplete ? "complete" : "pending"}">
+    <article class="match ${isComplete ? "complete" : "pending"}${isCurrentMatch(match) ? " current" : ""}" data-match-id="${escapeHtml(String(match.id || ""))}">
       <div class="match-header">
         <p class="match-title">${escapeHtml(match.title || (match.gameNumber ? `Game ${match.gameNumber}` : "Match"))}</p>
         <span class="match-status">${escapeHtml(status)}</span>
@@ -518,17 +583,19 @@ function syncPortalCodeInput() {
   }
 }
 
-function updatePortalExpiryFromSnapshot(code, state) {
+function updatePortalExpiryFromSnapshot(code, expiresAt, state) {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
     return;
   }
 
   if (state && state.champion) {
-    const existingExpiry = getStoredPortalExpiry(normalizedCode);
-    const expiresAt = existingExpiry || (Date.now() + portalSessionDurationMs);
-    saveStoredPortalExpiry(normalizedCode, expiresAt);
-    schedulePortalExpiryTimer(normalizedCode, expiresAt);
+    const parsedExpiry = Number(expiresAt || 0);
+    const deadline = Number.isFinite(parsedExpiry) && parsedExpiry > 0
+      ? parsedExpiry
+      : (getStoredPortalExpiry(normalizedCode) || (Date.now() + portalSessionDurationMs));
+    saveStoredPortalExpiry(normalizedCode, deadline);
+    schedulePortalExpiryTimer(normalizedCode, deadline);
     return;
   }
 
@@ -546,7 +613,10 @@ function shouldExpirePortalSession(code, snapshot) {
     return false;
   }
 
-  const expiresAt = getStoredPortalExpiry(normalizedCode) || (Date.now() + portalSessionDurationMs);
+  const parsedExpiry = Number(snapshot?.expiresAt || 0);
+  const expiresAt = Number.isFinite(parsedExpiry) && parsedExpiry > 0
+    ? parsedExpiry
+    : (getStoredPortalExpiry(normalizedCode) || (Date.now() + portalSessionDurationMs));
   saveStoredPortalExpiry(normalizedCode, expiresAt);
   const remaining = expiresAt - Date.now();
   if (remaining <= 0) {
@@ -575,7 +645,7 @@ function schedulePortalExpiryTimer(code, expiresAt) {
   }, remaining);
 }
 
-function expirePortalSession(code) {
+function expirePortalSession(code, messageText = "") {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
     return;
@@ -591,7 +661,7 @@ function expirePortalSession(code) {
     updateUrlForCode("");
     syncPortalCodeInput();
     renderEmptyPortal();
-    setMessage(`LOD ${normalizedCode} session ended.`);
+    setMessage(messageText || `LOD ${normalizedCode} session ended.`);
   }
 }
 

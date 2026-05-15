@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Draw and Bracket</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-41">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-44">
 </head>
 <body>
   <main class="app">
@@ -177,29 +177,37 @@
       </div>
     </div>
 
-    <section class="qr-panel" aria-labelledby="qrTitle">
-      <div class="qr-copy">
-        <p class="step-label">Player access</p>
-        <h2 id="qrTitle">QR code</h2>
-        <p>Scan to open the view-only portal for this LOD.</p>
-      </div>
-      <img id="portalQrCode" class="qr-code" alt="QR code for the player portal" src="" width="240" height="240">
-      <div class="qr-actions">
-        <button id="newLodCode" class="secondary" type="button">New code</button>
-        <div id="lodCodeText" class="lod-code-text" aria-live="polite">LOD: ------</div>
-      </div>
-    </section>
-
-    <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
-      <div class="panel-title">
-        <div>
-          <p class="step-label">Active</p>
-          <h2 id="lodRegistryTitle">Active LODs</h2>
+    <div class="share-row">
+      <section class="qr-panel" aria-labelledby="qrTitle">
+        <div class="qr-copy">
+          <p class="step-label">Player access</p>
+          <h2 id="qrTitle">QR code</h2>
+          <p>Scan to open the view-only portal for this LOD.</p>
         </div>
-        <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
-      </div>
-      <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
-    </section>
+        <img id="portalQrCode" class="qr-code" alt="QR code for the player portal" src="" width="240" height="240">
+        <div class="qr-actions">
+          <button id="newLodCode" class="secondary" type="button">New code</button>
+          <div id="lodCodeText" class="lod-code-text" aria-live="polite">LOD: ------</div>
+          <label class="lod-code-entry">
+            Load code
+            <input id="lodCodeInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
+          </label>
+          <button id="loadLodCode" class="secondary" type="button">Load</button>
+          <button id="clearLodCode" class="secondary" type="button">Clear</button>
+        </div>
+      </section>
+
+      <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
+        <div class="panel-title">
+          <div>
+            <p class="step-label">Active</p>
+            <h2 id="lodRegistryTitle">Active LODs</h2>
+          </div>
+          <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
+        </div>
+        <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
+      </section>
+    </div>
 
     <div class="bracket-workspace">
       <section class="bracket-shell" aria-labelledby="bracketTitle">
@@ -288,6 +296,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=4"></script>
-  <script src="bracket.js?v=interactive-tools-45"></script>
+  <script src="bracket.js?v=interactive-tools-47"></script>
 </body>
 </html>

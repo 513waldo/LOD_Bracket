@@ -37,6 +37,9 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
+const lodCodeInput = document.querySelector("#lodCodeInput");
+const loadLodCodeButton = document.querySelector("#loadLodCode");
+const clearLodCodeButton = document.querySelector("#clearLodCode");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const API_BASE_URLS = getApiBaseUrls();
@@ -48,7 +51,11 @@ const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
 const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
+const bracketDraftStorageKey = "dartsTournamentBracketDraft";
+const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
 const lodCodeStorageKey = "dartsTournamentLodCode";
+const lodCodeClearedValue = "__CLEARED__";
+const bracketCleanupDurationMs = 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const dartScores = [
   ...Array.from({ length: 20 }, (_, index) => index + 1),
@@ -110,10 +117,13 @@ let hasGeneratedTeams = false;
 let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
-let lodCode = getStoredLodCode() || generateLodCode();
+const storedLodCode = getStoredLodCode();
+let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
 let registryRefreshTimer = null;
+let bracketDraftSaveTimer = null;
+let bracketCleanupTimer = null;
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
@@ -128,6 +138,7 @@ syncPayoutTeamsFromPlayerCount();
 updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
+restoreBracketDraft();
 loadActiveLodCodes();
 
 totalPlayers.addEventListener("change", () => {
@@ -144,16 +155,30 @@ playersPerGroup.addEventListener("change", () => {
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
   renderNameInputs(Number(totalPlayers.value));
+  queueBracketDraftSave();
 });
 
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
     renderPdfColumnMirror(Number(pdfLayoutSelect.value));
+    queueBracketDraftSave();
   });
 }
 
 refreshRegistryButton?.addEventListener("click", () => {
   loadActiveLodCodes(true);
+});
+
+document.addEventListener("input", (event) => {
+  if (event.target?.matches?.("input:not([type='file']), textarea, select")) {
+    queueBracketDraftSave();
+  }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target?.matches?.("input:not([type='file']), textarea, select")) {
+    queueBracketDraftSave();
+  }
 });
 
 document.querySelector("#saveCurrentBackup").addEventListener("click", () => {
@@ -177,16 +202,45 @@ document.querySelector("#downloadPortalSnapshot").addEventListener("click", () =
 });
 
 newLodCodeButton?.addEventListener("click", () => {
-  const previousCode = lodCode;
   lodCode = generateLodCode();
   saveStoredLodCode(lodCode);
   renderPortalLink();
-  if (canUseLocalStorage()) {
-    localStorage.removeItem(`${portalSnapshotStorageKey}:${previousCode}`);
-  }
   savePortalSnapshotToLocalStorage();
   queueActiveLodCodesRefresh();
   showMessage(`New LOD code generated: ${lodCode}.`);
+});
+
+loadLodCodeButton?.addEventListener("click", () => {
+  const code = normalizeLodCode(lodCodeInput?.value || "");
+
+  if (!code) {
+    lodCode = "";
+    saveStoredLodCode("");
+    renderPortalLink();
+    queueActiveLodCodesRefresh();
+    showMessage("LOD code cleared.");
+    return;
+  }
+
+  lodCode = code;
+  saveStoredLodCode(lodCode);
+  renderPortalLink();
+  queueActiveLodCodesRefresh();
+  showMessage(`Loaded LOD code: ${lodCode}.`);
+});
+
+clearLodCodeButton?.addEventListener("click", () => {
+  const previousCode = lodCode;
+  lodCode = "";
+  saveStoredLodCode("");
+  renderPortalLink();
+
+  if (canUseLocalStorage() && previousCode) {
+    localStorage.removeItem(`${portalSnapshotStorageKey}:${previousCode}`);
+  }
+
+  queueActiveLodCodesRefresh();
+  showMessage("LOD code cleared.");
 });
 
 copyPortalLinkButton?.addEventListener("click", async () => {
@@ -472,6 +526,7 @@ function renderTeams(teams) {
   syncPdfLayoutToTeamCount(teams.length);
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
+  queueBracketDraftSave();
 }
 
 function syncPayoutTeams(teamCount = getPlayers().length) {
@@ -721,22 +776,7 @@ function hideTeamDrawWarning() {
 }
 
 function resetTournament() {
-  state = null;
-  currentTeams = [];
-  hasGeneratedTeams = false;
-  blockedGenerateCount = 0;
-  playerList.value = "";
-  championOutput.textContent = "Champion: pending";
-  groupsOutput.className = "groups empty";
-  groupsOutput.textContent = "No groups drawn yet.";
-  bracketOutput.className = "bracket empty";
-  bracketOutput.textContent = "Build a bracket to start.";
-  paperBackup.textContent = "Build a bracket to create a paper backup.";
-  mysteryOut = "";
-  renderMysteryOut();
-  hideTeamDrawWarning();
-  clearPlayerNames();
-  clearPortalSnapshotStorage();
+  clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
   showMessage("Bracket, teams, and player names cleared.");
 }
 
@@ -803,6 +843,7 @@ function saveOutShots() {
 
   localStorage.setItem(outShotStorageKey, JSON.stringify(getOutShots()));
   savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
 }
 
 function readOutShots() {
@@ -825,6 +866,7 @@ function clearOutShots() {
   renderOutShotSheet();
   renderMysteryOutWinner();
   savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
 }
 
 function preventDuplicateOutShotNumber(input) {
@@ -947,6 +989,7 @@ function animateDieRoll(index) {
       diceRollTimers[index] = null;
       setDieValue(index, randomD20());
       button.classList.remove("rolling");
+      queueBracketDraftSave();
     }, 620),
   };
 }
@@ -959,6 +1002,7 @@ function renderDice() {
   dieButtons.forEach((button, index) => {
     setDieValue(index, diceValues[index]);
   });
+  queueBracketDraftSave();
 }
 
 function generateMysteryOut() {
@@ -974,6 +1018,7 @@ function generateMysteryOut() {
   };
   renderMysteryOut();
   savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
 }
 
 function renderMysteryOut() {
@@ -992,6 +1037,7 @@ function resetMysteryOut() {
   mysteryOut = "";
   renderMysteryOut();
   savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
 }
 
 function getAvailableOuts(mode) {
@@ -2797,12 +2843,22 @@ function renderBracket() {
     return;
   }
 
+  if (state.champion) {
+    if (!scheduleBracketCleanupIfNeeded()) {
+      return;
+    }
+  } else {
+    clearBracketCleanupTimer();
+    clearBracketCleanupStorage(lodCode);
+  }
+
   championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
   bracketOutput.className = "bracket";
   if (state.mode === "graph") {
     bracketOutput.innerHTML = renderPdfVisualBracket();
     updatePaperBackup();
     savePortalSnapshotToLocalStorage();
+    saveBracketDraft();
     queueActiveLodCodesRefresh();
     return;
   }
@@ -2814,6 +2870,7 @@ function renderBracket() {
   `;
   updatePaperBackup();
   savePortalSnapshotToLocalStorage();
+  saveBracketDraft();
   queueActiveLodCodesRefresh();
 }
 
@@ -2822,6 +2879,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     version: 1,
     exportedAt,
     lodCode,
+    expiresAt: getBracketCleanupAt(lodCode) || "",
     state: state ? JSON.parse(JSON.stringify(state)) : null,
     outShots: getOutShots(),
     mysteryOut,
@@ -2838,6 +2896,329 @@ function savePortalSnapshotToLocalStorage() {
     localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
   }
   queuePortalSnapshotPublish(snapshot);
+}
+
+function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
+  const cleanupCode = normalizeLodCode(code || lodCode);
+
+  if (portalPublishTimer) {
+    clearTimeout(portalPublishTimer);
+    portalPublishTimer = null;
+  }
+  lastPublishedPortalSnapshot = "";
+  clearBracketCleanupTimer();
+  if (cleanupCode) {
+    clearBracketCleanupStorage(cleanupCode);
+    clearPortalSnapshotStorage(cleanupCode);
+  } else {
+    clearPortalSnapshotStorage();
+  }
+
+  state = null;
+  currentTeams = [];
+  hasGeneratedTeams = false;
+  blockedGenerateCount = 0;
+  playerList.value = "";
+  championOutput.textContent = "Champion: pending";
+  groupsOutput.className = "groups empty";
+  groupsOutput.textContent = "No groups drawn yet.";
+  bracketOutput.className = "bracket empty";
+  bracketOutput.textContent = "Build a bracket to start.";
+  paperBackup.textContent = "Build a bracket to create a paper backup.";
+  mysteryOut = "";
+  renderMysteryOut();
+  hideTeamDrawWarning();
+  clearPlayerNames();
+
+  if (clearDraft) {
+    clearBracketDraftStorage();
+  }
+
+  if (!preserveLodCode) {
+    lodCode = "";
+    saveStoredLodCode("");
+    renderPortalLink();
+  }
+}
+
+function saveBracketDraft() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(bracketDraftStorageKey, JSON.stringify(buildBracketDraft()));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function queueBracketDraftSave() {
+  if (bracketDraftSaveTimer) {
+    clearTimeout(bracketDraftSaveTimer);
+  }
+
+  bracketDraftSaveTimer = setTimeout(() => {
+    bracketDraftSaveTimer = null;
+    saveBracketDraft();
+  }, 150);
+}
+
+function restoreBracketDraft() {
+  const draft = readBracketDraft();
+  if (!draft) {
+    return;
+  }
+
+  if (typeof draft.lodCode === "string" && draft.lodCode.trim()) {
+    lodCode = normalizeLodCode(draft.lodCode) || lodCode;
+    saveStoredLodCode(lodCode);
+    renderPortalLink();
+  }
+
+  if (Number.isInteger(Number(draft.totalPlayers)) && draft.totalPlayers > 0) {
+    totalPlayers.value = String(draft.totalPlayers);
+  }
+
+  if (Number.isInteger(Number(draft.playersPerGroup)) && draft.playersPerGroup > 0) {
+    playersPerGroup.value = String(draft.playersPerGroup);
+  }
+
+  renderNameInputs(Number(totalPlayers.value));
+
+  if (draft.nameMap && typeof draft.nameMap === "object") {
+    applyPlayerNameMap(draft.nameMap, true);
+  }
+
+  if (typeof draft.playerList === "string") {
+    playerList.value = draft.playerList;
+  }
+
+  if (Array.isArray(draft.currentTeams) && draft.currentTeams.length) {
+    currentTeams = draft.currentTeams;
+    hasGeneratedTeams = Boolean(draft.hasGeneratedTeams);
+    blockedGenerateCount = Number(draft.blockedGenerateCount || 0);
+    renderGroups(currentTeams);
+  }
+
+  if (draft.state && typeof draft.state === "object") {
+    state = draft.state;
+    mysteryOut = draft.mysteryOut || "";
+
+    const savedExpiry = Number(draft.expiresAt || 0);
+    if (state.champion) {
+      if (Number.isFinite(savedExpiry) && savedExpiry > 0) {
+        saveBracketCleanupAt(lodCode, savedExpiry);
+        const remaining = savedExpiry - Date.now();
+        if (remaining <= 0) {
+          expireBracketSession(lodCode);
+          return;
+        }
+      } else {
+        saveBracketCleanupAt(lodCode, Date.now() + bracketCleanupDurationMs);
+      }
+    }
+
+    renderBracket();
+    syncPdfLayoutToTeamCount(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
+    syncPayoutTeams(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
+  }
+
+  if (typeof draft.mysteryOut === "string") {
+    mysteryOut = draft.mysteryOut;
+    renderMysteryOut();
+  } else if (draft.mysteryOut && typeof draft.mysteryOut === "object") {
+    mysteryOut = draft.mysteryOut;
+    if (draft.mysteryOut.mode) {
+      setMysteryOutMode(draft.mysteryOut.mode);
+    }
+    renderMysteryOut();
+  }
+
+  if (Array.isArray(draft.diceValues) && draft.diceValues.length >= 2) {
+    draft.diceValues.slice(0, 2).forEach((value, index) => {
+      const numeric = Number(value) || 1;
+      setDieValue(index, numeric < 1 ? 1 : numeric);
+    });
+  }
+
+  if (pdfLayoutSelect && Number.isInteger(Number(draft.pdfLayoutValue))) {
+    pdfLayoutSelect.value = String(draft.pdfLayoutValue);
+    renderPdfColumnMirror(Number(draft.pdfLayoutValue));
+  }
+
+  if (draft.payout && typeof draft.payout === "object") {
+    if (payoutTeams && draft.payout.teams !== undefined) {
+      payoutTeams.value = String(draft.payout.teams);
+    }
+    if (payoutEntry && draft.payout.entry !== undefined) {
+      payoutEntry.value = String(draft.payout.entry);
+    }
+    if (payoutAdded && draft.payout.added !== undefined) {
+      payoutAdded.value = String(draft.payout.added);
+    }
+    if (payoutPlaces && draft.payout.places !== undefined) {
+      payoutPlaces.value = String(draft.payout.places);
+    }
+    if (Array.isArray(draft.payout.percentValues)) {
+      renderPayoutPercentInputs(Number(payoutPlaces?.value || 0));
+      Array.from(document.querySelectorAll("[data-payout-percent]")).forEach((input, index) => {
+        if (draft.payout.percentValues[index] !== undefined) {
+          input.value = String(draft.payout.percentValues[index]);
+        }
+      });
+    }
+    updatePayoutCalculator();
+  }
+
+  queueBracketDraftSave();
+}
+
+function readBracketDraft() {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(bracketDraftStorageKey);
+    if (!raw) {
+      return null;
+    }
+
+    const draft = JSON.parse(raw);
+    return draft && typeof draft === "object" ? draft : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearBracketDraftStorage() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(bracketDraftStorageKey);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function buildBracketDraft() {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    totalPlayers: Number(totalPlayers.value) || 0,
+    playersPerGroup: Number(playersPerGroup.value) || 0,
+    playerList: playerList.value || "",
+    nameMap: getPlayerNameMap(),
+    currentTeams,
+    hasGeneratedTeams,
+    blockedGenerateCount,
+    state: state ? JSON.parse(JSON.stringify(state)) : null,
+    mysteryOut,
+    diceValues: [...diceValues],
+    payout: {
+      teams: payoutTeams?.value || "",
+      entry: payoutEntry?.value || "",
+      added: payoutAdded?.value || "",
+      places: payoutPlaces?.value || "",
+      percentValues: Array.from(document.querySelectorAll("[data-payout-percent]")).map((input) => input.value),
+    },
+    pdfLayoutValue: pdfLayoutSelect?.value || "",
+    lodCode,
+    expiresAt: getBracketCleanupAt(lodCode) || "",
+  };
+}
+
+function scheduleBracketCleanupIfNeeded() {
+  if (!state?.champion || !lodCode) {
+    clearBracketCleanupTimer();
+    clearBracketCleanupStorage(lodCode);
+    return true;
+  }
+
+  let expiresAt = getBracketCleanupAt(lodCode);
+  if (!expiresAt) {
+    expiresAt = Date.now() + bracketCleanupDurationMs;
+    saveBracketCleanupAt(lodCode, expiresAt);
+  }
+
+  const remaining = Number(expiresAt) - Date.now();
+  if (remaining <= 0) {
+    expireBracketSession(lodCode);
+    return false;
+  }
+
+  clearBracketCleanupTimer();
+  bracketCleanupTimer = setTimeout(() => {
+    expireBracketSession(lodCode);
+  }, remaining);
+
+  return true;
+}
+
+function expireBracketSession(code = lodCode) {
+  const expiredCode = normalizeLodCode(code);
+  clearBracketCleanupTimer();
+  clearTournamentState({ preserveLodCode: false, clearDraft: true, code: expiredCode });
+  if (expiredCode) {
+    clearBracketCleanupStorage(expiredCode);
+  }
+  queueActiveLodCodesRefresh();
+  showMessage(expiredCode
+    ? `LOD ${expiredCode} expired after 60 minutes and was cleared.`
+    : "Expired bracket session cleared.");
+}
+
+function getBracketCleanupAt(code = lodCode) {
+  if (!canUseLocalStorage()) {
+    return 0;
+  }
+
+  try {
+    const raw = localStorage.getItem(getBracketCleanupStorageKey(code));
+    const value = Number(raw);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBracketCleanupAt(code = lodCode, expiresAt) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(getBracketCleanupStorageKey(code), String(Number(expiresAt) || 0));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function clearBracketCleanupStorage(code = lodCode) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(getBracketCleanupStorageKey(code));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function clearBracketCleanupTimer() {
+  if (bracketCleanupTimer) {
+    clearTimeout(bracketCleanupTimer);
+    bracketCleanupTimer = null;
+  }
+}
+
+function getBracketCleanupStorageKey(code = lodCode) {
+  const normalized = normalizeLodCode(code) || "default";
+  return `${bracketCleanupStorageKey}:${normalized}`;
 }
 
 function queueActiveLodCodesRefresh() {
@@ -2939,17 +3320,22 @@ function renderActiveLodCodes(registry, sourceBaseUrl) {
   `;
 }
 
-function clearPortalSnapshotStorage() {
+function clearPortalSnapshotStorage(code = lodCode) {
+  const snapshotCode = normalizeLodCode(code);
   if (canUseLocalStorage()) {
-    localStorage.removeItem(getPortalSnapshotStorageKey());
+    if (!snapshotCode || snapshotCode === normalizeLodCode(lodCode)) {
+      localStorage.removeItem(getPortalSnapshotStorageKey());
+    } else {
+      localStorage.removeItem(`${portalSnapshotStorageKey}:${snapshotCode}`);
+    }
   }
 
-  if (!API_BASE_URLS.length || !lodCode) {
+  if (!API_BASE_URLS.length || !snapshotCode) {
     return;
   }
 
   API_BASE_URLS.forEach((baseUrl) => {
-    fetch(getApiSnapshotUrl(baseUrl, lodCode), { method: "DELETE" }).catch(() => {
+    fetch(getApiSnapshotUrl(baseUrl, snapshotCode), { method: "DELETE" }).catch(() => {
       // Ignore cleanup failures; the next publish will overwrite the old snapshot.
     });
   });
@@ -3258,13 +3644,20 @@ function getPortalSnapshotStorageKey() {
 
 function getStoredLodCode() {
   if (!canUseLocalStorage()) {
-    return "";
+    return null;
   }
 
   try {
-    return normalizeLodCode(localStorage.getItem(lodCodeStorageKey));
+    const raw = localStorage.getItem(lodCodeStorageKey);
+    if (raw === null) {
+      return null;
+    }
+    if (raw === lodCodeClearedValue) {
+      return "";
+    }
+    return normalizeLodCode(raw);
   } catch {
-    return "";
+    return null;
   }
 }
 
@@ -3273,7 +3666,7 @@ function saveStoredLodCode(code) {
     return;
   }
 
-  localStorage.setItem(lodCodeStorageKey, code);
+  localStorage.setItem(lodCodeStorageKey, code || lodCodeClearedValue);
 }
 
 function generateLodCode() {
@@ -3342,6 +3735,10 @@ function renderPortalLink() {
 
   if (portalQrCode) {
     portalQrCode.src = createPortalQrDataUrl(link, 500);
+  }
+
+  if (lodCodeInput) {
+    lodCodeInput.value = normalizeLodCode(lodCode);
   }
 }
 

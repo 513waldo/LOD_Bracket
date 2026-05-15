@@ -29,6 +29,13 @@ export async function onRequest(context) {
     if (!snapshot) {
       return jsonResponse({ error: "Snapshot not found" }, 404);
     }
+
+    if (isExpiredSnapshot(snapshot)) {
+      await bracketState.delete(key);
+      await updateRegistry(bracketState, code, false);
+      return jsonResponse({ error: "EXPIRED CODE" }, 410);
+    }
+
     return jsonResponse(snapshot);
   }
 
@@ -123,6 +130,7 @@ function normalizeSnapshot(data) {
       version: Number(data.version || 1),
       exportedAt: data.exportedAt || new Date().toISOString(),
       lodCode: normalizeLodCode(data.lodCode),
+      expiresAt: Number(data.expiresAt || 0) || 0,
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -133,10 +141,16 @@ function normalizeSnapshot(data) {
     version: Number(data.version || 1),
     exportedAt: data.exportedAt || new Date().toISOString(),
     lodCode: normalizeLodCode(data.lodCode),
+    expiresAt: Number(data.expiresAt || 0) || 0,
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
   };
+}
+
+function isExpiredSnapshot(snapshot) {
+  const expiresAt = Number(snapshot?.expiresAt || 0);
+  return Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt <= Date.now();
 }
 
 function jsonResponse(data, status = 200) {

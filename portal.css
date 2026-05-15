@@ -306,6 +306,12 @@ h1 {
   border-color: rgba(185, 39, 34, 0.2);
 }
 
+.match.current {
+  border-color: rgba(11, 122, 67, 0.74);
+  box-shadow: 0 0 0 3px rgba(11, 122, 67, 0.14);
+  scroll-margin-top: 24px;
+}
+
 .match-header {
   display: flex;
   justify-content: space-between;
