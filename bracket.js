@@ -41,7 +41,9 @@ const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
 const clearLodCodeButton = document.querySelector("#clearLodCode");
 const portalNoticeInput = document.querySelector("#portalNoticeInput");
+const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
+const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const API_BASE_URLS = getApiBaseUrls();
@@ -120,6 +122,8 @@ let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
 let portalNotice = "";
+let portalNoticeAt = "";
+let portalNoticeDraft = "";
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -247,15 +251,35 @@ clearLodCodeButton?.addEventListener("click", () => {
 });
 
 portalNoticeInput?.addEventListener("input", () => {
-  portalNotice = portalNoticeInput.value || "";
+  portalNoticeDraft = portalNoticeInput.value || "";
+  queueBracketDraftSave();
+});
+
+sendPortalNoticeButton?.addEventListener("click", () => {
+  portalNotice = portalNoticeDraft || "";
+  portalNoticeAt = portalNotice ? new Date().toISOString() : "";
   savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = portalNotice
+      ? `Sent at ${stamp}.`
+      : `Cleared at ${stamp}.`;
+  }
+  showMessage(portalNotice
+    ? `Board call sent to players portal at ${stamp}.`
+    : `Board call cleared at ${stamp}.`);
 });
 
 clearPortalNoticeButton?.addEventListener("click", () => {
   portalNotice = "";
+  portalNoticeAt = "";
+  portalNoticeDraft = "";
   if (portalNoticeInput) {
     portalNoticeInput.value = "";
+  }
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = "";
   }
   savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
@@ -2903,6 +2927,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     outShots: getOutShots(),
     mysteryOut,
     portalNotice,
+    portalNoticeAt,
   };
 }
 
@@ -2940,6 +2965,8 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   blockedGenerateCount = 0;
   playerList.value = "";
   portalNotice = "";
+  portalNoticeAt = "";
+  portalNoticeDraft = "";
   if (portalNoticeInput) {
     portalNoticeInput.value = "";
   }
@@ -3050,9 +3077,20 @@ function restoreBracketDraft() {
 
   if (typeof draft.portalNotice === "string") {
     portalNotice = draft.portalNotice;
-    if (portalNoticeInput) {
-      portalNoticeInput.value = portalNotice;
-    }
+  }
+
+  if (typeof draft.portalNoticeAt === "string") {
+    portalNoticeAt = draft.portalNoticeAt;
+  }
+
+  if (typeof draft.portalNoticeDraft === "string") {
+    portalNoticeDraft = draft.portalNoticeDraft;
+  } else {
+    portalNoticeDraft = draft.portalNotice || "";
+  }
+
+  if (portalNoticeInput) {
+    portalNoticeInput.value = portalNoticeDraft;
   }
 
   if (typeof draft.mysteryOut === "string") {
@@ -3160,6 +3198,7 @@ function buildBracketDraft() {
     lodCode,
     expiresAt: getBracketCleanupAt(lodCode) || "",
     portalNotice,
+    portalNoticeDraft,
   };
 }
 

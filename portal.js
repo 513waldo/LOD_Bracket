@@ -3,10 +3,10 @@ const DEFAULT_SNAPSHOT_FILE = "bracket-state.json";
 const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
-const portalNotice = document.querySelector("#portalNotice");
 const portalMessage = document.querySelector("#portalMessage");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
+const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
 const clearLodCodeButton = document.querySelector("#clearLodCode");
@@ -14,7 +14,6 @@ const championText = document.querySelector("#championText");
 const teamCountText = document.querySelector("#teamCountText");
 const bracketSubtitle = document.querySelector("#bracketSubtitle");
 const snapshotFile = document.querySelector("#snapshotFile");
-const reloadSnapshotButton = document.querySelector("#reloadSnapshot");
 const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const portalLodCodeClearedValue = "__CLEARED__";
 const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
@@ -27,11 +26,7 @@ let refreshTimer = null;
 let portalExpiryTimer = null;
 let autoFocusAppliedForCode = "";
 
-reloadSnapshotButton.addEventListener("click", () => {
-  loadPublishedSnapshot(activeLodCode, true);
-});
-
-loadLodCodeButton.addEventListener("click", () => {
+loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput.value);
 
   if (!code) {
@@ -56,7 +51,16 @@ clearLodCodeButton?.addEventListener("click", () => {
   clearPortalCode();
 });
 
-snapshotFile.addEventListener("change", async () => {
+copyPortalLinkButton?.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    setMessage("Portal link copied.");
+  } catch {
+    setMessage("Could not copy the portal link.");
+  }
+});
+
+snapshotFile?.addEventListener("change", async () => {
   const file = snapshotFile.files && snapshotFile.files[0];
 
   if (!file) {
@@ -123,10 +127,11 @@ async function loadPublishedSnapshot(code, announceFailure) {
   }
 
   const localSnapshot = readStoredSnapshot(normalizedCode);
+  let preferredSnapshot = localSnapshot;
 
   updateUrlForCode(normalizedCode);
 
-  if (localSnapshot && !activeSnapshot) {
+  if (localSnapshot && (!activeSnapshot || !areSnapshotsEqual(localSnapshot, activeSnapshot))) {
     if (shouldExpirePortalSession(normalizedCode, localSnapshot)) {
       expirePortalSession(normalizedCode, "EXPIRED CODE");
       return;
@@ -153,6 +158,10 @@ async function loadPublishedSnapshot(code, announceFailure) {
         continue;
       }
 
+      if (preferredSnapshot && !shouldPreferSnapshot(snapshot, preferredSnapshot)) {
+        continue;
+      }
+
       if (shouldExpirePortalSession(normalizedCode, snapshot)) {
         expirePortalSession(normalizedCode, "EXPIRED CODE");
         return;
@@ -168,6 +177,7 @@ async function loadPublishedSnapshot(code, announceFailure) {
       saveStoredPortalLodCode(activeLodCode);
       renderSnapshot(snapshot, activeLodCode ? `LOD ${activeLodCode}` : "Published snapshot");
       storeSnapshot(activeLodCode, snapshot);
+      preferredSnapshot = snapshot;
       return;
     } catch {
       // Try the next configured host.
@@ -221,6 +231,7 @@ function normalizeSnapshot(data) {
       lodCode: normalizeLodCode(data.lodCode),
       expiresAt: Number(data.expiresAt || 0) || 0,
       portalNotice: String(data.portalNotice || ""),
+      portalNoticeAt: String(data.portalNoticeAt || ""),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -233,10 +244,48 @@ function normalizeSnapshot(data) {
     lodCode: normalizeLodCode(data.lodCode),
     expiresAt: Number(data.expiresAt || 0) || 0,
     portalNotice: String(data.portalNotice || ""),
+    portalNoticeAt: String(data.portalNoticeAt || ""),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
   };
+}
+
+function areSnapshotsEqual(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  try {
+    return JSON.stringify(left) === JSON.stringify(right);
+  } catch {
+    return false;
+  }
+}
+
+function shouldPreferSnapshot(candidate, current) {
+  if (!candidate || !current) {
+    return Boolean(candidate);
+  }
+
+  const candidateNotice = String(candidate.portalNotice || "").trim();
+  const currentNotice = String(current.portalNotice || "").trim();
+  const candidateStamp = Number(new Date(candidate.portalNoticeAt || candidate.exportedAt || 0));
+  const currentStamp = Number(new Date(current.portalNoticeAt || current.exportedAt || 0));
+
+  if (candidateNotice && !currentNotice) {
+    return true;
+  }
+
+  if (!candidateNotice && currentNotice) {
+    return false;
+  }
+
+  if (Number.isFinite(candidateStamp) && Number.isFinite(currentStamp)) {
+    return candidateStamp >= currentStamp;
+  }
+
+  return true;
 }
 
 function renderSnapshot(snapshot, sourceLabel) {
@@ -256,12 +305,11 @@ function renderSnapshot(snapshot, sourceLabel) {
   championText.textContent = state?.champion || "Pending";
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
-  setPortalNotice(snapshot.portalNotice || "");
+  setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
 
   if (!state) {
     portalBracket.className = "bracket empty";
     portalBracket.textContent = "No bracket data is available in this snapshot.";
-    setMessage("");
     return;
   }
 
@@ -270,7 +318,6 @@ function renderSnapshot(snapshot, sourceLabel) {
   focusActiveMatch(state);
   updateUrlForCode(activeLodCode);
   updatePortalExpiryFromSnapshot(activeLodCode, snapshot.expiresAt, state);
-  setMessage("");
 }
 
 function renderEmptyPortal() {
@@ -281,7 +328,7 @@ function renderEmptyPortal() {
   championText.textContent = "Pending";
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
-  setPortalNotice("");
+  setMessage("");
 }
 
 function focusActiveMatch(state) {
@@ -344,9 +391,7 @@ function renderBracket(state) {
   const sections = [];
 
   if (state.mode === "graph") {
-    sections.push(renderGraphSection("Winners bracket", state.rounds?.winner || []));
-    sections.push(renderGraphSection("Losers bracket", state.rounds?.loser || []));
-    sections.push(renderFinalSection(state));
+    sections.push(renderPdfVisualBracket(state));
     return sections.join("");
   }
 
@@ -354,6 +399,83 @@ function renderBracket(state) {
   sections.push(renderStandardSection("Losers bracket", state.loserRounds || []));
   sections.push(renderFinalSection(state));
   return sections.join("");
+}
+
+function renderPdfVisualBracket(state) {
+  const doubleDipFinal = state.resetFinal && state.resetFinal.winner && state.resetFinal.winner !== state.resetFinal.players[0]
+    ? ensureDoubleDipFinal(state, state.resetFinal, state.resetFinal.players[0], state.resetFinal.players[1])
+    : state.doubleDipFinal;
+  const finalMatches = [state.final, state.resetFinal, doubleDipFinal].filter(Boolean);
+  const maxColumns = Math.max(state.rounds?.winner?.length || 0, state.rounds?.loser?.length || 0, finalMatches.length ? 1 : 0);
+
+  return `
+    <section class="bracket-section pdf-visual-section">
+      <div class="pdf-visual-heading">
+        <div>
+          <h3>PDF bracket</h3>
+          <p>${escapeHtml((state.originalPlayers || []).length)} teams - printed game layout</p>
+        </div>
+        <span>${escapeHtml(state.originalPlayers?.length ? `LOD ${activeLodCode || "N/A"}` : "Generated bracket")}</span>
+      </div>
+      <div class="pdf-visual-scroll">
+        <div class="pdf-visual-grid" style="--pdf-columns: ${maxColumns};">
+          ${renderPdfVisualBand("Winners bracket", state.rounds?.winner || [], "winner", state)}
+          ${renderPdfVisualBand("Losers bracket", state.rounds?.loser || [], "loser", state)}
+          <div class="pdf-visual-band final-band">
+            <p class="pdf-band-title">Final</p>
+            <div class="pdf-visual-columns">
+              <div class="pdf-visual-column final-column">
+                ${finalMatches.map((match) => renderFinalMatchBlock(match, match.title)).join("")}
+                ${renderChampionBox(state)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderPdfVisualBand(title, rounds, type, state) {
+  const hasPlayIn = type === "winner" && Array.isArray(state?.matches) && state.matches.some((match) => match.type === "winner" && isPlayInMatch(match));
+  const greyColumnIndex = type === "winner" ? (hasPlayIn ? 2 : 1) : -1;
+
+  return `
+    <div class="pdf-visual-band ${type}-band">
+      <p class="pdf-band-title">${escapeHtml(title)}</p>
+      <div class="pdf-visual-columns">
+        ${rounds.map((round, index) => `
+          <div class="pdf-visual-column ${type}-column ${index === greyColumnIndex ? "grey-column" : ""}" style="--column-index: ${index};">
+            <p class="round-title">${escapeHtml(type === "winner" ? "Winners" : "Losers")} R${index + 1}</p>
+            <div class="pdf-column-matches" style="--match-count: ${Math.max(round.matches?.length || round.length || 0, 1)};">
+              ${(round.matches || round || []).map(renderMatch).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderFinalMatchBlock(match, title) {
+  if (!match) {
+    return "";
+  }
+
+  return `
+    <div class="final-match-block">
+      <p class="round-title">${escapeHtml(title || match.title || "Final")}</p>
+      <article class="match ${match.winner ? "complete" : "pending"}${isCurrentMatch(match) ? " current" : ""}">
+        <div class="match-header">
+          <p class="match-title">${escapeHtml(match.title || "Final")}</p>
+        </div>
+        ${renderMatchMeta(match, "graph")}
+        <div class="slots">
+          ${(match.players || []).map((player, slotIndex) => renderSlot(match, player, (match.slotSources || [])[slotIndex], slotIndex)).join("")}
+        </div>
+      </article>
+    </div>
+  `;
 }
 
 function renderStandardSection(title, rounds) {
@@ -417,6 +539,42 @@ function renderChampionBox(state) {
       <p class="champion-box-note">${escapeHtml(note)}</p>
     </aside>
   `;
+}
+
+function isPlayInMatch(match) {
+  return Boolean(match?.isPlayIn);
+}
+
+function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, losersSidePlayer) {
+  if (!bracketState || !sourceMatch) {
+    return null;
+  }
+
+  if (bracketState.doubleDipFinal) {
+    return bracketState.doubleDipFinal;
+  }
+
+  if (!winnersSidePlayer || !losersSidePlayer) {
+    return null;
+  }
+
+  return {
+    id: `double-dip-${sourceMatch.id}`,
+    type: "doubleDipFinal",
+    title: "Game 14 - Double Dip Final",
+    players: [winnersSidePlayer, losersSidePlayer],
+    slotSources: [
+      "Winner of Game 13",
+      "Loser of Game 13",
+    ],
+    winner: "",
+    loser: "",
+    winnerTo: null,
+    loserTo: null,
+    autoAdvanced: false,
+    isPlayIn: false,
+    gameNumber: 14,
+  };
 }
 
 function renderMatches(matches, mode) {
@@ -519,17 +677,28 @@ function getTeamCount(state) {
 }
 
 function setMessage(text) {
-  portalMessage.textContent = text;
+  const value = String(text || "").trim();
+  portalMessage.textContent = value;
+  portalMessage.hidden = !value;
 }
 
-function setPortalNotice(text) {
-  if (!portalNotice) {
-    return;
+function formatPortalCall(message, stamp) {
+  const text = String(message || "").trim();
+  if (!text) {
+    return "";
   }
 
-  const value = String(text || "").trim();
-  portalNotice.hidden = !value;
-  portalNotice.textContent = value;
+  const time = formatBoardCallTime(stamp);
+  return time ? `${text} • ${time}` : text;
+}
+
+function formatBoardCallTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 function getRequestedLodCode() {

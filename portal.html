@@ -3,36 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Darts Bracket Portal</title>
-  <link rel="stylesheet" href="portal.css?v=2">
+  <title>Darts Players Portal</title>
+  <link rel="stylesheet" href="portal.css?v=8">
 </head>
 <body>
   <main class="app">
     <header class="hero">
       <div class="hero-copy">
-        <p class="eyebrow"><a href="bracket.html">Bracket Builder</a> / Player Portal</p>
-        <h1>Bracket Portal</h1>
+        <p class="eyebrow"><a href="bracket.html">Admin Portal</a> / Players Portal</p>
+        <h1>Players Portal</h1>
         <p class="intro">Read-only bracket view for players on any browser.</p>
       </div>
 
       <div class="portal-actions" aria-label="Portal controls">
-        <button id="reloadSnapshot" class="secondary" type="button">Reload</button>
-        <label class="file-button">
-          Load JSON
-          <input id="snapshotFile" type="file" accept="application/json,.json">
-        </label>
+        <button id="copyPortalLink" class="secondary" type="button">Copy link</button>
         <div class="lod-loader">
           <label class="lod-entry">
             LOD code
             <input id="lodCodeInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
           </label>
           <button id="loadLodCode" class="secondary" type="button">Load code</button>
-          <button id="clearLodCode" class="secondary" type="button">Clear</button>
+          <button id="clearLodCode" class="secondary" type="button">Clear code</button>
         </div>
       </div>
-    </header>
 
-    <p id="portalNotice" class="portal-notice" aria-live="polite" hidden></p>
+    </header>
 
     <section class="status-strip" aria-label="Snapshot status">
       <div class="status-card">
@@ -53,7 +48,7 @@
       </div>
     </section>
 
-    <p id="portalMessage" class="message" aria-live="polite"></p>
+    <p id="portalMessage" class="message board-call" aria-live="polite"></p>
 
     <section class="bracket-shell" aria-labelledby="portalBracketTitle">
       <div class="section-heading">
@@ -67,6 +62,6 @@
   </main>
 
   <script src="config.js?v=3"></script>
-  <script src="portal.js?v=9"></script>
+  <script src="portal.js?v=16"></script>
 </body>
 </html>
