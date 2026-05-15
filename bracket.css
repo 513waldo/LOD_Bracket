@@ -495,6 +495,7 @@ h2 {
 
 .bracket-workspace .bracket-shell,
 .bracket-workspace .out-shot-panel,
+.bracket-workspace .highest-out-card,
 .bracket-workspace .mystery-out-card {
   margin-bottom: 0;
 }
@@ -1451,6 +1452,36 @@ button.player-button .loser-source-text {
   display: grid;
   gap: 14px;
   text-align: center;
+}
+
+.highest-out-card {
+  display: grid;
+  gap: 12px;
+}
+
+.highest-out-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.highest-out-record-body {
+  min-height: 72px;
+  border: 1px solid rgba(11, 122, 67, 0.34);
+  border-radius: 8px;
+  background: rgba(225, 242, 230, 0.9);
+  color: var(--ink);
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.highest-out-record-body.empty {
+  border-color: rgba(185, 39, 34, 0.34);
+  background: rgba(248, 230, 228, 0.94);
+  color: var(--loss-text);
+  font-size: 0.96rem;
+  font-weight: 800;
 }
 
 .mystery-out-heading h3 {

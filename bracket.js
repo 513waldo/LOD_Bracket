@@ -22,6 +22,7 @@ const mysteryOutModeInputs = Array.from(document.querySelectorAll("[data-mystery
 const mysteryOutWinner = document.querySelector("#mysteryOutWinner");
 const mysteryOutWinnerTitle = document.querySelector("#mysteryOutWinnerTitle");
 const mysteryOutWinnerBody = document.querySelector("#mysteryOutWinnerBody");
+const highestOutRecordBody = document.querySelector("#highestOutRecordBody");
 const payoutTeams = document.querySelector("#payoutTeams");
 const payoutEntry = document.querySelector("#payoutEntry");
 const payoutAdded = document.querySelector("#payoutAdded");
@@ -320,6 +321,7 @@ document.querySelector("#clearOutShots").addEventListener("click", () => {
 outShotSheet.addEventListener("input", (event) => {
   preventDuplicateOutShotNumber(event.target);
   updateOutShotWinners();
+  renderHighestOutRecord();
   renderMysteryOutWinner();
   saveOutShots();
 });
@@ -834,6 +836,7 @@ function renderOutShotSheet() {
 
   updateOutShotWinners();
   renderMysteryOutWinner();
+  renderHighestOutRecord();
 }
 
 function getOutShots() {
@@ -877,6 +880,7 @@ function clearOutShots() {
 
   renderOutShotSheet();
   renderMysteryOutWinner();
+  renderHighestOutRecord();
   savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
 }
@@ -933,6 +937,39 @@ function renderMysteryOutWinner() {
   mysteryOutWinner.classList.remove("no-winner");
   mysteryOutWinnerTitle.textContent = "Winner";
   mysteryOutWinnerBody.textContent = `${winner.player || "Unnamed player"} - ${winner.number}`;
+}
+
+function renderHighestOutRecord() {
+  if (!highestOutRecordBody) {
+    return;
+  }
+
+  const record = getHighestOutRecord();
+  if (!record) {
+    highestOutRecordBody.classList.add("empty");
+    highestOutRecordBody.textContent = "No out shots recorded yet.";
+    return;
+  }
+
+  highestOutRecordBody.classList.remove("empty");
+  highestOutRecordBody.textContent = `${record.player || "Unnamed player"} - ${record.number}`;
+}
+
+function getHighestOutRecord() {
+  return Array.from(outShotSheet.querySelectorAll(".out-shot-row")).reduce((bestRecord, row) => {
+    const numberInput = row.querySelector('[data-out-field="number"]');
+    const playerInput = row.querySelector('[data-out-field="player"]');
+    const number = getOutShotNumberValue(numberInput);
+
+    if (number === null || (bestRecord && number <= bestRecord.number)) {
+      return bestRecord;
+    }
+
+    return {
+      player: playerInput?.value?.trim() || "",
+      number,
+    };
+  }, null);
 }
 
 function getMysteryOutWinner() {
