@@ -8,15 +8,22 @@ const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
 const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
+const clearLodCodeButton = document.querySelector("#clearLodCode");
 const championText = document.querySelector("#championText");
 const teamCountText = document.querySelector("#teamCountText");
 const bracketSubtitle = document.querySelector("#bracketSubtitle");
 const snapshotFile = document.querySelector("#snapshotFile");
 const reloadSnapshotButton = document.querySelector("#reloadSnapshot");
+const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
+const portalLodCodeClearedValue = "__CLEARED__";
+const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
+const portalSessionDurationMs = 60 * 60 * 1000;
 
 let activeSnapshot = null;
-let activeLodCode = getRequestedLodCode();
+const storedLodCode = getStoredPortalLodCode();
+let activeLodCode = storedLodCode !== null ? storedLodCode : getRequestedLodCode();
 let refreshTimer = null;
+let portalExpiryTimer = null;
 
 reloadSnapshotButton.addEventListener("click", () => {
   loadPublishedSnapshot(activeLodCode, true);
@@ -26,13 +33,25 @@ loadLodCodeButton.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput.value);
 
   if (!code) {
-    setMessage("Enter a LOD code first.");
+    clearPortalCode();
     return;
   }
 
   activeLodCode = code;
+  saveStoredPortalLodCode(code);
+  clearPortalExpiry(code);
   updateUrlForCode(code);
   loadPublishedSnapshot(code, true);
+});
+
+lodCodeInput?.addEventListener("input", () => {
+  if (!normalizeLodCode(lodCodeInput.value) && activeLodCode) {
+    clearPortalCode();
+  }
+});
+
+clearLodCodeButton?.addEventListener("click", () => {
+  clearPortalCode();
 });
 
 snapshotFile.addEventListener("change", async () => {
@@ -51,6 +70,7 @@ snapshotFile.addEventListener("change", async () => {
     }
 
     activeLodCode = normalizeLodCode(snapshot.lodCode || activeLodCode);
+    clearPortalExpiry(activeLodCode);
     renderSnapshot(snapshot, snapshot.lodCode ? `LOD ${snapshot.lodCode}` : "Uploaded snapshot");
     storeSnapshot(activeLodCode, snapshot);
     updateUrlForCode(activeLodCode);
@@ -66,31 +86,50 @@ boot();
 startAutoRefresh();
 
 async function boot() {
-  if (activeLodCode) {
-    lodCodeInput.value = activeLodCode;
+  syncPortalCodeInput();
+
+  if (!activeLodCode) {
+    renderEmptyPortal();
+    setMessage("Enter a LOD code to load a published snapshot.");
+    return;
   }
 
   const localSnapshot = readStoredSnapshot(activeLodCode);
   if (localSnapshot) {
+    if (shouldExpirePortalSession(activeLodCode, localSnapshot)) {
+      expirePortalSession(activeLodCode);
+      return;
+    }
+
     renderSnapshot(localSnapshot, "Local snapshot");
   }
 
   await loadPublishedSnapshot(activeLodCode, false);
 
   if (!activeSnapshot) {
-    setMessage(activeLodCode
-      ? `No published snapshot found for LOD ${activeLodCode}.`
-      : "Enter a LOD code to load a published snapshot.");
+    setMessage(`No published snapshot found for LOD ${activeLodCode}.`);
   }
 }
 
 async function loadPublishedSnapshot(code, announceFailure) {
   const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    if (announceFailure && !activeSnapshot) {
+      setMessage("Enter a LOD code to load a published snapshot.");
+    }
+    return;
+  }
+
   const localSnapshot = readStoredSnapshot(normalizedCode);
 
   updateUrlForCode(normalizedCode);
 
   if (localSnapshot && !activeSnapshot) {
+    if (shouldExpirePortalSession(normalizedCode, localSnapshot)) {
+      expirePortalSession(normalizedCode);
+      return;
+    }
+
     renderSnapshot(localSnapshot, normalizedCode ? `Local LOD ${normalizedCode}` : "Local snapshot");
   }
 
@@ -107,16 +146,19 @@ async function loadPublishedSnapshot(code, announceFailure) {
         continue;
       }
 
+      if (shouldExpirePortalSession(normalizedCode, snapshot)) {
+        expirePortalSession(normalizedCode);
+        return;
+      }
+
       if (snapshot.lodCode && !normalizedCode) {
         activeLodCode = normalizeLodCode(snapshot.lodCode);
       } else if (normalizedCode) {
         activeLodCode = normalizedCode;
       }
 
-      if (lodCodeInput) {
-        lodCodeInput.value = activeLodCode || "";
-      }
-
+      syncPortalCodeInput();
+      saveStoredPortalLodCode(activeLodCode);
       renderSnapshot(snapshot, activeLodCode ? `LOD ${activeLodCode}` : "Published snapshot");
       storeSnapshot(activeLodCode, snapshot);
       return;
@@ -139,9 +181,25 @@ function startAutoRefresh() {
 
   refreshTimer = window.setInterval(() => {
     if (activeLodCode) {
+      if (isPortalSessionExpired(activeLodCode)) {
+        expirePortalSession(activeLodCode);
+        return;
+      }
       loadPublishedSnapshot(activeLodCode, false);
     }
   }, Math.max(1000, API_REFRESH_MS));
+}
+
+function clearPortalCode() {
+  const previousCode = activeLodCode;
+  activeLodCode = "";
+  activeSnapshot = null;
+  clearPortalExpiry(previousCode);
+  saveStoredPortalLodCode("");
+  updateUrlForCode("");
+  syncPortalCodeInput();
+  renderEmptyPortal();
+  setMessage("LOD code cleared.");
 }
 
 function normalizeSnapshot(data) {
@@ -198,7 +256,18 @@ function renderSnapshot(snapshot, sourceLabel) {
   portalBracket.className = "bracket";
   portalBracket.innerHTML = renderBracket(state);
   updateUrlForCode(activeLodCode);
+  updatePortalExpiryFromSnapshot(activeLodCode, state);
   setMessage("");
+}
+
+function renderEmptyPortal() {
+  portalBracket.className = "bracket empty";
+  portalBracket.textContent = "No bracket snapshot available.";
+  publishedAt.textContent = "No snapshot loaded";
+  lodCodeText.textContent = "Not set";
+  championText.textContent = "Pending";
+  teamCountText.textContent = "-";
+  bracketSubtitle.textContent = "Waiting for a published snapshot.";
 }
 
 function renderBracket(state) {
@@ -438,6 +507,185 @@ function getLocalSnapshotKey(code) {
   return `${LOCAL_SNAPSHOT_KEY_PREFIX}${normalized}`;
 }
 
+function getPortalExpiryKey(code) {
+  const normalized = normalizeLodCode(code) || "default";
+  return `${portalSessionExpiryStorageKey}:${normalized}`;
+}
+
+function syncPortalCodeInput() {
+  if (lodCodeInput) {
+    lodCodeInput.value = activeLodCode || "";
+  }
+}
+
+function updatePortalExpiryFromSnapshot(code, state) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return;
+  }
+
+  if (state && state.champion) {
+    const existingExpiry = getStoredPortalExpiry(normalizedCode);
+    const expiresAt = existingExpiry || (Date.now() + portalSessionDurationMs);
+    saveStoredPortalExpiry(normalizedCode, expiresAt);
+    schedulePortalExpiryTimer(normalizedCode, expiresAt);
+    return;
+  }
+
+  clearPortalExpiry(normalizedCode);
+}
+
+function shouldExpirePortalSession(code, snapshot) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const state = snapshot?.state || null;
+  if (!state || !state.champion) {
+    return false;
+  }
+
+  const expiresAt = getStoredPortalExpiry(normalizedCode) || (Date.now() + portalSessionDurationMs);
+  saveStoredPortalExpiry(normalizedCode, expiresAt);
+  const remaining = expiresAt - Date.now();
+  if (remaining <= 0) {
+    return true;
+  }
+
+  schedulePortalExpiryTimer(normalizedCode, expiresAt);
+  return false;
+}
+
+function schedulePortalExpiryTimer(code, expiresAt) {
+  clearPortalExpiryTimer();
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return;
+  }
+
+  const remaining = Number(expiresAt) - Date.now();
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    expirePortalSession(normalizedCode);
+    return;
+  }
+
+  portalExpiryTimer = window.setTimeout(() => {
+    expirePortalSession(normalizedCode);
+  }, remaining);
+}
+
+function expirePortalSession(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return;
+  }
+
+  clearPortalExpiryTimer();
+  clearPortalExpiry(normalizedCode);
+
+  if (activeLodCode === normalizedCode) {
+    activeLodCode = "";
+    activeSnapshot = null;
+    saveStoredPortalLodCode("");
+    updateUrlForCode("");
+    syncPortalCodeInput();
+    renderEmptyPortal();
+    setMessage(`LOD ${normalizedCode} session ended.`);
+  }
+}
+
+function clearPortalExpiry(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode || !canUseLocalStorage()) {
+    clearPortalExpiryTimer();
+    return;
+  }
+
+  clearPortalExpiryTimer();
+  try {
+    localStorage.removeItem(getPortalExpiryKey(normalizedCode));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function clearPortalExpiryTimer() {
+  if (portalExpiryTimer) {
+    window.clearTimeout(portalExpiryTimer);
+    portalExpiryTimer = null;
+  }
+}
+
+function getStoredPortalExpiry(code) {
+  if (!canUseLocalStorage()) {
+    return 0;
+  }
+
+  try {
+    const raw = localStorage.getItem(getPortalExpiryKey(code));
+    const value = Number(raw);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function isPortalSessionExpired(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const expiresAt = getStoredPortalExpiry(normalizedCode);
+  return Boolean(expiresAt) && expiresAt <= Date.now();
+}
+
+function saveStoredPortalExpiry(code, expiresAt) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(getPortalExpiryKey(code), String(Number(expiresAt) || 0));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getStoredPortalLodCode() {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(portalLodCodeStorageKey);
+    if (raw === null) {
+      return null;
+    }
+
+    if (raw === portalLodCodeClearedValue) {
+      return "";
+    }
+
+    return normalizeLodCode(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredPortalLodCode(code) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(portalLodCodeStorageKey, code ? normalizeLodCode(code) : portalLodCodeClearedValue);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function updateUrlForCode(code) {
   const normalized = normalizeLodCode(code);
 
@@ -473,6 +721,14 @@ function storeSnapshot(code, snapshot) {
     localStorage.setItem(getLocalSnapshotKey(code), JSON.stringify(snapshot));
   } catch {
     // Ignore storage failures.
+  }
+}
+
+function canUseLocalStorage() {
+  try {
+    return typeof localStorage !== "undefined";
+  } catch {
+    return false;
   }
 }
 
