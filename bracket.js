@@ -464,7 +464,15 @@ bracketOutput.addEventListener("click", (event) => {
       resetMatch: resetButton.dataset.resetMatch,
       selectedWinner: "",
     });
-    resetMatchResult(Number(resetButton.dataset.matchId));
+    if (state?.matchesById) {
+      resetMatchResult(Number(resetButton.dataset.matchId));
+    } else {
+      resetMatchResultLegacy(
+        resetButton.dataset.matchType,
+        Number(resetButton.dataset.roundIndex),
+        Number(resetButton.dataset.matchIndex),
+      );
+    }
     return;
   }
 
@@ -479,7 +487,16 @@ bracketOutput.addEventListener("click", (event) => {
     selectedWinner: button.dataset.player,
   });
 
-  chooseWinner(Number(button.dataset.matchId), button.dataset.player);
+  if (state?.matchesById) {
+    chooseWinner(Number(button.dataset.matchId), button.dataset.player);
+  } else {
+    chooseWinnerLegacy(
+      button.dataset.matchType,
+      Number(button.dataset.roundIndex),
+      Number(button.dataset.matchIndex),
+      button.dataset.player,
+    );
+  }
   queueActiveLodCodesRefresh();
 });
 
@@ -2402,8 +2419,22 @@ function rebuildGraphMatchIndex(bracketState) {
   bracketState.matches.forEach((match) => {
     bracketState.matchesById[match.id] = match;
   });
-  bracketState.resetFinal = bracketState.resetFinal || bracketState.matches.find((match) => match.type === "resetFinal") || null;
-  bracketState.doubleDipFinal = bracketState.doubleDipFinal || bracketState.matches.find((match) => match.type === "doubleDipFinal") || null;
+  bracketState.rounds = bracketState.rounds || { winner: [], loser: [] };
+  bracketState.rounds.winner = (bracketState.rounds.winner || []).map((round) => (
+    round.map((match) => bracketState.matchesById[match.id]).filter(Boolean)
+  ));
+  bracketState.rounds.loser = (bracketState.rounds.loser || []).map((round) => (
+    round.map((match) => bracketState.matchesById[match.id]).filter(Boolean)
+  ));
+  bracketState.final = bracketState.matchesById[bracketState.final?.id] ||
+    bracketState.matches.find((match) => match.type === "final") ||
+    null;
+  bracketState.resetFinal = bracketState.matchesById[bracketState.resetFinal?.id] ||
+    bracketState.matches.find((match) => match.type === "resetFinal") ||
+    null;
+  bracketState.doubleDipFinal = bracketState.matchesById[bracketState.doubleDipFinal?.id] ||
+    bracketState.matches.find((match) => match.type === "doubleDipFinal") ||
+    null;
 }
 
 function addGraphSource(bracketState, destination, label) {
@@ -3062,6 +3093,13 @@ function restoreBracketDraft() {
   if (draft.state && typeof draft.state === "object") {
     state = draft.state;
     mysteryOut = draft.mysteryOut || "";
+
+    if (state.mode === "graph") {
+      rebuildGraphMatchIndex(state);
+      refreshGraphSources(state);
+    } else {
+      refreshGameNumbersAndSources(state);
+    }
 
     const savedExpiry = Number(draft.expiresAt || 0);
     if (state.champion) {
@@ -4031,6 +4069,9 @@ function renderFinalMatchBlock(match, title) {
               type="button"
               data-reset-match="${escapeAttribute(match.id)}"
               data-match-id="${match.id}"
+              data-match-type="${escapeAttribute(match.type)}"
+              data-round-index="${match.roundIndex}"
+              data-match-index="${match.matchIndex}"
             >Fix</button>
           ` : ""}
         </div>
@@ -4120,7 +4161,10 @@ function renderMatch(match) {
             class="reset-match"
             type="button"
             data-reset-match="${escapeAttribute(match.id)}"
-          data-match-id="${match.id}"
+            data-match-id="${match.id}"
+            data-match-type="${escapeAttribute(match.type)}"
+            data-round-index="${match.roundIndex}"
+            data-match-index="${match.matchIndex}"
         >Fix</button>
         ` : ""}
       </div>
