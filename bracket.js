@@ -2415,26 +2415,50 @@ function refreshGraphSources(bracketState) {
 }
 
 function rebuildGraphMatchIndex(bracketState) {
+  bracketState.rounds = bracketState.rounds || { winner: [], loser: [] };
+  const visibleMatches = [
+    ...(bracketState.rounds.winner || []).flat(),
+    ...(bracketState.rounds.loser || []).flat(),
+    bracketState.final,
+    bracketState.resetFinal,
+    bracketState.doubleDipFinal,
+  ].filter(Boolean);
+  const fallbackMatches = Array.isArray(bracketState.matches) ? bracketState.matches : [];
+  const matchesById = {};
+
+  [...visibleMatches, ...fallbackMatches].forEach((match) => {
+    if (match?.id && !matchesById[match.id]) {
+      matchesById[match.id] = match;
+    }
+  });
+
+  bracketState.rounds.winner = (bracketState.rounds.winner || []).map((round) => (
+    round.map((match) => matchesById[match.id] || match).filter(Boolean)
+  ));
+  bracketState.rounds.loser = (bracketState.rounds.loser || []).map((round) => (
+    round.map((match) => matchesById[match.id] || match).filter(Boolean)
+  ));
+  bracketState.final = matchesById[bracketState.final?.id] ||
+    fallbackMatches.find((match) => match.type === "final") ||
+    null;
+  bracketState.resetFinal = matchesById[bracketState.resetFinal?.id] ||
+    fallbackMatches.find((match) => match.type === "resetFinal") ||
+    null;
+  bracketState.doubleDipFinal = matchesById[bracketState.doubleDipFinal?.id] ||
+    fallbackMatches.find((match) => match.type === "doubleDipFinal") ||
+    null;
+
+  bracketState.matches = [
+    ...bracketState.rounds.winner.flat(),
+    ...bracketState.rounds.loser.flat(),
+    bracketState.final,
+    bracketState.resetFinal,
+    bracketState.doubleDipFinal,
+  ].filter(Boolean);
   bracketState.matchesById = {};
   bracketState.matches.forEach((match) => {
     bracketState.matchesById[match.id] = match;
   });
-  bracketState.rounds = bracketState.rounds || { winner: [], loser: [] };
-  bracketState.rounds.winner = (bracketState.rounds.winner || []).map((round) => (
-    round.map((match) => bracketState.matchesById[match.id]).filter(Boolean)
-  ));
-  bracketState.rounds.loser = (bracketState.rounds.loser || []).map((round) => (
-    round.map((match) => bracketState.matchesById[match.id]).filter(Boolean)
-  ));
-  bracketState.final = bracketState.matchesById[bracketState.final?.id] ||
-    bracketState.matches.find((match) => match.type === "final") ||
-    null;
-  bracketState.resetFinal = bracketState.matchesById[bracketState.resetFinal?.id] ||
-    bracketState.matches.find((match) => match.type === "resetFinal") ||
-    null;
-  bracketState.doubleDipFinal = bracketState.matchesById[bracketState.doubleDipFinal?.id] ||
-    bracketState.matches.find((match) => match.type === "doubleDipFinal") ||
-    null;
 }
 
 function addGraphSource(bracketState, destination, label) {
