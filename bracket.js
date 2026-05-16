@@ -52,6 +52,7 @@ const API_PUBLISH_DEBOUNCE_MS = 300;
 const REGISTRY_REFRESH_DEBOUNCE_MS = 300;
 const backupIndexKey = "dartsTournamentBracketBackupIndex";
 const backupKeyPrefix = "dartsTournamentBracketBackup:";
+const maxBracketBackups = 25;
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
@@ -3481,21 +3482,48 @@ function saveBracketBackup(action) {
     return;
   }
 
-  const createdAt = new Date().toISOString();
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const backup = {
-    id,
-    createdAt,
-    action,
-    state: JSON.parse(JSON.stringify(state)),
-  };
-  const index = readBackupIndex();
+  try {
+    const createdAt = new Date().toISOString();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const backup = {
+      id,
+      createdAt,
+      action,
+      state: JSON.parse(JSON.stringify(state)),
+    };
+    const index = pruneBracketBackups(readBackupIndex(), maxBracketBackups - 1);
 
-  localStorage.setItem(`${backupKeyPrefix}${id}`, JSON.stringify(backup));
-  index.push({ id, createdAt, action });
-  localStorage.setItem(backupIndexKey, JSON.stringify(index));
-  renderBackups();
-  updatePaperBackup(backup.state, `Backup saved ${formatBackupTime(createdAt)}`);
+    localStorage.setItem(`${backupKeyPrefix}${id}`, JSON.stringify(backup));
+    index.push({ id, createdAt, action });
+    localStorage.setItem(backupIndexKey, JSON.stringify(index));
+    renderBackups();
+    updatePaperBackup(backup.state, `Backup saved ${formatBackupTime(createdAt)}`);
+  } catch {
+    try {
+      pruneBracketBackups(readBackupIndex(), Math.floor(maxBracketBackups / 2));
+      renderBackups();
+    } catch {
+      // Backup cleanup is best effort; bracket clicks must still be allowed through.
+    }
+    showMessage("Bracket can still advance, but the backup could not be saved. Delete old backups if this keeps happening.");
+  }
+}
+
+function pruneBracketBackups(index, keepCount = maxBracketBackups) {
+  if (!canUseLocalStorage()) {
+    return [];
+  }
+
+  const cleanedIndex = Array.isArray(index) ? index.filter((backup) => backup?.id) : [];
+  const removeCount = Math.max(0, cleanedIndex.length - Math.max(0, keepCount));
+  if (removeCount) {
+    cleanedIndex.splice(0, removeCount).forEach((backup) => {
+      localStorage.removeItem(`${backupKeyPrefix}${backup.id}`);
+    });
+  }
+
+  localStorage.setItem(backupIndexKey, JSON.stringify(cleanedIndex));
+  return cleanedIndex;
 }
 
 function renderBackups() {
