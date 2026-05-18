@@ -3011,7 +3011,11 @@ function savePortalSnapshotToLocalStorage() {
 
   const snapshot = buildPortalSnapshot();
   if (canUseLocalStorage()) {
-    localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
+    try {
+      localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
+    } catch {
+      // Local portal caching is optional; bracket clicks must keep working.
+    }
   }
   queuePortalSnapshotPublish(snapshot);
 }
