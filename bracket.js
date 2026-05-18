@@ -2110,13 +2110,19 @@ function chooseWinner(matchId, winnerName) {
     return;
   }
 
+  if (state.mode === "graph") {
+    rebuildGraphMatchIndex(state);
+  }
+
   const match = state.matchesById[matchId];
   if (!match || match.winner) {
+    showMessage(match?.winner ? "That match already has a winner. Use Fix to change it." : "That match could not be found. Rebuild or restore the bracket.");
     return;
   }
 
   const loserName = match.players.find((player) => player && player !== winnerName) || "";
   if (!loserName || loserName === "BYE") {
+    showMessage("That match is not ready yet. Wait for both players to be filled in.");
     return;
   }
 
@@ -2948,6 +2954,11 @@ function renderBracket() {
     return;
   }
 
+  if (state.mode === "graph") {
+    rebuildGraphMatchIndex(state);
+    refreshGraphSources(state);
+  }
+
   if (state.champion) {
     if (!scheduleBracketCleanupIfNeeded()) {
       return;
@@ -3272,29 +3283,8 @@ function buildBracketDraft() {
 }
 
 function scheduleBracketCleanupIfNeeded() {
-  if (!state?.champion || !lodCode) {
-    clearBracketCleanupTimer();
-    clearBracketCleanupStorage(lodCode);
-    return true;
-  }
-
-  let expiresAt = getBracketCleanupAt(lodCode);
-  if (!expiresAt) {
-    expiresAt = Date.now() + bracketCleanupDurationMs;
-    saveBracketCleanupAt(lodCode, expiresAt);
-  }
-
-  const remaining = Number(expiresAt) - Date.now();
-  if (remaining <= 0) {
-    expireBracketSession(lodCode);
-    return false;
-  }
-
   clearBracketCleanupTimer();
-  bracketCleanupTimer = setTimeout(() => {
-    expireBracketSession(lodCode);
-  }, remaining);
-
+  clearBracketCleanupStorage(lodCode);
   return true;
 }
 
