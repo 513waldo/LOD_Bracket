@@ -1486,6 +1486,11 @@ button.player-button .loser-source-text {
   gap: 14px;
 }
 
+.dice-roller #rollDice {
+  justify-self: center;
+  width: min(100%, 220px);
+}
+
 .dice-roller-heading {
   display: flex;
   justify-content: space-between;
