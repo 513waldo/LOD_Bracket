@@ -776,7 +776,7 @@ function updatePayoutCalculator() {
       <div class="payout-row payout-row-two-place">
         <span>1st / 2nd place</span>
         <strong>${formatMoney(pot)}</strong>
-        <small>${formatMoneyExact(half)} - ${formatMoneyExact(half)}</small>
+        <small>Half ${formatMoneyExact(half)}</small>
       </div>
     `;
     return;
