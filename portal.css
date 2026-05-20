@@ -306,7 +306,7 @@ h1 {
   border-style: dotted;
 }
 
-.message.board-call.winner-call {
+.winner-call-line {
   color: #0b7a43;
 }
 

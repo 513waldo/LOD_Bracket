@@ -741,9 +741,8 @@ function setAutomatedMessage(text) {
   }
 
   const value = String(text || "").trim() || "No Split The Pot messages yet.";
-  portalAutoMessage.textContent = value;
+  portalAutoMessage.innerHTML = renderPortalMessageMarkup(value, /^Split The Pot winner\b/i);
   portalAutoMessageWrap.hidden = false;
-  portalAutoMessage.classList.toggle("winner-call", /^Split The Pot winner\b/i.test(value));
 }
 
 function setBullshootMessage(text) {
@@ -752,9 +751,25 @@ function setBullshootMessage(text) {
   }
 
   const value = String(text || "").trim() || "No Bullshoot messages yet.";
-  portalBullshootMessage.textContent = value;
+  portalBullshootMessage.innerHTML = renderPortalMessageMarkup(value, /^Bullshoot winner\b/i);
   portalBullshootMessageWrap.hidden = false;
-  portalBullshootMessage.classList.toggle("winner-call", /^Bullshoot winner\b/i.test(value));
+}
+
+function renderPortalMessageMarkup(value, winnerPattern) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const lines = text.split("\n");
+  if (!winnerPattern.test(lines[0] || "")) {
+    return escapeHtml(text).replace(/\n/g, "<br>");
+  }
+
+  const [firstLine, ...rest] = lines;
+  const winnerLine = `<span class="winner-call-line">${escapeHtml(firstLine)}</span>`;
+  const remainder = rest.length ? `<br>${escapeHtml(rest.join("\n")).replace(/\n/g, "<br>")}` : "";
+  return `${winnerLine}${remainder}`;
 }
 
 function formatPortalCall(message, stamp) {
