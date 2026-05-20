@@ -1977,7 +1977,7 @@ button.player-button .loser-source-text {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--blue-surface);
@@ -1999,6 +1999,8 @@ button.player-button .loser-source-text {
 .backup-item-actions {
   display: grid;
   gap: 8px;
+  align-content: start;
+  justify-items: stretch;
 }
 
 .backup-item button {
