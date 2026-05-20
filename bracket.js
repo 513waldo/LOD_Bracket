@@ -770,26 +770,16 @@ function updatePayoutCalculator() {
     ? getBalancedPayoutAmounts(pot, split)
     : split.map((percent) => Math.round(pot * percent));
 
-  if (split.length === 2) {
-    const half = pot / 2;
-    payoutResults.innerHTML = `
-      <div class="payout-row payout-row-two-place">
-        <span>Total payout per team</span>
-        <strong>${formatMoney(pot)}</strong>
-        <small>Per team half ${formatMoneyExact(half)}</small>
-      </div>
-    `;
-    return;
-  }
-
   payoutResults.innerHTML = split.map((percent, index) => {
     const amount = amounts[index];
     const displayedAmount = amount;
     const displayedPercent = percent * 100;
+    const halfAmount = amount / 2;
     return `
       <div class="payout-row">
         <span>${formatPlace(index + 1)}</span>
-        <strong>${formatMoney(displayedAmount)}</strong>
+        <strong>${formatMoneyExact(displayedAmount)}</strong>
+        <small>Per team half ${formatMoneyExact(halfAmount)}</small>
         <small>${formatPercentValue(displayedPercent)}%</small>
       </div>
     `;
