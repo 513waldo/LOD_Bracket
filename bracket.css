@@ -1549,9 +1549,11 @@ button.player-button .loser-source-text {
   aspect-ratio: 1 / 1;
   min-height: 118px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--ink);
   padding: 18px;
+  clip-path: polygon(50% 0%, 68% 4%, 84% 14%, 96% 30%, 100% 50%, 96% 70%, 84% 86%, 68% 96%, 50% 100%, 32% 96%, 16% 86%, 4% 70%, 0% 50%, 4% 30%, 16% 14%, 32% 4%);
+  overflow: hidden;
   transition: transform 160ms ease, filter 160ms ease;
 }
 
