@@ -1484,13 +1484,16 @@ button.player-button .loser-source-text {
 .dice-roller {
   display: grid;
   gap: 14px;
-  justify-items: center;
 }
 
-.dice-roller #rollDice {
-  display: block;
-  width: min(100%, 220px);
-  margin: 0 auto;
+.dice-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.dice-actions #rollDice {
+  width: auto;
+  min-width: 220px;
 }
 
 .dice-roller-heading {
