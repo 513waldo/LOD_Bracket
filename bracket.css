@@ -1483,7 +1483,11 @@ button.player-button .loser-source-text {
 
 .dice-roller {
   display: grid;
-  gap: 14px;
+  gap: 8px;
+}
+
+.dice-tray {
+  margin-bottom: 10px;
 }
 
 .dice-actions {
