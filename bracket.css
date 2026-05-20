@@ -261,14 +261,25 @@ textarea:focus {
 
 .portal-auto-notice-panel h3 {
   margin: 0;
-  color: #fffaf0;
+  color: #b92722;
   font-size: 1rem;
 }
 
 .portal-bullshoot-notice-panel h3 {
   margin: 0;
-  color: #fffaf0;
+  color: #b92722;
   font-size: 1rem;
+}
+
+#portalAutoNoticeInput,
+#portalBullshootNoticeInput {
+  color: #b92722;
+  caret-color: #b92722;
+}
+
+#portalAutoNoticeInput::placeholder,
+#portalBullshootNoticeInput::placeholder {
+  color: rgba(185, 39, 34, 0.6);
 }
 
 .portal-notice-actions {

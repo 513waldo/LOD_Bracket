@@ -291,6 +291,13 @@ h1 {
   text-transform: uppercase;
 }
 
+.portal-auto-message-wrap .portal-message-label,
+.portal-bullshoot-message-wrap .portal-message-label,
+.message.board-call.automated-call,
+.message.board-call.bullshoot-call {
+  color: #b92722;
+}
+
 .message.board-call.automated-call {
   border-style: dashed;
 }
