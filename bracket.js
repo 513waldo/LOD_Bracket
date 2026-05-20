@@ -2080,14 +2080,14 @@ function animateDieRoll(index) {
   diceRollTimers[index] = {
     interval: setInterval(() => {
       setDieValue(index, randomD20());
-    }, 55),
+    }, 70),
     timeout: setTimeout(() => {
       clearInterval(diceRollTimers[index].interval);
       diceRollTimers[index] = null;
       setDieValue(index, randomD20());
       button.classList.remove("rolling");
       queueBracketDraftSave();
-    }, 620),
+    }, 1600),
   };
 }
 
