@@ -2209,6 +2209,54 @@ function setMysteryOutMode(mode) {
   });
 }
 
+function getD20VisibleNumbers(value) {
+  const top = normalizeD20Number(value);
+  return Array.from({ length: 6 }, (_, index) => normalizeD20Number(top + index));
+}
+
+function normalizeD20Number(value) {
+  const numeric = Math.floor(Number(value) || 1);
+  const wrapped = ((numeric - 1) % 20 + 20) % 20;
+  return wrapped + 1;
+}
+
+function buildD20DieMarkup(index, value) {
+  const label = index === 0 ? "Triple" : "Double";
+  const numbers = getD20VisibleNumbers(value);
+
+  return `
+    <span class="die-visual" aria-hidden="true">
+      <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
+        <g class="d20-face d20-face-center">
+          <polygon points="120,58 158,82 158,128 120,152 82,128 82,82"></polygon>
+          <text x="120" y="115">${numbers[0]}</text>
+        </g>
+        <g class="d20-face d20-face-top">
+          <polygon points="120,12 152,40 88,40"></polygon>
+          <text x="120" y="31">${numbers[1]}</text>
+        </g>
+        <g class="d20-face d20-face-top-right">
+          <polygon points="176,68 206,98 170,118"></polygon>
+          <text x="183" y="95">${numbers[2]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom-right">
+          <polygon points="174,172 204,142 168,122"></polygon>
+          <text x="182" y="145">${numbers[3]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom">
+          <polygon points="120,228 152,200 88,200"></polygon>
+          <text x="120" y="209">${numbers[4]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom-left">
+          <polygon points="64,172 34,142 70,122"></polygon>
+          <text x="58" y="145">${numbers[5]}</text>
+        </g>
+      </svg>
+    </span>
+    <span class="die-label">${label}</span>
+  `;
+}
+
 function setDieValue(index, value) {
   const button = dieButtons[index];
   if (!button) {
@@ -2216,7 +2264,7 @@ function setDieValue(index, value) {
   }
 
   diceValues[index] = value;
-  button.querySelector(".die-value").textContent = value;
+  button.innerHTML = buildD20DieMarkup(index, value);
   button.setAttribute("aria-label", `Roll die ${index + 1}, current value ${value}`);
 
   diceTotal.textContent = `Total: ${diceValues.reduce((sum, value) => sum + value, 0)}`;
