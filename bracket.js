@@ -1656,8 +1656,61 @@ function hideTeamDrawWarning() {
 }
 
 function resetTournament() {
-  clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
-  showMessage("Bracket, teams, and player names cleared.");
+  stopSplitPotDrawAnimation();
+  stopBullseyeShootDrawAnimation();
+  clearTournamentState({ preserveLodCode: false, clearDraft: true, code: lodCode });
+
+  if (totalPlayers) {
+    totalPlayers.value = "0";
+  }
+  if (playersPerGroup) {
+    playersPerGroup.value = "2";
+  }
+  renderNameInputs(0);
+
+  clearPayoutInputs();
+  if (payoutTeams) {
+    payoutTeams.value = "0";
+  }
+  updatePayoutCalculator();
+
+  if (pdfLayoutSelect) {
+    pdfLayoutSelect.value = "8";
+    renderPdfColumnMirror(8);
+  }
+
+  setDieValue(0, 1);
+  setDieValue(1, 1);
+
+  splitPotEntries = [];
+  splitPotWinner = null;
+  if (splitPotNameInput) {
+    splitPotNameInput.value = "";
+  }
+  if (splitPotTicketsInput) {
+    splitPotTicketsInput.value = "0";
+  }
+  saveSplitPot();
+  renderSplitPot();
+
+  bullseyeShootEntries = [];
+  bullseyeShootWinner = null;
+  bullseyeShootCurrentPot = 0;
+  if (bullseyeShootNameInput) {
+    bullseyeShootNameInput.value = "";
+  }
+  if (bullseyeShootTicketsInput) {
+    bullseyeShootTicketsInput.value = "0";
+  }
+  if (bullseyeShootCurrentPotInput) {
+    bullseyeShootCurrentPotInput.value = "0";
+  }
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+
+  clearOutShots();
+  renderMysteryOut();
+  showMessage("All page fields reset.");
 }
 
 function clearPlayerNames() {
