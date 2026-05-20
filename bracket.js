@@ -63,8 +63,6 @@ const clearLodCodeButton = document.querySelector("#clearLodCode");
 const portalNoticeInput = document.querySelector("#portalNoticeInput");
 const portalAutoNoticeInput = document.querySelector("#portalAutoNoticeInput");
 const portalAutoNoticeStatus = document.querySelector("#portalAutoNoticeStatus");
-const portalBracketNoticeInput = document.querySelector("#portalBracketNoticeInput");
-const portalBracketNoticeStatus = document.querySelector("#portalBracketNoticeStatus");
 const portalBullshootNoticeInput = document.querySelector("#portalBullshootNoticeInput");
 const portalBullshootNoticeStatus = document.querySelector("#portalBullshootNoticeStatus");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
@@ -158,8 +156,6 @@ let portalNoticeAt = "";
 let portalNoticeDraft = "";
 let portalAutoNotice = "";
 let portalAutoNoticeAt = "";
-let portalBracketNotice = "";
-let portalBracketNoticeAt = "";
 let portalBullshootNotice = "";
 let portalBullshootNoticeAt = "";
 let splitPotEntries = [];
@@ -1545,24 +1541,6 @@ function setAutomatedPortalNotice(message) {
   return didPublish;
 }
 
-function setBracketPortalNotice(message) {
-  const text = String(message || "").trim();
-  portalBracketNotice = text;
-  portalBracketNoticeAt = text ? new Date().toISOString() : "";
-  if (portalBracketNoticeInput) {
-    portalBracketNoticeInput.value = text;
-  }
-  const didPublish = savePortalSnapshotToLocalStorage();
-  queueBracketDraftSave();
-  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (portalBracketNoticeStatus) {
-    portalBracketNoticeStatus.textContent = text
-      ? (didPublish ? `Bracket message sent at ${stamp}.` : `Bracket message ready at ${stamp}; set an LOD code to publish.`)
-      : "";
-  }
-  return didPublish;
-}
-
 function setBullshootPortalNotice(message) {
   const text = String(message || "").trim();
   portalBullshootNotice = text;
@@ -1587,7 +1565,7 @@ function sendBracketLegWinnerPortalNotice(match, winnerName) {
   }
 
   const winnerLine = `Bracket leg winner: ${formatMatchTitle(match)} - ${winnerName}`;
-  return setBracketPortalNotice(winnerLine);
+  return setAutomatedPortalNotice(winnerLine);
 }
 
 function formatSplitPotTicketRange(row) {
@@ -4151,8 +4129,6 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     portalNoticeAt,
     portalAutoNotice,
     portalAutoNoticeAt,
-    portalBracketNotice,
-    portalBracketNoticeAt,
     portalBullshootNotice,
     portalBullshootNoticeAt,
   };
@@ -4197,8 +4173,6 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   portalNoticeDraft = "";
   portalAutoNotice = "";
   portalAutoNoticeAt = "";
-  portalBracketNotice = "";
-  portalBracketNoticeAt = "";
   portalBullshootNotice = "";
   portalBullshootNoticeAt = "";
   if (portalNoticeInput) {
@@ -4212,12 +4186,6 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   }
   if (portalAutoNoticeStatus) {
     portalAutoNoticeStatus.textContent = "";
-  }
-  if (portalBracketNoticeInput) {
-    portalBracketNoticeInput.value = "";
-  }
-  if (portalBracketNoticeStatus) {
-    portalBracketNoticeStatus.textContent = "";
   }
   if (portalBullshootNoticeInput) {
     portalBullshootNoticeInput.value = "";
@@ -4368,18 +4336,6 @@ function restoreBracketDraft() {
     portalAutoNoticeInput.value = portalAutoNotice;
   }
 
-  if (typeof draft.portalBracketNotice === "string") {
-    portalBracketNotice = draft.portalBracketNotice;
-  }
-
-  if (typeof draft.portalBracketNoticeAt === "string") {
-    portalBracketNoticeAt = draft.portalBracketNoticeAt;
-  }
-
-  if (portalBracketNoticeInput) {
-    portalBracketNoticeInput.value = portalBracketNotice;
-  }
-
   if (typeof draft.portalBullshootNotice === "string") {
     portalBullshootNotice = draft.portalBullshootNotice;
   }
@@ -4500,8 +4456,6 @@ function buildBracketDraft() {
     portalNoticeDraft,
     portalAutoNotice,
     portalAutoNoticeAt,
-    portalBracketNotice,
-    portalBracketNoticeAt,
     portalBullshootNotice,
     portalBullshootNoticeAt,
   };

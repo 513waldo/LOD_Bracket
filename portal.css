@@ -269,11 +269,6 @@ h1 {
   gap: 8px;
 }
 
-.portal-bracket-message-wrap {
-  display: grid;
-  gap: 8px;
-}
-
 .portal-bullshoot-message-wrap {
   display: grid;
   gap: 8px;
@@ -298,10 +293,6 @@ h1 {
 
 .message.board-call.automated-call {
   border-style: dashed;
-}
-
-.message.board-call.bracket-call {
-  border-style: solid;
 }
 
 .message.board-call.bullshoot-call {

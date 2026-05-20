@@ -6,8 +6,6 @@ const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
 const portalAutoMessage = document.querySelector("#portalAutoMessage");
 const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
-const portalBracketMessage = document.querySelector("#portalBracketMessage");
-const portalBracketMessageWrap = document.querySelector("#portalBracketMessageWrap");
 const portalBullshootMessage = document.querySelector("#portalBullshootMessage");
 const portalBullshootMessageWrap = document.querySelector("#portalBullshootMessageWrap");
 const publishedAt = document.querySelector("#publishedAt");
@@ -261,8 +259,6 @@ function normalizeSnapshot(data) {
       portalNoticeAt: String(data.portalNoticeAt || ""),
       portalAutoNotice: String(data.portalAutoNotice || ""),
       portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
-      portalBracketNotice: String(data.portalBracketNotice || ""),
-      portalBracketNoticeAt: String(data.portalBracketNoticeAt || ""),
       portalBullshootNotice: String(data.portalBullshootNotice || ""),
       portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
       state: data.state && typeof data.state === "object" ? data.state : null,
@@ -280,8 +276,6 @@ function normalizeSnapshot(data) {
     portalNoticeAt: String(data.portalNoticeAt || ""),
     portalAutoNotice: String(data.portalAutoNotice || ""),
     portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
-    portalBracketNotice: String(data.portalBracketNotice || ""),
-    portalBracketNoticeAt: String(data.portalBracketNoticeAt || ""),
     portalBullshootNotice: String(data.portalBullshootNotice || ""),
     portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
     state: data,
@@ -311,13 +305,10 @@ function shouldPreferSnapshot(candidate, current) {
   const currentNotice = String(current.portalNotice || "").trim();
   const candidateAutoNotice = String(candidate.portalAutoNotice || "").trim();
   const currentAutoNotice = String(current.portalAutoNotice || "").trim();
-  const candidateBracketNotice = String(candidate.portalBracketNotice || "").trim();
-  const currentBracketNotice = String(current.portalBracketNotice || "").trim();
   const candidateBullshootNotice = String(candidate.portalBullshootNotice || "").trim();
   const currentBullshootNotice = String(current.portalBullshootNotice || "").trim();
   const candidateStamp = Number(new Date(
     candidate.portalBullshootNoticeAt ||
-    candidate.portalBracketNoticeAt ||
     candidate.portalAutoNoticeAt ||
     candidate.portalNoticeAt ||
     candidate.exportedAt ||
@@ -325,18 +316,17 @@ function shouldPreferSnapshot(candidate, current) {
   ));
   const currentStamp = Number(new Date(
     current.portalBullshootNoticeAt ||
-    current.portalBracketNoticeAt ||
     current.portalAutoNoticeAt ||
     current.portalNoticeAt ||
     current.exportedAt ||
     0,
   ));
 
-  if ((candidateNotice || candidateAutoNotice || candidateBracketNotice || candidateBullshootNotice) && !(currentNotice || currentAutoNotice || currentBracketNotice || currentBullshootNotice)) {
+  if ((candidateNotice || candidateAutoNotice || candidateBullshootNotice) && !(currentNotice || currentAutoNotice || currentBullshootNotice)) {
     return true;
   }
 
-  if (!(candidateNotice || candidateAutoNotice || candidateBracketNotice || candidateBullshootNotice) && (currentNotice || currentAutoNotice || currentBracketNotice || currentBullshootNotice)) {
+  if (!(candidateNotice || candidateAutoNotice || candidateBullshootNotice) && (currentNotice || currentAutoNotice || currentBullshootNotice)) {
     return false;
   }
 
@@ -366,7 +356,6 @@ function renderSnapshot(snapshot, sourceLabel) {
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
   setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
   setAutomatedMessage(formatPortalCall(snapshot.portalAutoNotice, snapshot.portalAutoNoticeAt));
-  setBracketMessage(formatPortalCall(snapshot.portalBracketNotice, snapshot.portalBracketNoticeAt));
   setBullshootMessage(formatPortalCall(snapshot.portalBullshootNotice, snapshot.portalBullshootNoticeAt));
 
   if (!state) {
@@ -392,7 +381,6 @@ function renderEmptyPortal() {
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
   setMessage("");
   setAutomatedMessage("");
-  setBracketMessage("");
   setBullshootMessage("");
 }
 
@@ -755,16 +743,6 @@ function setAutomatedMessage(text) {
   const value = String(text || "").trim() || "No automated messages yet.";
   portalAutoMessage.textContent = value;
   portalAutoMessageWrap.hidden = false;
-}
-
-function setBracketMessage(text) {
-  if (!portalBracketMessage || !portalBracketMessageWrap) {
-    return;
-  }
-
-  const value = String(text || "").trim() || "No bracket messages yet.";
-  portalBracketMessage.textContent = value;
-  portalBracketMessageWrap.hidden = false;
 }
 
 function setBullshootMessage(text) {

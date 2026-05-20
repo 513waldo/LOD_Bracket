@@ -249,16 +249,6 @@ textarea:focus {
   border-top: 1px solid rgba(255, 250, 240, 0.16);
 }
 
-.portal-bracket-notice-panel {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 250, 240, 0.16);
-}
-
 .portal-bullshoot-notice-panel {
   display: grid;
   gap: 8px;
@@ -270,12 +260,6 @@ textarea:focus {
 }
 
 .portal-auto-notice-panel h3 {
-  margin: 0;
-  color: #fffaf0;
-  font-size: 1rem;
-}
-
-.portal-bracket-notice-panel h3 {
   margin: 0;
   color: #fffaf0;
   font-size: 1rem;
