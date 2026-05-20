@@ -41,6 +41,15 @@ const drawSplitPotWinnerButton = document.querySelector("#drawSplitPotWinner");
 const clearSplitPotWinnerButton = document.querySelector("#clearSplitPotWinner");
 const clearSplitPotEntriesButton = document.querySelector("#clearSplitPotEntries");
 const splitPotWinnerOutput = document.querySelector("#splitPotWinner");
+const bullseyeShootNameInput = document.querySelector("#bullseyeShootName");
+const bullseyeShootTicketsInput = document.querySelector("#bullseyeShootTickets");
+const addBullseyeShootEntryButton = document.querySelector("#addBullseyeShootEntry");
+const bullseyeShootSummary = document.querySelector("#bullseyeShootSummary");
+const bullseyeShootEntriesOutput = document.querySelector("#bullseyeShootEntries");
+const drawBullseyeShootWinnerButton = document.querySelector("#drawBullseyeShootWinner");
+const clearBullseyeShootWinnerButton = document.querySelector("#clearBullseyeShootWinner");
+const clearBullseyeShootEntriesButton = document.querySelector("#clearBullseyeShootEntries");
+const bullseyeShootWinnerOutput = document.querySelector("#bullseyeShootWinner");
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
@@ -66,6 +75,7 @@ const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
 const splitPotStorageKey = "dartsTournamentSplitPot";
+const bullseyeShootStorageKey = "dartsTournamentBullseyeShoot";
 const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
 const bracketDraftStorageKey = "dartsTournamentBracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
@@ -140,6 +150,8 @@ let portalNoticeAt = "";
 let portalNoticeDraft = "";
 let splitPotEntries = [];
 let splitPotWinner = null;
+let bullseyeShootEntries = [];
+let bullseyeShootWinner = null;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -160,6 +172,9 @@ renderMysteryOut();
 loadSplitPot();
 renderSplitPotPurchaseOptions();
 renderSplitPot();
+loadBullseyeShoot();
+renderBullseyeShootPurchaseOptions();
+renderBullseyeShoot();
 syncPayoutTeamsFromPlayerCount();
 updatePayoutCalculator();
 renderPdfLayoutOptions();
@@ -404,6 +419,31 @@ clearSplitPotEntriesButton?.addEventListener("click", () => {
   saveSplitPot();
   renderSplitPot();
   showMessage("Split The Pot entries cleared.");
+});
+
+addBullseyeShootEntryButton?.addEventListener("click", addBullseyeShootEntry);
+
+bullseyeShootTicketsInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addBullseyeShootEntry();
+  }
+});
+
+drawBullseyeShootWinnerButton?.addEventListener("click", drawBullseyeShootWinner);
+
+clearBullseyeShootWinnerButton?.addEventListener("click", () => {
+  bullseyeShootWinner = null;
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+});
+
+clearBullseyeShootEntriesButton?.addEventListener("click", () => {
+  bullseyeShootEntries = [];
+  bullseyeShootWinner = null;
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  showMessage("Bullseye Shoot entries cleared.");
 });
 
 playerList.addEventListener("input", () => {
@@ -899,6 +939,65 @@ function drawSplitPotWinner() {
   showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
 
+function addBullseyeShootEntry() {
+  const name = String(bullseyeShootNameInput?.value || "").trim();
+  const amountPaid = Math.floor(Number(bullseyeShootTicketsInput?.value) || 0);
+  const ticketCount = getSplitPotTicketsForAmount(amountPaid);
+
+  if (!name) {
+    showMessage("Enter a Bullseye Shoot name.");
+    bullseyeShootNameInput?.focus();
+    return;
+  }
+
+  if (!Number.isInteger(amountPaid) || amountPaid < 1) {
+    showMessage("Choose at least $1 for Bullseye Shoot.");
+    bullseyeShootTicketsInput?.focus();
+    return;
+  }
+
+  bullseyeShootEntries.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    amountPaid,
+    ticketCount,
+    createdAt: new Date().toISOString(),
+  });
+  bullseyeShootWinner = null;
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  const didSendNotice = sendBullseyeShootPortalNotice();
+
+  if (bullseyeShootNameInput) {
+    bullseyeShootNameInput.value = "";
+    bullseyeShootNameInput.focus();
+  }
+  if (bullseyeShootTicketsInput) {
+    bullseyeShootTicketsInput.value = "5";
+  }
+
+  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+}
+
+function drawBullseyeShootWinner() {
+  const tickets = getBullseyeShootTickets();
+
+  if (!tickets.length) {
+    showMessage("Add Bullseye Shoot tickets before drawing.");
+    return;
+  }
+
+  const winnerTicket = tickets[getRandomIndex(tickets.length)];
+  bullseyeShootWinner = {
+    ...winnerTicket,
+    drawnAt: new Date().toISOString(),
+  };
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  const didSendNotice = sendBullseyeShootPortalNotice({ winner: winnerTicket });
+  showMessage(`Bullseye Shoot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+}
+
 function renderSplitPot() {
   if (!splitPotSummary || !splitPotEntriesOutput || !splitPotWinnerOutput) {
     return;
@@ -956,6 +1055,63 @@ function renderSplitPot() {
   `;
 }
 
+function renderBullseyeShoot() {
+  if (!bullseyeShootSummary || !bullseyeShootEntriesOutput || !bullseyeShootWinnerOutput) {
+    return;
+  }
+
+  const ticketRows = getBullseyeShootEntryRows();
+  const ticketTotal = ticketRows.reduce((sum, row) => sum + row.ticketCount, 0);
+  const pot = ticketRows.reduce((sum, row) => sum + row.amountPaid, 0);
+
+  bullseyeShootSummary.innerHTML = `
+    <div>
+      <span>Tickets sold</span>
+      <strong>${ticketTotal}</strong>
+    </div>
+    <div>
+      <span>Total pot</span>
+      <strong>${formatMoney(pot)}</strong>
+    </div>
+    <div>
+      <span>Next ticket</span>
+      <strong>${formatTicketNumber(splitPotFirstTicketNumber + ticketTotal)}</strong>
+    </div>
+  `;
+
+  if (!ticketRows.length) {
+    bullseyeShootEntriesOutput.innerHTML = `<p class="split-pot-empty">No Bullseye Shoot tickets entered yet.</p>`;
+  } else {
+    bullseyeShootEntriesOutput.innerHTML = ticketRows.map((row) => `
+      <article class="split-pot-entry">
+        <div class="split-pot-entry-heading">
+          <div>
+            <strong>${escapeHtml(row.name)}</strong>
+            <span>${formatMoney(row.amountPaid)} • ${row.ticketCount} ticket${row.ticketCount === 1 ? "" : "s"}</span>
+          </div>
+          <button class="danger" type="button" data-bullseye-shoot-delete="${escapeAttribute(row.id)}">Delete</button>
+        </div>
+        <div class="split-pot-ticket-list" aria-label="Tickets for ${escapeAttribute(row.name)}">
+          <code>${escapeHtml(formatSplitPotTicketRange(row))}</code>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  if (!bullseyeShootWinner) {
+    bullseyeShootWinnerOutput.className = "split-pot-winner empty";
+    bullseyeShootWinnerOutput.textContent = "No winner drawn.";
+    return;
+  }
+
+  bullseyeShootWinnerOutput.className = "split-pot-winner";
+  bullseyeShootWinnerOutput.innerHTML = `
+    <span>Winning ticket</span>
+    <strong>${escapeHtml(bullseyeShootWinner.ticketLabel)}</strong>
+    <b>${escapeHtml(bullseyeShootWinner.name)}</b>
+  `;
+}
+
 function getSplitPotEntryRows() {
   let nextTicketNumber = splitPotFirstTicketNumber;
 
@@ -986,6 +1142,36 @@ function getSplitPotTickets() {
   return getSplitPotEntryRows().flatMap((entry) => entry.tickets);
 }
 
+function getBullseyeShootEntryRows() {
+  let nextTicketNumber = splitPotFirstTicketNumber;
+
+  return bullseyeShootEntries.map((entry) => {
+    const amountPaid = Math.max(0, Math.floor(Number(entry.amountPaid ?? calculateSplitPotAmount(entry.ticketCount)) || 0));
+    const ticketCount = getSplitPotTicketsForAmount(amountPaid);
+    const tickets = Array.from({ length: ticketCount }, (_, index) => {
+      const ticketNumber = nextTicketNumber + index;
+      return {
+        entryId: entry.id,
+        name: entry.name,
+        ticketNumber,
+        ticketLabel: formatTicketNumber(ticketNumber),
+      };
+    });
+    nextTicketNumber += ticketCount;
+
+    return {
+      ...entry,
+      amountPaid,
+      ticketCount,
+      tickets,
+    };
+  }).filter((entry) => entry.ticketCount > 0);
+}
+
+function getBullseyeShootTickets() {
+  return getBullseyeShootEntryRows().flatMap((entry) => entry.tickets);
+}
+
 function sendSplitPotPortalNotice({ winner = null } = {}) {
   const rows = getSplitPotEntryRows();
   if (!rows.length) {
@@ -1002,6 +1188,42 @@ function sendSplitPotPortalNotice({ winner = null } = {}) {
     winner
       ? `Split The Pot Winner: ${winner.name} - ${winner.ticketLabel}`
       : `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
+    ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
+    ...ticketList,
+  ].join("\n");
+  portalNotice = message;
+  portalNoticeDraft = message;
+  portalNoticeAt = new Date().toISOString();
+  if (portalNoticeInput) {
+    portalNoticeInput.value = message;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = didPublish
+      ? `Auto sent at ${stamp}.`
+      : `Auto message ready at ${stamp}; set an LOD code to publish.`;
+  }
+  return didPublish;
+}
+
+function sendBullseyeShootPortalNotice({ winner = null } = {}) {
+  const rows = getBullseyeShootEntryRows();
+  if (!rows.length) {
+    return false;
+  }
+
+  const ticketTotal = rows.reduce((sum, entry) => sum + entry.ticketCount, 0);
+  const pot = rows.reduce((sum, entry) => sum + entry.amountPaid, 0);
+  const ticketList = rows.map((entry) => {
+    const ticketLabel = entry.ticketCount === 1 ? "ticket" : "tickets";
+    return `${entry.name}: ${formatSplitPotTicketRange(entry)} (${entry.ticketCount} ${ticketLabel}, ${formatMoney(entry.amountPaid)})`;
+  });
+  const message = [
+    winner
+      ? `Bullseye Shoot Winner: ${winner.name} - ${winner.ticketLabel}`
+      : `Bullseye Shoot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
     ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
   ].join("\n");
@@ -1041,7 +1263,24 @@ function getSplitPotTicketsForAmount(amountPaid) {
 }
 
 function renderSplitPotPurchaseOptions() {
-  if (!splitPotTicketsInput) {
+  const purchaseAmounts = [
+    1,
+    2,
+    3,
+    4,
+    ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => (index + 1) * 5),
+  ];
+
+  if (splitPotTicketsInput) {
+    splitPotTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
+      const ticketCount = getSplitPotTicketsForAmount(amount);
+      return `<option value="${amount}"${amount === 5 ? " selected" : ""}>${formatMoney(amount)} - ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}</option>`;
+    }).join("");
+  }
+}
+
+function renderBullseyeShootPurchaseOptions() {
+  if (!bullseyeShootTicketsInput) {
     return;
   }
 
@@ -1053,7 +1292,7 @@ function renderSplitPotPurchaseOptions() {
     ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => (index + 1) * 5),
   ];
 
-  splitPotTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
+  bullseyeShootTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
     const ticketCount = getSplitPotTicketsForAmount(amount);
     return `<option value="${amount}"${amount === 5 ? " selected" : ""}>${formatMoney(amount)} - ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}</option>`;
   }).join("");
@@ -1116,6 +1355,49 @@ function loadSplitPot() {
   }
 }
 
+function saveBullseyeShoot() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(bullseyeShootStorageKey, JSON.stringify({
+      version: 1,
+      entries: bullseyeShootEntries,
+      winner: bullseyeShootWinner,
+    }));
+  } catch {
+    showMessage("Bullseye Shoot could not be saved in this browser.");
+  }
+}
+
+function loadBullseyeShoot() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    const data = JSON.parse(localStorage.getItem(bullseyeShootStorageKey) || "null");
+    if (!data || typeof data !== "object") {
+      return;
+    }
+
+    bullseyeShootEntries = Array.isArray(data.entries)
+      ? data.entries.map((entry) => ({
+        id: String(entry.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        name: String(entry.name || "").trim(),
+        amountPaid: Math.max(0, Math.floor(Number(entry.amountPaid ?? calculateSplitPotAmount(entry.ticketCount)) || 0)),
+        ticketCount: Math.max(0, Math.floor(Number(entry.ticketCount) || 0)),
+        createdAt: String(entry.createdAt || ""),
+      })).filter((entry) => entry.name && entry.amountPaid > 0)
+      : [];
+    bullseyeShootWinner = data.winner && typeof data.winner === "object" ? data.winner : null;
+  } catch {
+    bullseyeShootEntries = [];
+    bullseyeShootWinner = null;
+  }
+}
+
 splitPotEntriesOutput?.addEventListener("click", (event) => {
   const deleteButton = event.target.closest("[data-split-pot-delete]");
   if (!deleteButton) {
@@ -1127,6 +1409,19 @@ splitPotEntriesOutput?.addEventListener("click", (event) => {
   saveSplitPot();
   renderSplitPot();
   showMessage("Split The Pot entry deleted.");
+});
+
+bullseyeShootEntriesOutput?.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-bullseye-shoot-delete]");
+  if (!deleteButton) {
+    return;
+  }
+
+  bullseyeShootEntries = bullseyeShootEntries.filter((entry) => entry.id !== deleteButton.dataset.bullseyeShootDelete);
+  bullseyeShootWinner = null;
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  showMessage("Bullseye Shoot entry deleted.");
 });
 
 function showTeamDrawWarning(text) {
