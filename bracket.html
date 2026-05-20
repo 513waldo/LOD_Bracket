@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-52">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-53">
 </head>
 <body>
   <main class="app">
@@ -170,8 +170,7 @@
               </label>
               <label>
                 Dollars paid
-                <input id="splitPotTickets" type="number" min="1" step="1" inputmode="numeric" autocomplete="off" value="5" placeholder="5">
-                <small id="splitPotTicketsHelp" class="ticket-reference"></small>
+                <input id="splitPotTickets" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0" placeholder="0">
               </label>
               <button id="addSplitPotEntry" type="button">Add tickets</button>
             </div>
@@ -205,8 +204,7 @@
               </label>
               <label>
                 Dollars paid
-                <input id="bullseyeShootTickets" type="number" min="1" step="1" inputmode="numeric" autocomplete="off" value="5" placeholder="5">
-                <small id="bullseyeShootTicketsHelp" class="ticket-reference"></small>
+                <input id="bullseyeShootTickets" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0" placeholder="0">
               </label>
               <label class="bullseye-current-pot">
                 Current pot
@@ -398,6 +396,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-67"></script>
+  <script src="bracket.js?v=interactive-tools-68"></script>
 </body>
 </html>

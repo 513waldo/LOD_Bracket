@@ -527,15 +527,6 @@ label {
   font-weight: 800;
 }
 
-.ticket-reference {
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 700;
-  line-height: 1.35;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 input,
 textarea,
 select {
@@ -1477,10 +1468,10 @@ button.player-button .loser-source-text {
 
 .highest-out-record-body {
   min-height: 72px;
-  border: 1px solid rgba(11, 122, 67, 0.34);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(225, 242, 230, 0.9);
-  color: var(--ink);
+  background: #ffffff;
+  color: #000000;
   padding: 14px;
   font-size: 1.1rem;
   font-weight: 900;
@@ -1488,9 +1479,9 @@ button.player-button .loser-source-text {
 }
 
 .highest-out-record-body.empty {
-  border-color: rgba(185, 39, 34, 0.34);
-  background: rgba(248, 230, 228, 0.94);
-  color: var(--loss-text);
+  border-color: var(--line);
+  background: #ffffff;
+  color: #000000;
   font-size: 0.96rem;
   font-weight: 800;
 }

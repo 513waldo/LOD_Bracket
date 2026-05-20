@@ -34,7 +34,6 @@ const payoutSummary = document.querySelector("#payoutSummary");
 const payoutResults = document.querySelector("#payoutResults");
 const splitPotNameInput = document.querySelector("#splitPotName");
 const splitPotTicketsInput = document.querySelector("#splitPotTickets");
-const splitPotTicketsHelp = document.querySelector("#splitPotTicketsHelp");
 const addSplitPotEntryButton = document.querySelector("#addSplitPotEntry");
 const splitPotSummary = document.querySelector("#splitPotSummary");
 const splitPotEntriesOutput = document.querySelector("#splitPotEntries");
@@ -44,7 +43,6 @@ const clearSplitPotEntriesButton = document.querySelector("#clearSplitPotEntries
 const splitPotWinnerOutput = document.querySelector("#splitPotWinner");
 const bullseyeShootNameInput = document.querySelector("#bullseyeShootName");
 const bullseyeShootTicketsInput = document.querySelector("#bullseyeShootTickets");
-const bullseyeShootTicketsHelp = document.querySelector("#bullseyeShootTicketsHelp");
 const bullseyeShootCurrentPotInput = document.querySelector("#bullseyeShootCurrentPot");
 const addBullseyeShootEntryButton = document.querySelector("#addBullseyeShootEntry");
 const bullseyeShootSummary = document.querySelector("#bullseyeShootSummary");
@@ -932,7 +930,7 @@ function addSplitPotEntry() {
     splitPotNameInput.focus();
   }
   if (splitPotTicketsInput) {
-    splitPotTicketsInput.value = "5";
+    splitPotTicketsInput.value = "0";
   }
 
   showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
@@ -991,7 +989,7 @@ function addBullseyeShootEntry() {
     bullseyeShootNameInput.focus();
   }
   if (bullseyeShootTicketsInput) {
-    bullseyeShootTicketsInput.value = "5";
+    bullseyeShootTicketsInput.value = "0";
   }
 
   showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
@@ -1291,14 +1289,14 @@ function getSplitPotTicketsForAmount(amountPaid) {
 }
 
 function renderSplitPotPurchaseOptions() {
-  if (splitPotTicketsHelp) {
-    splitPotTicketsHelp.textContent = buildPurchaseReferenceText();
+  if (splitPotTicketsInput) {
+    splitPotTicketsInput.title = buildPurchaseReferenceText();
   }
 }
 
 function renderBullseyeShootPurchaseOptions() {
-  if (bullseyeShootTicketsHelp) {
-    bullseyeShootTicketsHelp.textContent = buildPurchaseReferenceText();
+  if (bullseyeShootTicketsInput) {
+    bullseyeShootTicketsInput.title = buildPurchaseReferenceText();
   }
 }
 
