@@ -2250,11 +2250,13 @@ function buildD20SvgMarkup(value, palette) {
     ...surroundingFaces.sort((a, b) => a.depth - b.depth),
     { ...model.centerFace, number: topValue, center: true },
   ];
+  const silhouette = buildD20SilhouettePath(drawFaces);
 
   return `
     <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
       <ellipse cx="120" cy="130" rx="88" ry="78" fill="rgba(0, 0, 0, 0.20)"></ellipse>
       <ellipse cx="120" cy="112" rx="44" ry="36" fill="rgba(255, 255, 255, 0.10)"></ellipse>
+      <path d="${silhouette}" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.52)" stroke-width="2.5" stroke-linejoin="round"></path>
       ${drawFaces.map((face) => {
         const fill = getD20FaceFill(palette, face);
         const textX = face.cx + (face.center ? 0 : Math.cos(face.angle) * 1.5);
@@ -2291,14 +2293,25 @@ function getProjectedD20Model() {
 
   const centerFace = visibleFaces[centerFaceIndex] || visibleFaces[0] || faces[0];
   const surroundingFaces = visibleFaces
-    .filter((_, index) => index !== centerFaceIndex)
-    .map((face) => ({
-      ...face,
-      distance: Math.hypot(face.cx - centerX, face.cy - centerY),
-    }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, 8)
+    .filter((face, index) => index !== centerFaceIndex && sharesEdge(face.indices, centerFace.indices))
     .sort((a, b) => a.angle - b.angle);
+
+  if (surroundingFaces.length < 5) {
+    const fallbackFaces = visibleFaces
+      .filter((_, index) => index !== centerFaceIndex)
+      .map((face) => ({
+        ...face,
+        distance: Math.hypot(face.cx - centerX, face.cy - centerY),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5)
+      .sort((a, b) => a.angle - b.angle);
+
+    return {
+      centerFace,
+      surroundingFaces: fallbackFaces,
+    };
+  }
 
   return {
     centerFace,
@@ -2360,6 +2373,7 @@ function getProjectedD20Faces(vertices) {
 
     return {
       points: points.map((point) => `${point.x},${point.y}`).join(" "),
+      indices,
       cx,
       cy,
       depth,
@@ -2399,6 +2413,82 @@ function getD20FaceFill(palette, face) {
   }
 
   return mixHexColors(palette.faceSecondary, palette.faceHighlight, 0.42);
+}
+
+function sharesEdge(firstIndices, secondIndices) {
+  if (!Array.isArray(firstIndices) || !Array.isArray(secondIndices)) {
+    return false;
+  }
+
+  let shared = 0;
+  for (const index of firstIndices) {
+    if (secondIndices.includes(index)) {
+      shared += 1;
+    }
+    if (shared >= 2) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function buildD20SilhouettePath(faces) {
+  const points = faces.flatMap((face) => {
+    return face.points.split(" ").map((pair) => {
+      const [x, y] = pair.split(",").map(Number);
+      return { x, y };
+    });
+  });
+
+  const hull = buildConvexHull(points);
+  if (!hull.length) {
+    return "";
+  }
+
+  return `M ${hull.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" L ")} Z`;
+}
+
+function buildConvexHull(points) {
+  const uniquePoints = [];
+  const seen = new Set();
+
+  points.forEach((point) => {
+    const key = `${point.x.toFixed(2)}:${point.y.toFixed(2)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniquePoints.push(point);
+    }
+  });
+
+  if (uniquePoints.length < 3) {
+    return uniquePoints;
+  }
+
+  const sorted = [...uniquePoints].sort((a, b) => (a.x - b.x) || (a.y - b.y));
+
+  const cross = (origin, a, b) => ((a.x - origin.x) * (b.y - origin.y)) - ((a.y - origin.y) * (b.x - origin.x));
+
+  const lower = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+
+  const upper = [];
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const point = sorted[index];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
 }
 
 function mixHexColors(startHex, endHex, amount) {
