@@ -1528,7 +1528,7 @@ function setAutomatedPortalNotice(message) {
   portalAutoNotice = text;
   portalAutoNoticeAt = text ? new Date().toISOString() : "";
   if (portalAutoNoticeInput) {
-    portalAutoNoticeInput.value = text;
+    portalAutoNoticeInput.innerHTML = renderAdminNoticeMarkup(text, /^Split The Pot winner\b/i);
   }
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
@@ -1546,7 +1546,7 @@ function setBullshootPortalNotice(message) {
   portalBullshootNotice = text;
   portalBullshootNoticeAt = text ? new Date().toISOString() : "";
   if (portalBullshootNoticeInput) {
-    portalBullshootNoticeInput.value = text;
+    portalBullshootNoticeInput.innerHTML = renderAdminNoticeMarkup(text, /^Bullshoot winner\b/i);
   }
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
@@ -1557,6 +1557,23 @@ function setBullshootPortalNotice(message) {
       : "";
   }
   return didPublish;
+}
+
+function renderAdminNoticeMarkup(text, winnerPattern) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return "";
+  }
+
+  const lines = value.split("\n");
+  if (!winnerPattern.test(lines[0] || "")) {
+    return escapeHtml(value).replace(/\n/g, "<br>");
+  }
+
+  const [firstLine, ...rest] = lines;
+  const winnerLine = `<span class="winner-line">${escapeHtml(firstLine)}</span>`;
+  const remainder = rest.length ? `<br>${escapeHtml(rest.join("\n")).replace(/\n/g, "<br>")}` : "";
+  return `${winnerLine}${remainder}`;
 }
 
 function sendBracketLegWinnerPortalNotice(match, winnerName) {
@@ -4182,13 +4199,13 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
     portalNoticeStatus.textContent = "";
   }
   if (portalAutoNoticeInput) {
-    portalAutoNoticeInput.value = "";
+    portalAutoNoticeInput.innerHTML = "";
   }
   if (portalAutoNoticeStatus) {
     portalAutoNoticeStatus.textContent = "";
   }
   if (portalBullshootNoticeInput) {
-    portalBullshootNoticeInput.value = "";
+    portalBullshootNoticeInput.innerHTML = "";
   }
   if (portalBullshootNoticeStatus) {
     portalBullshootNoticeStatus.textContent = "";
@@ -4333,7 +4350,7 @@ function restoreBracketDraft() {
   }
 
   if (portalAutoNoticeInput) {
-    portalAutoNoticeInput.value = portalAutoNotice;
+    portalAutoNoticeInput.innerHTML = renderAdminNoticeMarkup(portalAutoNotice, /^Split The Pot winner\b/i);
   }
 
   if (typeof draft.portalBullshootNotice === "string") {
@@ -4345,7 +4362,7 @@ function restoreBracketDraft() {
   }
 
   if (portalBullshootNoticeInput) {
-    portalBullshootNoticeInput.value = portalBullshootNotice;
+    portalBullshootNoticeInput.innerHTML = renderAdminNoticeMarkup(portalBullshootNotice, /^Bullshoot winner\b/i);
   }
 
   if (typeof draft.mysteryOut === "string") {
