@@ -2114,7 +2114,7 @@ function generateMysteryOut() {
   stopMysteryOutDrawAnimation();
   mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
     values: availableOuts,
-    durationMs: 12000,
+    durationMs: 20000,
     onFrame: (score) => {
       if (mysteryOutDrawAnimation) {
         mysteryOutDrawAnimation.value = score;
