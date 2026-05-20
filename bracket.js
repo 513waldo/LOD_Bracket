@@ -964,13 +964,38 @@ function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) 
       return;
     }
 
-    const speedCurve = 0.35 + (0.95 * Math.sin(progress * Math.PI));
-    const nextDelay = Math.max(28, Math.round(120 / speedCurve));
+    const nextDelay = getTicketDrawDelay(progress);
     state.timerId = window.setTimeout(step, nextDelay);
   };
 
   state.timerId = window.setTimeout(step, 0);
   return state;
+}
+
+function getTicketDrawDelay(progress) {
+  const t = Math.max(0, Math.min(1, Number(progress) || 0));
+
+  if (t < 0.2) {
+    return Math.round(420 - (t / 0.2) * 220);
+  }
+
+  if (t < 0.72) {
+    const mid = (t - 0.2) / 0.52;
+    return Math.round(200 - (mid * 120));
+  }
+
+  if (t < 0.88) {
+    const tail = (t - 0.72) / 0.16;
+    return Math.round(80 + (tail * 180));
+  }
+
+  if (t < 0.96) {
+    const finalStretch = (t - 0.88) / 0.08;
+    return Math.round(260 + (finalStretch * 360));
+  }
+
+  const lastTicket = Math.min(1, (t - 0.96) / 0.04);
+  return Math.round(620 + (lastTicket * 580));
 }
 
 function stopSplitPotDrawAnimation() {
