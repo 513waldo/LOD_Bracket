@@ -1484,11 +1484,11 @@ button.player-button .loser-source-text {
 .dice-roller {
   display: grid;
   gap: 8px;
+  position: relative;
 }
 
 .dice-roller-heading {
   display: flex;
-  justify-content: space-between;
   gap: 12px;
   align-items: center;
 }
@@ -1501,7 +1501,8 @@ button.player-button .loser-source-text {
 .dice-stage {
   display: grid;
   place-items: center;
-  min-height: 168px;
+  min-height: 186px;
+  padding-top: 22px;
 }
 
 .dice-tray {
@@ -1521,6 +1522,9 @@ button.player-button .loser-source-text {
 }
 
 .dice-total {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   border-radius: 999px;
   background: var(--soft);
   color: var(--primary-dark);
