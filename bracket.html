@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-54">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-55">
 </head>
 <body>
   <main class="app">
@@ -49,7 +49,10 @@
           <section class="name-editor" aria-labelledby="namesTitle">
             <div class="name-editor-title">
               <h3 id="namesTitle">Player names</h3>
-              <button id="refreshNames" class="secondary" type="button">Update list</button>
+              <div class="name-editor-actions">
+                <button id="refreshNames" class="secondary" type="button">Update list</button>
+                <button id="seedTicketTestCase" class="secondary" type="button">Load test tickets</button>
+              </div>
             </div>
             <div id="nameList" class="name-list"></div>
             <details class="name-backup-history">
@@ -396,6 +399,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-70"></script>
+  <script src="bracket.js?v=interactive-tools-71"></script>
 </body>
 </html>

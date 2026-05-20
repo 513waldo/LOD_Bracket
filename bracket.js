@@ -203,6 +203,45 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
   queueBracketDraftSave();
 });
 
+document.querySelector("#seedTicketTestCase").addEventListener("click", () => {
+  const namedPlayers = Array.from(nameList.querySelectorAll("[data-player-number]"))
+    .map((input) => String(input.value || "").trim())
+    .filter(Boolean);
+
+  if (!namedPlayers.length) {
+    showMessage("Add player names first.");
+    return;
+  }
+
+  const amountPaid = 20;
+  const now = new Date().toISOString();
+  const makeEntry = (name) => ({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    amountPaid,
+    ticketCount: getSplitPotTicketsForAmount(amountPaid),
+    createdAt: now,
+  });
+
+  stopSplitPotDrawAnimation();
+  stopBullseyeShootDrawAnimation();
+  splitPotEntries = namedPlayers.map(makeEntry);
+  splitPotWinner = null;
+  bullseyeShootEntries = namedPlayers.map(makeEntry);
+  bullseyeShootWinner = null;
+  if (bullseyeShootCurrentPotInput) {
+    bullseyeShootCurrentPotInput.value = "0";
+  }
+  bullseyeShootCurrentPot = 0;
+  saveSplitPot();
+  saveBullseyeShoot();
+  renderSplitPot();
+  renderBullseyeShoot();
+  sendSplitPotPortalNotice();
+  sendBullseyeShootPortalNotice();
+  showMessage(`Loaded ${namedPlayers.length} test player${namedPlayers.length === 1 ? "" : "s"} into both ticket tools at $20 each.`);
+});
+
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
     renderPdfColumnMirror(Number(pdfLayoutSelect.value));

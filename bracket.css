@@ -582,6 +582,13 @@ textarea {
   margin-bottom: 12px;
 }
 
+.name-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .name-editor-title h3 {
   margin: 0;
   font-size: 1rem;
