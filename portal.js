@@ -297,6 +297,8 @@ function shouldPreferSnapshot(candidate, current) {
 
   const candidateNotice = String(candidate.portalNotice || "").trim();
   const currentNotice = String(current.portalNotice || "").trim();
+  const candidateAutoNotice = String(candidate.portalAutoNotice || "").trim();
+  const currentAutoNotice = String(current.portalAutoNotice || "").trim();
   const candidateStamp = Number(new Date(
     candidate.portalAutoNoticeAt ||
     candidate.portalNoticeAt ||
@@ -310,11 +312,11 @@ function shouldPreferSnapshot(candidate, current) {
     0,
   ));
 
-  if (candidateNotice && !currentNotice) {
+  if ((candidateNotice || candidateAutoNotice) && !(currentNotice || currentAutoNotice)) {
     return true;
   }
 
-  if (!candidateNotice && currentNotice) {
+  if (!(candidateNotice || candidateAutoNotice) && (currentNotice || currentAutoNotice)) {
     return false;
   }
 
