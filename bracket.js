@@ -975,7 +975,7 @@ function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) 
       return;
     }
 
-    const nextDelay = getTicketDrawDelay(progress);
+    const nextDelay = getTicketDrawDelay(progress, elapsed, durationMs);
     state.timerId = window.setTimeout(step, nextDelay);
   };
 
@@ -1020,7 +1020,7 @@ function startMysteryOutDrawAnimation({ values, durationMs, onFrame, onComplete 
       return;
     }
 
-    state.timerId = window.setTimeout(step, getTicketDrawDelay(progress));
+    state.timerId = window.setTimeout(step, getTicketDrawDelay(progress, elapsed, durationMs));
   };
 
   state.timerId = window.setTimeout(step, 0);
@@ -1057,30 +1057,33 @@ function pickRollingValue(values, previousValue) {
   return nextValue;
 }
 
-function getTicketDrawDelay(progress) {
-  const t = Math.max(0, Math.min(1, Number(progress) || 0));
+function getTicketDrawDelay(progress, elapsedMs = 0, durationMs = 20000) {
+  const elapsed = Math.max(0, Number(elapsedMs) || 0);
+  const total = Math.max(1, Number(durationMs) || 20000);
+  const remaining = Math.max(0, total - elapsed);
 
-  if (t < 0.2) {
-    return Math.round(420 - (t / 0.2) * 220);
+  if (remaining <= 3000) {
+    if (remaining <= 1000) {
+      return 500;
+    }
+    if (remaining <= 2000) {
+      return 750;
+    }
+    return 1000;
   }
 
-  if (t < 0.72) {
-    const mid = (t - 0.2) / 0.52;
-    return Math.round(200 - (mid * 120));
+  if (elapsed < 5000) {
+    const ramp = elapsed / 5000;
+    return Math.round(650 - (ramp * 530));
   }
 
-  if (t < 0.88) {
-    const tail = (t - 0.72) / 0.16;
-    return Math.round(80 + (tail * 180));
+  if (elapsed < 11000) {
+    const fast = (elapsed - 5000) / 6000;
+    return Math.round(30 - (fast * 8));
   }
 
-  if (t < 0.96) {
-    const finalStretch = (t - 0.88) / 0.08;
-    return Math.round(260 + (finalStretch * 360));
-  }
-
-  const lastTicket = Math.min(1, (t - 0.96) / 0.04);
-  return Math.round(620 + (lastTicket * 580));
+  const slowDown = Math.min(1, (elapsed - 11000) / Math.max(1, total - 14000));
+  return Math.round(40 + (slowDown * 460));
 }
 
 function stopSplitPotDrawAnimation() {
