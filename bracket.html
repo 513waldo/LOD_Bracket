@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-73">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-76">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -64,25 +64,6 @@
 
         </section>
 
-        <section class="panel qr-panel" aria-labelledby="qrTitle">
-          <div class="qr-copy">
-            <p class="step-label">Player access</p>
-            <h2 id="qrTitle">QR code</h2>
-            <p>Scan to open the view-only portal for this LOD.</p>
-          </div>
-          <img id="portalQrCode" class="qr-code" alt="QR code for the player portal" src="" width="240" height="240">
-          <div class="qr-actions">
-            <button id="newLodCode" class="secondary" type="button">New code</button>
-            <div id="lodCodeText" class="lod-code-text" aria-live="polite">LOD: ------</div>
-            <label class="lod-code-entry">
-              Load code
-              <input id="lodCodeInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
-            </label>
-            <button id="loadLodCode" class="secondary" type="button">Load</button>
-            <button id="clearLodCode" class="secondary" type="button">Clear</button>
-          </div>
-        </section>
-
         <section class="panel groups-panel" aria-labelledby="groupsTitle">
           <div class="panel-title">
             <div>
@@ -115,6 +96,55 @@
             <button id="buildBracket" type="button">Build bracket</button>
           </div>
           <p id="message" class="message" aria-live="polite"></p>
+        </section>
+
+        <section class="panel qr-panel" aria-labelledby="qrTitle">
+          <div class="qr-copy">
+            <p class="step-label">Player access</p>
+            <h2 id="qrTitle">QR code</h2>
+            <p>Scan to open the view-only portal for this LOD.</p>
+          </div>
+          <img id="portalQrCode" class="qr-code" alt="QR code for the player portal" src="" width="240" height="240">
+          <div class="qr-actions">
+            <button id="newLodCode" class="secondary" type="button">New code</button>
+            <div id="lodCodeText" class="lod-code-text" aria-live="polite">LOD: ------</div>
+            <label class="lod-code-entry">
+              Load code
+              <input id="lodCodeInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
+            </label>
+            <button id="loadLodCode" class="secondary" type="button">Load</button>
+            <button id="clearLodCode" class="secondary" type="button">Clear</button>
+          </div>
+        </section>
+
+        <section class="panel portal-notice-panel" aria-labelledby="portalNoticeTitle">
+          <div class="panel-title">
+            <div>
+              <p class="step-label">Alert</p>
+              <h2 id="portalNoticeTitle">Portal message</h2>
+            </div>
+            <p>Send a board call to the viewer portal.</p>
+          </div>
+          <label class="portal-notice-field">
+            Message
+            <textarea id="portalNoticeInput" rows="3" spellcheck="false" placeholder="Board 4, please report."></textarea>
+          </label>
+          <div class="portal-notice-actions">
+            <button id="sendPortalNotice" type="button">Send board call</button>
+            <button id="clearPortalNotice" class="secondary" type="button">Clear message</button>
+          </div>
+          <p id="portalNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
+        </section>
+
+        <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
+          <div class="panel-title">
+            <div>
+              <p class="step-label">Active</p>
+              <h2 id="lodRegistryTitle">Active LODs</h2>
+            </div>
+            <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
+          </div>
+          <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
         </section>
       </div>
 
@@ -269,37 +299,6 @@
             <div id="bullseyeShootWinner" class="split-pot-winner" aria-live="polite"></div>
           </div>
         </details>
-        <div class="portal-stack">
-          <section class="panel portal-notice-panel" aria-labelledby="portalNoticeTitle">
-            <div class="panel-title">
-              <div>
-                <p class="step-label">Alert</p>
-                <h2 id="portalNoticeTitle">Portal message</h2>
-              </div>
-              <p>Send a board call to the viewer portal.</p>
-            </div>
-            <label class="portal-notice-field">
-              Message
-              <textarea id="portalNoticeInput" rows="3" spellcheck="false" placeholder="Board 4, please report."></textarea>
-            </label>
-            <div class="portal-notice-actions">
-              <button id="sendPortalNotice" type="button">Send board call</button>
-              <button id="clearPortalNotice" class="secondary" type="button">Clear message</button>
-            </div>
-            <p id="portalNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
-          </section>
-
-          <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
-            <div class="panel-title">
-              <div>
-                <p class="step-label">Active</p>
-                <h2 id="lodRegistryTitle">Active LODs</h2>
-              </div>
-              <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
-            </div>
-            <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
-          </section>
-        </div>
       </div>
     </div>
 
