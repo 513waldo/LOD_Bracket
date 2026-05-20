@@ -34,6 +34,7 @@ const payoutSummary = document.querySelector("#payoutSummary");
 const payoutResults = document.querySelector("#payoutResults");
 const splitPotNameInput = document.querySelector("#splitPotName");
 const splitPotTicketsInput = document.querySelector("#splitPotTickets");
+const splitPotTicketsHelp = document.querySelector("#splitPotTicketsHelp");
 const addSplitPotEntryButton = document.querySelector("#addSplitPotEntry");
 const splitPotSummary = document.querySelector("#splitPotSummary");
 const splitPotEntriesOutput = document.querySelector("#splitPotEntries");
@@ -43,6 +44,7 @@ const clearSplitPotEntriesButton = document.querySelector("#clearSplitPotEntries
 const splitPotWinnerOutput = document.querySelector("#splitPotWinner");
 const bullseyeShootNameInput = document.querySelector("#bullseyeShootName");
 const bullseyeShootTicketsInput = document.querySelector("#bullseyeShootTickets");
+const bullseyeShootTicketsHelp = document.querySelector("#bullseyeShootTicketsHelp");
 const bullseyeShootCurrentPotInput = document.querySelector("#bullseyeShootCurrentPot");
 const addBullseyeShootEntryButton = document.querySelector("#addBullseyeShootEntry");
 const bullseyeShootSummary = document.querySelector("#bullseyeShootSummary");
@@ -1289,39 +1291,32 @@ function getSplitPotTicketsForAmount(amountPaid) {
 }
 
 function renderSplitPotPurchaseOptions() {
-  const purchaseAmounts = [
-    1,
-    2,
-    3,
-    4,
-    ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => (index + 1) * 5),
-  ];
-
-  if (splitPotTicketsInput) {
-    splitPotTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
-      const ticketCount = getSplitPotTicketsForAmount(amount);
-      return `<option value="${amount}"${amount === 5 ? " selected" : ""}>${formatMoney(amount)} - ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}</option>`;
-    }).join("");
+  if (splitPotTicketsHelp) {
+    splitPotTicketsHelp.textContent = buildPurchaseReferenceText();
   }
 }
 
 function renderBullseyeShootPurchaseOptions() {
-  if (!bullseyeShootTicketsInput) {
-    return;
+  if (bullseyeShootTicketsHelp) {
+    bullseyeShootTicketsHelp.textContent = buildPurchaseReferenceText();
   }
+}
 
-  const purchaseAmounts = [
-    1,
-    2,
-    3,
-    4,
-    ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => (index + 1) * 5),
+function buildPurchaseReferenceText() {
+  const refs = [
+    ...Array.from({ length: 4 }, (_, index) => {
+      const amount = index + 1;
+      const ticketCount = getSplitPotTicketsForAmount(amount);
+      return `${formatMoney(amount)} = ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}`;
+    }),
+    ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => {
+      const amount = (index + 1) * 5;
+      const ticketCount = getSplitPotTicketsForAmount(amount);
+      return `${formatMoney(amount)} = ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}`;
+    }),
   ];
 
-  bullseyeShootTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
-    const ticketCount = getSplitPotTicketsForAmount(amount);
-    return `<option value="${amount}"${amount === 5 ? " selected" : ""}>${formatMoney(amount)} - ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}</option>`;
-  }).join("");
+  return `Reference: ${refs.join(", ")}`;
 }
 
 function formatTicketNumber(number) {
