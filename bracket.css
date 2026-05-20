@@ -1570,20 +1570,20 @@ button.player-button .loser-source-text {
 }
 
 .die-soft {
-  border-color: #5e0000;
-  background-color: #b00000;
+  border-color: #0a5a28;
+  background-color: #0f7a33;
   background-image: none;
-  color: #0b5f14;
+  color: #b40000;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
 }
 
 .die-soft .die-label {
   opacity: 1;
-  color: #0b5f14;
+  color: #b40000;
 }
 
 .die-soft .die-value {
-  color: #0b5f14;
+  color: #b40000;
   text-shadow: none;
 }
 
