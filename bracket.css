@@ -1,6 +1,6 @@
 :root {
   --bg: #1a1b18;
-  --panel: #f1f2ef;
+  --panel: #f5f1ea;
   --ink: #171512;
   --muted: #171512;
   --line: rgba(212, 201, 180, 0.05);
@@ -11,10 +11,10 @@
   --dart-black: #151512;
   --wire: #b9b4aa;
   --bracket-line: rgba(0, 0, 0, 0.82);
-  --blue-panel: rgba(241, 242, 239, 0.62);
-  --blue-surface: rgba(247, 248, 245, 0.56);
-  --blue-surface-strong: rgba(247, 248, 245, 0.78);
-  --soft: #e3e7df;
+  --blue-panel: #f5f1ea;
+  --blue-surface: #f5f1ea;
+  --blue-surface-strong: #f5f1ea;
+  --soft: #f5f1ea;
   --warn: #fff7e6;
   --warn-text: #704c00;
   --loss: #fae4de;
@@ -193,7 +193,7 @@ textarea:focus {
   width: 220px;
   height: 220px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel);
   padding: 6px;
   justify-self: start;
   min-width: 0;
@@ -311,7 +311,7 @@ textarea:focus {
   min-height: 64px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel);
   color: var(--ink);
   padding: 12px 14px;
   white-space: pre-line;
@@ -432,7 +432,7 @@ textarea:focus {
   width: 256px;
   height: 256px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel);
   padding: 10px;
 }
 
@@ -1036,7 +1036,7 @@ textarea {
   gap: 16px;
   align-items: start;
   border-bottom: 2px solid #111;
-  background: #ffffff;
+  background: var(--panel);
   margin-bottom: 0;
   padding: 10px 14px 8px;
   color: #111;
@@ -1061,7 +1061,7 @@ textarea {
 .pdf-visual-scroll {
   border: 1px solid #111;
   border-top: 0;
-  background: #ffffff;
+  background: var(--panel);
   overflow-x: auto;
 }
 
@@ -1070,7 +1070,7 @@ textarea {
   grid-template-rows: minmax(460px, auto) minmax(430px, auto) auto;
   gap: 0;
   min-width: max(100%, calc(var(--pdf-columns, 6) * 315px + 340px));
-  background: #ffffff;
+  background: var(--panel);
   color: #111;
   padding: 10px;
 }
@@ -1173,7 +1173,7 @@ textarea {
 .pdf-visual-section .match {
   border: 0;
   border-radius: 0;
-  background: #ffffff;
+  background: var(--panel);
   box-shadow: none;
   margin-bottom: 0;
   padding: 0;
@@ -1202,7 +1202,7 @@ textarea {
   border: 0;
   border-bottom: 2px solid #111;
   border-radius: 0;
-  background: #ffffff;
+  background: var(--panel);
   color: #111;
   padding: 0 4px;
   font-size: 0.86rem;
@@ -1237,7 +1237,7 @@ textarea {
   min-height: 24px;
   border: 1px solid #111;
   border-radius: 0;
-  background: #ffffff;
+  background: var(--panel);
   color: #111;
   padding: 0 7px;
   font-size: 0.68rem;
@@ -1256,7 +1256,7 @@ textarea {
 
 .pdf-visual-section .champion-box {
   border: 2px solid #111;
-  background: #ffffff;
+  background: var(--panel);
   box-shadow: none;
 }
 
@@ -1443,7 +1443,7 @@ button.player-button .loser-source-text {
 
 .out-shot-row.out-shot-winner {
   border-color: rgba(17, 126, 67, 0.72);
-  background: rgba(216, 239, 224, 0.92);
+  background: var(--panel);
 }
 
 .out-shot-number {
@@ -1589,7 +1589,7 @@ button.player-button .loser-source-text {
   min-height: 72px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel);
   color: #000000;
   padding: 14px;
   font-size: 1.1rem;
@@ -1599,7 +1599,7 @@ button.player-button .loser-source-text {
 
 .highest-out-record-body.empty {
   border-color: var(--line);
-  background: #ffffff;
+  background: var(--panel);
   color: #000000;
   font-size: 0.96rem;
   font-weight: 800;
@@ -1661,14 +1661,14 @@ button.player-button .loser-source-text {
   min-height: 92px;
   border: 1px solid rgba(11, 122, 67, 0.34);
   border-radius: 8px;
-  background: rgba(225, 242, 230, 0.9);
+  background: var(--panel);
   padding: 12px;
   text-align: left;
 }
 
 .mystery-out-winner.no-winner {
   border-color: rgba(185, 39, 34, 0.34);
-  background: rgba(248, 230, 228, 0.94);
+  background: var(--panel);
 }
 
 .mystery-out-winner-title {
@@ -1926,7 +1926,7 @@ button.player-button .loser-source-text {
 .split-pot-ticket-list code {
   border: 1px solid rgba(11, 122, 67, 0.22);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel);
   color: var(--primary-dark);
   padding: 5px 7px;
   font-family: "Courier New", Courier, monospace;
