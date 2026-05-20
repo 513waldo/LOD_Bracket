@@ -1832,6 +1832,10 @@ button.player-button .loser-source-text {
   margin-top: 12px;
 }
 
+.split-pot-winner.rolling {
+  border-style: dashed;
+}
+
 .split-pot-winner strong {
   color: var(--primary-dark);
   font-family: "Courier New", Courier, monospace;

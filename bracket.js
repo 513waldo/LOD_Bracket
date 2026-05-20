@@ -154,6 +154,8 @@ let splitPotWinner = null;
 let bullseyeShootEntries = [];
 let bullseyeShootWinner = null;
 let bullseyeShootCurrentPot = 0;
+let splitPotDrawAnimation = null;
+let bullseyeShootDrawAnimation = null;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -410,12 +412,14 @@ splitPotTicketsInput?.addEventListener("keydown", (event) => {
 drawSplitPotWinnerButton?.addEventListener("click", drawSplitPotWinner);
 
 clearSplitPotWinnerButton?.addEventListener("click", () => {
+  stopSplitPotDrawAnimation();
   splitPotWinner = null;
   saveSplitPot();
   renderSplitPot();
 });
 
 clearSplitPotEntriesButton?.addEventListener("click", () => {
+  stopSplitPotDrawAnimation();
   splitPotEntries = [];
   splitPotWinner = null;
   saveSplitPot();
@@ -449,12 +453,14 @@ bullseyeShootCurrentPotInput?.addEventListener("change", () => {
 });
 
 clearBullseyeShootWinnerButton?.addEventListener("click", () => {
+  stopBullseyeShootDrawAnimation();
   bullseyeShootWinner = null;
   saveBullseyeShoot();
   renderBullseyeShoot();
 });
 
 clearBullseyeShootEntriesButton?.addEventListener("click", () => {
+  stopBullseyeShootDrawAnimation();
   bullseyeShootEntries = [];
   bullseyeShootWinner = null;
   saveBullseyeShoot();
@@ -895,6 +901,62 @@ function formatMoney(value) {
   return `$${Math.round(value).toLocaleString()}`;
 }
 
+function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) {
+  if (!tickets.length) {
+    return null;
+  }
+
+  const state = {
+    active: true,
+    ticket: null,
+    timerId: null,
+    durationMs,
+  };
+  const startAt = performance.now();
+
+  const step = () => {
+    if (!state.active) {
+      return;
+    }
+
+    const elapsed = performance.now() - startAt;
+    const progress = Math.min(1, elapsed / durationMs);
+    const ticket = tickets[getRandomIndex(tickets.length)];
+    state.ticket = ticket;
+    onFrame(ticket, progress);
+
+    if (progress >= 1) {
+      const finalTicket = tickets[getRandomIndex(tickets.length)];
+      state.ticket = finalTicket;
+      onFrame(finalTicket, 1);
+      state.active = false;
+      state.timerId = null;
+      onComplete(finalTicket);
+      return;
+    }
+
+    const nextDelay = Math.max(24, Math.round(20 + (progress * progress * 260)));
+    state.timerId = window.setTimeout(step, nextDelay);
+  };
+
+  state.timerId = window.setTimeout(step, 0);
+  return state;
+}
+
+function stopSplitPotDrawAnimation() {
+  if (splitPotDrawAnimation?.timerId) {
+    clearTimeout(splitPotDrawAnimation.timerId);
+  }
+  splitPotDrawAnimation = null;
+}
+
+function stopBullseyeShootDrawAnimation() {
+  if (bullseyeShootDrawAnimation?.timerId) {
+    clearTimeout(bullseyeShootDrawAnimation.timerId);
+  }
+  bullseyeShootDrawAnimation = null;
+}
+
 function addSplitPotEntry() {
   const name = String(splitPotNameInput?.value || "").trim();
   const amountPaid = Math.floor(Number(splitPotTicketsInput?.value) || 0);
@@ -944,15 +1006,32 @@ function drawSplitPotWinner() {
     return;
   }
 
-  const winnerTicket = tickets[getRandomIndex(tickets.length)];
-  splitPotWinner = {
-    ...winnerTicket,
-    drawnAt: new Date().toISOString(),
-  };
-  saveSplitPot();
-  renderSplitPot();
-  const didSendNotice = sendSplitPotPortalNotice({ winner: winnerTicket });
-  showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+  stopSplitPotDrawAnimation();
+  splitPotDrawAnimation = startTicketDrawAnimation({
+    tickets,
+    durationMs: 4000,
+    onFrame: (ticket) => {
+      if (splitPotDrawAnimation) {
+        splitPotDrawAnimation.ticket = ticket;
+        splitPotDrawAnimation.active = true;
+      }
+      renderSplitPotWinnerDisplay();
+    },
+    onComplete: (winnerTicket) => {
+      if (splitPotDrawAnimation) {
+        splitPotDrawAnimation.active = false;
+      }
+      stopSplitPotDrawAnimation();
+      splitPotWinner = {
+        ...winnerTicket,
+        drawnAt: new Date().toISOString(),
+      };
+      saveSplitPot();
+      renderSplitPot();
+      const didSendNotice = sendSplitPotPortalNotice({ winner: winnerTicket });
+      showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+    },
+  });
 }
 
 function addBullseyeShootEntry() {
@@ -1003,15 +1082,32 @@ function drawBullseyeShootWinner() {
     return;
   }
 
-  const winnerTicket = tickets[getRandomIndex(tickets.length)];
-  bullseyeShootWinner = {
-    ...winnerTicket,
-    drawnAt: new Date().toISOString(),
-  };
-  saveBullseyeShoot();
-  renderBullseyeShoot();
-  const didSendNotice = sendBullseyeShootPortalNotice({ winner: winnerTicket });
-  showMessage(`Bullseye Shoot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+  stopBullseyeShootDrawAnimation();
+  bullseyeShootDrawAnimation = startTicketDrawAnimation({
+    tickets,
+    durationMs: 4000,
+    onFrame: (ticket) => {
+      if (bullseyeShootDrawAnimation) {
+        bullseyeShootDrawAnimation.ticket = ticket;
+        bullseyeShootDrawAnimation.active = true;
+      }
+      renderBullseyeShootWinnerDisplay();
+    },
+    onComplete: (winnerTicket) => {
+      if (bullseyeShootDrawAnimation) {
+        bullseyeShootDrawAnimation.active = false;
+      }
+      stopBullseyeShootDrawAnimation();
+      bullseyeShootWinner = {
+        ...winnerTicket,
+        drawnAt: new Date().toISOString(),
+      };
+      saveBullseyeShoot();
+      renderBullseyeShoot();
+      const didSendNotice = sendBullseyeShootPortalNotice({ winner: winnerTicket });
+      showMessage(`Bullseye Shoot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+    },
+  });
 }
 
 function renderSplitPot() {
@@ -1057,18 +1153,7 @@ function renderSplitPot() {
     `).join("");
   }
 
-  if (!splitPotWinner) {
-    splitPotWinnerOutput.className = "split-pot-winner empty";
-    splitPotWinnerOutput.textContent = "No winner drawn.";
-    return;
-  }
-
-  splitPotWinnerOutput.className = "split-pot-winner";
-  splitPotWinnerOutput.innerHTML = `
-    <span>Winning ticket</span>
-    <strong>${escapeHtml(splitPotWinner.ticketLabel)}</strong>
-    <b>${escapeHtml(splitPotWinner.name)}</b>
-  `;
+  renderSplitPotWinnerDisplay();
 }
 
 function renderBullseyeShoot() {
@@ -1118,6 +1203,55 @@ function renderBullseyeShoot() {
         </div>
       </article>
     `).join("");
+  }
+
+  renderBullseyeShootWinnerDisplay();
+}
+
+function renderSplitPotWinnerDisplay() {
+  if (!splitPotWinnerOutput) {
+    return;
+  }
+
+  const animationTicket = splitPotDrawAnimation?.active ? splitPotDrawAnimation.ticket : null;
+  if (animationTicket) {
+    splitPotWinnerOutput.className = "split-pot-winner rolling";
+    splitPotWinnerOutput.innerHTML = `
+      <span>Drawing winner</span>
+      <strong>${escapeHtml(animationTicket.ticketLabel)}</strong>
+      <b>${escapeHtml(animationTicket.name)}</b>
+    `;
+    return;
+  }
+
+  if (!splitPotWinner) {
+    splitPotWinnerOutput.className = "split-pot-winner empty";
+    splitPotWinnerOutput.textContent = "No winner drawn.";
+    return;
+  }
+
+  splitPotWinnerOutput.className = "split-pot-winner";
+  splitPotWinnerOutput.innerHTML = `
+    <span>Winning ticket</span>
+    <strong>${escapeHtml(splitPotWinner.ticketLabel)}</strong>
+    <b>${escapeHtml(splitPotWinner.name)}</b>
+  `;
+}
+
+function renderBullseyeShootWinnerDisplay() {
+  if (!bullseyeShootWinnerOutput) {
+    return;
+  }
+
+  const animationTicket = bullseyeShootDrawAnimation?.active ? bullseyeShootDrawAnimation.ticket : null;
+  if (animationTicket) {
+    bullseyeShootWinnerOutput.className = "split-pot-winner rolling";
+    bullseyeShootWinnerOutput.innerHTML = `
+      <span>Drawing winner</span>
+      <strong>${escapeHtml(animationTicket.ticketLabel)}</strong>
+      <b>${escapeHtml(animationTicket.name)}</b>
+    `;
+    return;
   }
 
   if (!bullseyeShootWinner) {
@@ -1433,6 +1567,7 @@ splitPotEntriesOutput?.addEventListener("click", (event) => {
   }
 
   splitPotEntries = splitPotEntries.filter((entry) => entry.id !== deleteButton.dataset.splitPotDelete);
+  stopSplitPotDrawAnimation();
   splitPotWinner = null;
   saveSplitPot();
   renderSplitPot();
@@ -1446,6 +1581,7 @@ bullseyeShootEntriesOutput?.addEventListener("click", (event) => {
   }
 
   bullseyeShootEntries = bullseyeShootEntries.filter((entry) => entry.id !== deleteButton.dataset.bullseyeShootDelete);
+  stopBullseyeShootDrawAnimation();
   bullseyeShootWinner = null;
   saveBullseyeShoot();
   renderBullseyeShoot();
