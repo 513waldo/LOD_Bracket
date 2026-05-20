@@ -1156,7 +1156,7 @@ function drawSplitPotWinner() {
   stopSplitPotDrawAnimation();
   splitPotDrawAnimation = startTicketDrawAnimation({
     tickets,
-    durationMs: 12000,
+    durationMs: 20000,
     onFrame: (ticket) => {
       if (splitPotDrawAnimation) {
         splitPotDrawAnimation.ticket = ticket;
@@ -1232,7 +1232,7 @@ function drawBullseyeShootWinner() {
   stopBullseyeShootDrawAnimation();
   bullseyeShootDrawAnimation = startTicketDrawAnimation({
     tickets,
-    durationMs: 12000,
+    durationMs: 20000,
     onFrame: (ticket) => {
       if (bullseyeShootDrawAnimation) {
         bullseyeShootDrawAnimation.ticket = ticket;
