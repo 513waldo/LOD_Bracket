@@ -311,7 +311,7 @@ textarea:focus {
   min-height: 64px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel-strong);
+  background: #ffffff;
   color: var(--ink);
   padding: 12px 14px;
   white-space: pre-line;
