@@ -212,13 +212,6 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
   queueBracketDraftSave();
 });
 
-document.querySelector("#seedTicketTestCase").addEventListener("click", () => {
-  const seededCount = populateTicketToolsFromCurrentPlayers({ resetBullseyeCurrentPot: true });
-  if (!seededCount) {
-    showMessage("Generate teams first, or add player names.");
-  }
-});
-
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
     renderPdfColumnMirror(Number(pdfLayoutSelect.value));
@@ -518,7 +511,6 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
   blockedGenerateCount = 0;
   hideTeamDrawWarning();
   renderTeams(currentTeams);
-  populateTicketToolsFromCurrentPlayers();
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
@@ -2254,92 +2246,6 @@ function getPlayerNameMap() {
   });
 
   return names;
-}
-
-function populateTicketToolsFromCurrentPlayers({ resetBullseyeCurrentPot = false } = {}) {
-  const namedPlayers = getCurrentPlayersForTicketSeed();
-  if (!namedPlayers.length) {
-    return 0;
-  }
-
-  const amountPaid = 20;
-  const now = new Date().toISOString();
-  const makeEntry = (name) => ({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name,
-    amountPaid,
-    ticketCount: getSplitPotTicketsForAmount(amountPaid),
-    createdAt: now,
-  });
-
-  stopSplitPotDrawAnimation();
-  stopBullseyeShootDrawAnimation();
-  splitPotEntries = namedPlayers.map(makeEntry);
-  splitPotWinner = null;
-  bullseyeShootEntries = namedPlayers.map(makeEntry);
-  bullseyeShootWinner = null;
-  if (resetBullseyeCurrentPot && bullseyeShootCurrentPotInput) {
-    bullseyeShootCurrentPotInput.value = "0";
-  }
-  if (resetBullseyeCurrentPot) {
-    bullseyeShootCurrentPot = 0;
-  }
-  saveSplitPot();
-  saveBullseyeShoot();
-  renderSplitPot();
-  renderBullseyeShoot();
-  sendSplitPotPortalNotice();
-  sendBullseyeShootPortalNotice();
-  return namedPlayers.length;
-}
-
-function getCurrentPlayersForTicketSeed() {
-  const playersFromList = extractPlayersFromCurrentPlayerList();
-  if (playersFromList.length) {
-    return playersFromList;
-  }
-
-  const currentNames = Array.from(nameList.querySelectorAll("[data-player-number]"))
-    .map((input) => String(input.value || "").trim())
-    .filter(Boolean);
-  if (currentNames.length) {
-    return currentNames;
-  }
-
-  const playerNumbers = Array.from(new Set(
-    playerList.value
-      .split(/\n+/)
-      .flatMap((line) => parseTeamNumbers(line))
-  ));
-
-  return playerNumbers
-    .map((number) => getPlayerLabel(number))
-    .filter(Boolean);
-}
-
-function extractPlayersFromCurrentPlayerList() {
-  const players = [];
-  const seen = new Set();
-
-  playerList.value
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .forEach((line) => {
-      line.split("/")
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .forEach((part) => {
-          const match = /^(.*)\s*\(#\d+\)\s*$/.exec(part);
-          const name = String(match?.[1] || part).trim();
-          if (name && !seen.has(name)) {
-            seen.add(name);
-            players.push(name);
-          }
-        });
-    });
-
-  return players;
 }
 
 function applyPlayerNameMap(names, overwriteExisting = false) {
