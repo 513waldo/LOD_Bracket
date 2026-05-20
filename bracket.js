@@ -2297,7 +2297,7 @@ function getProjectedD20Model() {
       distance: Math.hypot(face.cx - centerX, face.cy - centerY),
     }))
     .sort((a, b) => a.distance - b.distance)
-    .slice(0, 5)
+    .slice(0, 8)
     .sort((a, b) => a.angle - b.angle);
 
   return {
@@ -2371,15 +2371,15 @@ function getProjectedD20Faces(vertices) {
 
 function projectD20Vertex(x, y, z) {
   const rotated = rotatePoint3D(x, y, z, {
-    x: -1.13,
-    y: 0.28,
-    z: 0.05,
+    x: -0.92,
+    y: 0.36,
+    z: 0.02,
   });
-  const scale = 56;
-  const perspective = 4.4 / (4.4 - rotated.z * 0.62);
+  const scale = 58;
+  const perspective = 4.6 / (4.6 - rotated.z * 0.58);
   return {
     x: 120 + rotated.x * scale * perspective,
-    y: 117 + rotated.y * scale * perspective,
+    y: 116 + rotated.y * scale * perspective,
     z: rotated.z,
   };
 }
