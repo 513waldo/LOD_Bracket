@@ -774,9 +774,9 @@ function updatePayoutCalculator() {
     const half = pot / 2;
     payoutResults.innerHTML = `
       <div class="payout-row payout-row-two-place">
-        <span>Total payout</span>
+        <span>Total payout per team</span>
         <strong>${formatMoney(pot)}</strong>
-        <small>Halved total ${formatMoneyExact(half)}</small>
+        <small>Per team half ${formatMoneyExact(half)}</small>
       </div>
     `;
     return;
