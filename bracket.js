@@ -146,6 +146,7 @@ let hasGeneratedTeams = false;
 let blockedGenerateCount = 0;
 let advancingMatchId = null;
 let mysteryOut = "";
+let mysteryOutDrawAnimation = null;
 let portalNotice = "";
 let portalNoticeAt = "";
 let portalNoticeDraft = "";
@@ -972,6 +973,80 @@ function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) 
   return state;
 }
 
+function startMysteryOutDrawAnimation({ values, durationMs, onFrame, onComplete }) {
+  if (!values.length) {
+    return null;
+  }
+
+  const rollValues = shuffleValues(values);
+  const state = {
+    active: true,
+    value: null,
+    index: 0,
+    timerId: null,
+    durationMs,
+  };
+  const startAt = performance.now();
+
+  const step = () => {
+    if (!state.active) {
+      return;
+    }
+
+    const elapsed = performance.now() - startAt;
+    const progress = Math.min(1, elapsed / durationMs);
+    const value = rollValues[state.index % rollValues.length];
+    state.value = value;
+    state.index += 1;
+    onFrame(value, progress);
+
+    if (progress >= 1) {
+      const finalValue = rollValues[getRandomIndex(rollValues.length)];
+      state.value = finalValue;
+      onFrame(finalValue, 1);
+      state.active = false;
+      state.timerId = null;
+      onComplete(finalValue);
+      return;
+    }
+
+    state.timerId = window.setTimeout(step, getTicketDrawDelay(progress));
+  };
+
+  state.timerId = window.setTimeout(step, 0);
+  return state;
+}
+
+function shuffleValues(values) {
+  const shuffled = [...values];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = getRandomIndex(index + 1);
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+function pickRollingValue(values, previousValue) {
+  if (!values.length) {
+    return null;
+  }
+
+  if (values.length === 1) {
+    return values[0];
+  }
+
+  let nextValue = values[getRandomIndex(values.length)];
+  let attempts = 0;
+  while (nextValue === previousValue && attempts < 8) {
+    nextValue = values[getRandomIndex(values.length)];
+    attempts += 1;
+  }
+
+  return nextValue;
+}
+
 function getTicketDrawDelay(progress) {
   const t = Math.max(0, Math.min(1, Number(progress) || 0));
 
@@ -1010,6 +1085,13 @@ function stopBullseyeShootDrawAnimation() {
     clearTimeout(bullseyeShootDrawAnimation.timerId);
   }
   bullseyeShootDrawAnimation = null;
+}
+
+function stopMysteryOutDrawAnimation() {
+  if (mysteryOutDrawAnimation?.timerId) {
+    clearTimeout(mysteryOutDrawAnimation.timerId);
+  }
+  mysteryOutDrawAnimation = null;
 }
 
 function addSplitPotEntry() {
@@ -2005,34 +2087,64 @@ function renderDice() {
 }
 
 function generateMysteryOut() {
-  if (mysteryOut) {
+  if (mysteryOut || mysteryOutDrawAnimation) {
     return;
   }
 
   const mode = getMysteryOutMode();
   const availableOuts = getAvailableOuts(mode);
-  mysteryOut = {
-    mode,
-    score: availableOuts[Math.floor(Math.random() * availableOuts.length)],
-  };
+  if (!availableOuts.length) {
+    showMessage("No mystery out values are available for that mode.");
+    return;
+  }
+
+  stopMysteryOutDrawAnimation();
+  mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
+    values: availableOuts,
+    durationMs: 12000,
+    onFrame: (score) => {
+      if (mysteryOutDrawAnimation) {
+        mysteryOutDrawAnimation.value = score;
+        mysteryOutDrawAnimation.active = true;
+      }
+      renderMysteryOut();
+    },
+    onComplete: (score) => {
+      if (mysteryOutDrawAnimation) {
+        mysteryOutDrawAnimation.active = false;
+      }
+      stopMysteryOutDrawAnimation();
+      mysteryOut = {
+        mode,
+        score,
+      };
+      renderMysteryOut();
+      savePortalSnapshotToLocalStorage();
+      queueBracketDraftSave();
+    },
+  });
   renderMysteryOut();
-  savePortalSnapshotToLocalStorage();
-  queueBracketDraftSave();
 }
 
 function renderMysteryOut() {
-  mysteryOutValue.textContent = mysteryOut ? mysteryOut.score : "--";
-  generateMysteryOutButton.disabled = Boolean(mysteryOut);
-  generateMysteryOutButton.textContent = mysteryOut ? "Locked until reset" : "Generate mystery out";
-  resetMysteryOutButton.hidden = !mysteryOut;
+  const rollingScore = mysteryOutDrawAnimation?.active ? mysteryOutDrawAnimation.value : null;
+  mysteryOutValue.textContent = rollingScore !== null ? String(rollingScore) : (mysteryOut ? mysteryOut.score : "--");
+  generateMysteryOutButton.disabled = Boolean(mysteryOut || mysteryOutDrawAnimation);
+  generateMysteryOutButton.textContent = mysteryOutDrawAnimation
+    ? "Drawing..."
+    : mysteryOut
+      ? "Locked until reset"
+      : "Generate mystery out";
+  resetMysteryOutButton.hidden = !mysteryOut && !mysteryOutDrawAnimation;
   mysteryOutModeInputs.forEach((input) => {
-    input.disabled = Boolean(mysteryOut);
+    input.disabled = Boolean(mysteryOut || mysteryOutDrawAnimation);
   });
   updateOutShotWinners();
   renderMysteryOutWinner();
 }
 
 function resetMysteryOut() {
+  stopMysteryOutDrawAnimation();
   mysteryOut = "";
   renderMysteryOut();
   savePortalSnapshotToLocalStorage();
@@ -4057,6 +4169,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   hasGeneratedTeams = false;
   blockedGenerateCount = 0;
   playerList.value = "";
+  stopMysteryOutDrawAnimation();
   portalNotice = "";
   portalNoticeAt = "";
   portalNoticeDraft = "";
@@ -4071,6 +4184,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   paperBackup.textContent = "Build a bracket to create a paper backup.";
   mysteryOut = "";
   renderMysteryOut();
+  savePortalSnapshotToLocalStorage();
   hideTeamDrawWarning();
   clearPlayerNames();
 
