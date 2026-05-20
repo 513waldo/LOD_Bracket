@@ -138,15 +138,6 @@ textarea:focus {
   color: #fffaf0;
 }
 
-.share-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
-  gap: 18px;
-  align-items: start;
-  width: 100%;
-  margin: 0;
-}
-
 .portal-stack {
   display: grid;
   gap: 18px;
@@ -488,7 +479,7 @@ h2 {
 
 .setup-stack {
   display: grid;
-  gap: 36px;
+  gap: 18px;
 }
 
 .setup-stack .panel,
@@ -2020,9 +2011,7 @@ button.player-button .loser-source-text {
   }
 
   .setup-stack {
-    grid-template-columns: minmax(0, 0.95fr) minmax(280px, 0.9fr) minmax(280px, 0.9fr);
-    column-gap: 56px;
-    row-gap: 36px;
+    gap: 18px;
     align-items: start;
     margin-top: 18px;
   }
@@ -2155,10 +2144,6 @@ button.player-button .loser-source-text {
   .top-side-stack {
     grid-template-columns: 1fr;
     display: grid;
-  }
-
-  .share-row {
-    grid-template-columns: 1fr;
   }
 
   .portal-stack {
