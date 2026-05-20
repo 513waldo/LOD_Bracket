@@ -771,12 +771,13 @@ function updatePayoutCalculator() {
     : split.map((percent) => Math.round(pot * percent));
   payoutResults.innerHTML = split.map((percent, index) => {
     const amount = amounts[index];
-    const displayedAmount = amount / 2;
+    const displayedAmount = split.length === 2 ? pot / 2 : amount / 2;
+    const displayedPercent = split.length === 2 ? 50 : percent * 100;
     return `
       <div class="payout-row">
         <span>${formatPlace(index + 1)}</span>
         <strong>${formatMoney(displayedAmount)}</strong>
-        <small>${formatPercentValue(percent * 100)}%</small>
+        <small>${formatPercentValue(displayedPercent)}%</small>
       </div>
     `;
   }).join("");
