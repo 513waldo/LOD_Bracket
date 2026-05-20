@@ -740,7 +740,7 @@ function setAutomatedMessage(text) {
     return;
   }
 
-  const value = String(text || "").trim() || "No automated messages yet.";
+  const value = String(text || "").trim() || "No Split The Pot messages yet.";
   portalAutoMessage.textContent = value;
   portalAutoMessageWrap.hidden = false;
 }

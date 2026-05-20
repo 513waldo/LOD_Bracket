@@ -1535,7 +1535,7 @@ function setAutomatedPortalNotice(message) {
   const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalAutoNoticeStatus) {
     portalAutoNoticeStatus.textContent = text
-      ? (didPublish ? `Automated message sent at ${stamp}.` : `Automated message ready at ${stamp}; set an LOD code to publish.`)
+      ? (didPublish ? `Split The Pot message sent at ${stamp}.` : `Split The Pot message ready at ${stamp}; set an LOD code to publish.`)
       : "";
   }
   return didPublish;
