@@ -1561,22 +1561,22 @@ button.player-button .loser-source-text {
 }
 
 .die-steel {
-  border-color: rgba(20, 20, 18, 0.32);
+  border-color: rgba(255, 255, 255, 0.18);
   background:
-    linear-gradient(135deg, rgba(255, 245, 210, 0.86), rgba(37, 36, 32, 0.16)),
-    repeating-linear-gradient(28deg, rgba(37, 36, 32, 0.08) 0 1px, transparent 1px 7px),
-    rgba(239, 223, 178, 0.82);
-  color: #171512;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.18)),
+    repeating-linear-gradient(28deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 7px),
+    #111111;
+  color: #ffffff;
 }
 
 .die-soft {
-  border-color: rgba(0, 84, 139, 0.34);
+  border-color: rgba(141, 28, 28, 0.45);
   background:
-    radial-gradient(circle, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 8px),
-    linear-gradient(135deg, rgba(0, 92, 166, 0.78), rgba(11, 122, 67, 0.66)),
-    rgba(18, 26, 32, 0.86);
+    radial-gradient(circle, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 8px),
+    linear-gradient(135deg, rgba(171, 24, 24, 0.95), rgba(118, 12, 12, 0.9)),
+    #a21717;
   background-size: 12px 12px, auto, auto;
-  color: #f7fbff;
+  color: #88ff66;
 }
 
 .die-button.rolling {
