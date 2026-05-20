@@ -964,7 +964,8 @@ function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) 
       return;
     }
 
-    const nextDelay = Math.max(24, Math.round(20 + (progress * progress * 260)));
+    const speedCurve = 0.35 + (0.95 * Math.sin(progress * Math.PI));
+    const nextDelay = Math.max(28, Math.round(120 / speedCurve));
     state.timerId = window.setTimeout(step, nextDelay);
   };
 
@@ -1038,7 +1039,7 @@ function drawSplitPotWinner() {
   stopSplitPotDrawAnimation();
   splitPotDrawAnimation = startTicketDrawAnimation({
     tickets,
-    durationMs: 8000,
+    durationMs: 12000,
     onFrame: (ticket) => {
       if (splitPotDrawAnimation) {
         splitPotDrawAnimation.ticket = ticket;
@@ -1114,7 +1115,7 @@ function drawBullseyeShootWinner() {
   stopBullseyeShootDrawAnimation();
   bullseyeShootDrawAnimation = startTicketDrawAnimation({
     tickets,
-    durationMs: 4000,
+    durationMs: 12000,
     onFrame: (ticket) => {
       if (bullseyeShootDrawAnimation) {
         bullseyeShootDrawAnimation.ticket = ticket;
