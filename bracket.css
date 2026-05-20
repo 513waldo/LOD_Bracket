@@ -1566,7 +1566,17 @@ button.player-button .loser-source-text {
     linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.18)),
     repeating-linear-gradient(28deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 7px),
     #111111;
-  color: #ffffff;
+  color: #ff8c00;
+}
+
+.die-steel .die-label {
+  color: #ff8c00;
+  opacity: 0.96;
+}
+
+.die-steel .die-value {
+  color: #ff8c00;
+  text-shadow: none;
 }
 
 .die-soft {
