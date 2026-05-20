@@ -2209,11 +2209,6 @@ function setMysteryOutMode(mode) {
   });
 }
 
-function getD20VisibleNumbers(value) {
-  const top = normalizeD20Number(value);
-  return Array.from({ length: 6 }, (_, index) => normalizeD20Number(top + index));
-}
-
 function normalizeD20Number(value) {
   const numeric = Math.floor(Number(value) || 1);
   const wrapped = ((numeric - 1) % 20 + 20) % 20;
@@ -2222,39 +2217,267 @@ function normalizeD20Number(value) {
 
 function buildD20DieMarkup(index, value) {
   const label = index === 0 ? "Triple" : "Double";
-  const numbers = getD20VisibleNumbers(value);
+  const palette = index === 0
+    ? {
+      facePrimary: "#111111",
+      faceSecondary: "#242424",
+      faceHighlight: "#383838",
+      number: "#ff8c00",
+    }
+    : {
+      facePrimary: "#6d33a9",
+      faceSecondary: "#4a207a",
+      faceHighlight: "#8f57d3",
+      number: "#39ff14",
+    };
 
   return `
     <span class="die-visual" aria-hidden="true">
-      <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
-        <g class="d20-face d20-face-center">
-          <polygon points="120,58 158,82 158,128 120,152 82,128 82,82"></polygon>
-          <text x="120" y="115">${numbers[0]}</text>
-        </g>
-        <g class="d20-face d20-face-top">
-          <polygon points="120,12 152,40 88,40"></polygon>
-          <text x="120" y="31">${numbers[1]}</text>
-        </g>
-        <g class="d20-face d20-face-top-right">
-          <polygon points="176,68 206,98 170,118"></polygon>
-          <text x="183" y="95">${numbers[2]}</text>
-        </g>
-        <g class="d20-face d20-face-bottom-right">
-          <polygon points="174,172 204,142 168,122"></polygon>
-          <text x="182" y="145">${numbers[3]}</text>
-        </g>
-        <g class="d20-face d20-face-bottom">
-          <polygon points="120,228 152,200 88,200"></polygon>
-          <text x="120" y="209">${numbers[4]}</text>
-        </g>
-        <g class="d20-face d20-face-bottom-left">
-          <polygon points="64,172 34,142 70,122"></polygon>
-          <text x="58" y="145">${numbers[5]}</text>
-        </g>
-      </svg>
+      ${buildD20SvgMarkup(value, palette)}
     </span>
     <span class="die-label">${label}</span>
   `;
+}
+
+function buildD20SvgMarkup(value, palette) {
+  const model = getProjectedD20Model();
+  const topValue = normalizeD20Number(value);
+  const surroundingFaces = model.surroundingFaces.map((face, index) => ({
+    ...face,
+    number: normalizeD20Number(topValue + index + 1),
+  }));
+  const drawFaces = [
+    ...surroundingFaces.sort((a, b) => a.depth - b.depth),
+    { ...model.centerFace, number: topValue, center: true },
+  ];
+
+  return `
+    <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
+      <ellipse cx="120" cy="130" rx="88" ry="78" fill="rgba(0, 0, 0, 0.20)"></ellipse>
+      <ellipse cx="120" cy="112" rx="44" ry="36" fill="rgba(255, 255, 255, 0.10)"></ellipse>
+      ${drawFaces.map((face) => {
+        const fill = getD20FaceFill(palette, face);
+        const textX = face.cx + (face.center ? 0 : Math.cos(face.angle) * 1.5);
+        const textY = face.cy + (face.center ? 0 : Math.sin(face.angle) * 1.5);
+
+        return `
+          <g class="d20-face ${face.center ? "d20-face-center" : ""}">
+            <polygon points="${face.points}" style="fill:${fill};stroke:rgba(255,255,255,0.34);stroke-width:2;stroke-linejoin:round;"></polygon>
+            <text x="${textX}" y="${textY}" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${face.number}</text>
+          </g>
+        `;
+      }).join("")}
+    </svg>
+  `;
+}
+
+function getProjectedD20Model() {
+  const vertices = getProjectedD20Vertices();
+  const faces = getProjectedD20Faces(vertices);
+  const visibleFaces = faces.filter((face) => face.visible);
+  const centerX = 120;
+  const centerY = 118;
+
+  let centerFaceIndex = 0;
+  let centerFaceDistance = Number.POSITIVE_INFINITY;
+
+  visibleFaces.forEach((face, index) => {
+    const distance = Math.hypot(face.cx - centerX, face.cy - centerY);
+    if (distance < centerFaceDistance) {
+      centerFaceDistance = distance;
+      centerFaceIndex = index;
+    }
+  });
+
+  const centerFace = visibleFaces[centerFaceIndex] || visibleFaces[0] || faces[0];
+  const surroundingFaces = visibleFaces
+    .filter((_, index) => index !== centerFaceIndex)
+    .sort((a, b) => a.angle - b.angle);
+
+  return {
+    centerFace,
+    surroundingFaces,
+  };
+}
+
+function getProjectedD20Vertices() {
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const rawVertices = [
+    [-1, phi, 0],
+    [1, phi, 0],
+    [-1, -phi, 0],
+    [1, -phi, 0],
+    [0, -1, phi],
+    [0, 1, phi],
+    [0, -1, -phi],
+    [0, 1, -phi],
+    [phi, 0, -1],
+    [phi, 0, 1],
+    [-phi, 0, -1],
+    [-phi, 0, 1],
+  ];
+
+  return rawVertices.map(([x, y, z]) => projectD20Vertex(x, y, z));
+}
+
+function getProjectedD20Faces(vertices) {
+  const faceIndices = [
+    [0, 11, 5],
+    [0, 5, 1],
+    [0, 1, 7],
+    [0, 7, 10],
+    [0, 10, 11],
+    [1, 5, 9],
+    [5, 11, 4],
+    [11, 10, 2],
+    [10, 7, 6],
+    [7, 1, 8],
+    [3, 9, 4],
+    [3, 4, 2],
+    [3, 2, 6],
+    [3, 6, 8],
+    [3, 8, 9],
+    [4, 9, 5],
+    [2, 4, 11],
+    [6, 2, 10],
+    [8, 6, 7],
+    [9, 8, 1],
+  ];
+
+  return faceIndices.map((indices) => {
+    const points = indices.map((index) => vertices[index]);
+    const cx = points.reduce((sum, point) => sum + point.x, 0) / points.length;
+    const cy = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+    const depth = points.reduce((sum, point) => sum + point.z, 0) / points.length;
+    const visible = isFrontFacingFace(points);
+    const angle = Math.atan2(cy - 118, cx - 120);
+
+    return {
+      points: points.map((point) => `${point.x},${point.y}`).join(" "),
+      cx,
+      cy,
+      depth,
+      visible,
+      angle,
+    };
+  });
+}
+
+function projectD20Vertex(x, y, z) {
+  const rotated = rotatePoint3D(x, y, z, {
+    x: -0.98,
+    y: 0.52,
+    z: 0.2,
+  });
+  const scale = 54;
+  const perspective = 4.2 / (4.2 - rotated.z * 0.82);
+  return {
+    x: 120 + rotated.x * scale * perspective,
+    y: 118 + rotated.y * scale * perspective,
+    z: rotated.z,
+  };
+}
+
+function getD20FaceFill(palette, face) {
+  const depthFactor = Math.max(-1, Math.min(1, face.depth / 2));
+  if (face.center) {
+    return palette.facePrimary;
+  }
+
+  if (depthFactor < -0.35) {
+    return palette.faceHighlight;
+  }
+
+  if (depthFactor > 0.4) {
+    return palette.faceSecondary;
+  }
+
+  return mixHexColors(palette.faceSecondary, palette.faceHighlight, 0.42);
+}
+
+function mixHexColors(startHex, endHex, amount) {
+  const ratio = Math.max(0, Math.min(1, amount));
+  const start = hexToRgb(startHex);
+  const end = hexToRgb(endHex);
+
+  if (!start || !end) {
+    return startHex;
+  }
+
+  const red = Math.round(start.red + (end.red - start.red) * ratio);
+  const green = Math.round(start.green + (end.green - start.green) * ratio);
+  const blue = Math.round(start.blue + (end.blue - start.blue) * ratio);
+
+  return rgbToHex(red, green, blue);
+}
+
+function hexToRgb(hex) {
+  const normalized = String(hex || "").trim().replace(/^#/, "");
+  const shorthand = normalized.length === 3
+    ? normalized.split("").map((char) => char + char).join("")
+    : normalized;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(shorthand)) {
+    return null;
+  }
+
+  return {
+    red: Number.parseInt(shorthand.slice(0, 2), 16),
+    green: Number.parseInt(shorthand.slice(2, 4), 16),
+    blue: Number.parseInt(shorthand.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex(red, green, blue) {
+  return `#${[red, green, blue]
+    .map((value) => Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function rotatePoint3D(x, y, z, rotation) {
+  const rx = rotation.x || 0;
+  const ry = rotation.y || 0;
+  const rz = rotation.z || 0;
+
+  let px = x;
+  let py = y;
+  let pz = z;
+
+  // Rotate around X.
+  let sin = Math.sin(rx);
+  let cos = Math.cos(rx);
+  let ty = py * cos - pz * sin;
+  let tz = py * sin + pz * cos;
+  py = ty;
+  pz = tz;
+
+  // Rotate around Y.
+  sin = Math.sin(ry);
+  cos = Math.cos(ry);
+  let tx = px * cos + pz * sin;
+  tz = -px * sin + pz * cos;
+  px = tx;
+  pz = tz;
+
+  // Rotate around Z.
+  sin = Math.sin(rz);
+  cos = Math.cos(rz);
+  tx = px * cos - py * sin;
+  ty = px * sin + py * cos;
+
+  return { x: tx, y: ty, z: pz };
+}
+
+function isFrontFacingFace(points) {
+  if (points.length < 3) {
+    return false;
+  }
+
+  const [a, b, c] = points;
+  const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+  const ac = { x: c.x - a.x, y: c.y - a.y, z: c.z - a.z };
+  const normalZ = (ab.x * ac.y) - (ab.y * ac.x);
+  return normalZ < 0;
 }
 
 function setDieValue(index, value) {
