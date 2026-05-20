@@ -144,7 +144,7 @@ textarea:focus {
   gap: 18px;
   align-items: start;
   width: min(100%, 1180px);
-  margin: 0 auto 18px;
+  margin: 0 auto 10px;
 }
 
 .qr-panel {
@@ -476,7 +476,7 @@ h2 {
   display: grid;
   gap: 18px;
   align-items: start;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
   width: calc(100vw - 36px);
 }
 
@@ -500,7 +500,7 @@ h2 {
   display: grid;
   gap: 18px;
   align-items: start;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
   width: calc(100vw - 36px);
 }
 
@@ -2018,7 +2018,7 @@ button.player-button .loser-source-text {
     column-gap: 56px;
     row-gap: 36px;
     align-items: start;
-    margin-top: 42px;
+    margin-top: 18px;
   }
 
   .setup-grid {
