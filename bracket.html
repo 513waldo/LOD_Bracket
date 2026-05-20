@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-87">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-89">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -134,6 +134,19 @@
             <button id="clearPortalNotice" class="secondary" type="button">Clear message</button>
           </div>
           <p id="portalNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
+          <section class="portal-auto-notice-panel" aria-labelledby="portalAutoNoticeTitle">
+            <div class="panel-title">
+              <div>
+                <p class="step-label">Automated</p>
+                <h3 id="portalAutoNoticeTitle">Automated Messages</h3>
+              </div>
+            </div>
+            <label class="portal-notice-field">
+              Latest automated message
+              <textarea id="portalAutoNoticeInput" rows="5" spellcheck="false" readonly placeholder="Automated bracket and ticket messages will appear here."></textarea>
+            </label>
+            <p id="portalAutoNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
+          </section>
           <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
             <div class="panel-title">
               <div>
@@ -397,6 +410,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-79"></script>
+  <script src="bracket.js?v=interactive-tools-81"></script>
 </body>
 </html>
