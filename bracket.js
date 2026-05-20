@@ -2292,6 +2292,12 @@ function getProjectedD20Model() {
   const centerFace = visibleFaces[centerFaceIndex] || visibleFaces[0] || faces[0];
   const surroundingFaces = visibleFaces
     .filter((_, index) => index !== centerFaceIndex)
+    .map((face) => ({
+      ...face,
+      distance: Math.hypot(face.cx - centerX, face.cy - centerY),
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 5)
     .sort((a, b) => a.angle - b.angle);
 
   return {
@@ -2365,15 +2371,15 @@ function getProjectedD20Faces(vertices) {
 
 function projectD20Vertex(x, y, z) {
   const rotated = rotatePoint3D(x, y, z, {
-    x: -0.98,
-    y: 0.52,
-    z: 0.2,
+    x: -1.13,
+    y: 0.28,
+    z: 0.05,
   });
-  const scale = 54;
-  const perspective = 4.2 / (4.2 - rotated.z * 0.82);
+  const scale = 56;
+  const perspective = 4.4 / (4.4 - rotated.z * 0.62);
   return {
     x: 120 + rotated.x * scale * perspective,
-    y: 118 + rotated.y * scale * perspective,
+    y: 117 + rotated.y * scale * perspective,
     z: rotated.z,
   };
 }
