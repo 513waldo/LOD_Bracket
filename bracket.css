@@ -273,7 +273,7 @@ textarea:focus {
 
 .portal-auto-notice-panel .portal-notice-field,
 .portal-bullshoot-notice-panel .portal-notice-field {
-  color: #b92722;
+  color: var(--ink);
 }
 
 #portalAutoNoticeInput,
