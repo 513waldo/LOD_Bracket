@@ -307,23 +307,6 @@ textarea:focus {
   resize: vertical;
 }
 
-.portal-notice-display {
-  min-height: 64px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-strong);
-  color: var(--ink);
-  padding: 12px 14px;
-  white-space: pre-line;
-  line-height: 1.35;
-  overflow: auto;
-}
-
-.portal-notice-display .winner-line {
-  color: #0b7a43;
-  font-weight: 900;
-}
-
 .lod-registry-panel {
   display: grid;
   gap: 10px;
