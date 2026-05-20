@@ -204,9 +204,7 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
 });
 
 document.querySelector("#seedTicketTestCase").addEventListener("click", () => {
-  const namedPlayers = Array.from(nameList.querySelectorAll("[data-player-number]"))
-    .map((input) => String(input.value || "").trim())
-    .filter(Boolean);
+  const namedPlayers = getCurrentPlayersForTicketSeed();
 
   if (!namedPlayers.length) {
     showMessage("Add player names first.");
@@ -2052,6 +2050,25 @@ function getPlayerNameMap() {
   });
 
   return names;
+}
+
+function getCurrentPlayersForTicketSeed() {
+  const currentNames = Array.from(nameList.querySelectorAll("[data-player-number]"))
+    .map((input) => String(input.value || "").trim())
+    .filter(Boolean);
+  if (currentNames.length) {
+    return currentNames;
+  }
+
+  const playerNumbers = Array.from(new Set(
+    playerList.value
+      .split(/\n+/)
+      .flatMap((line) => parseTeamNumbers(line))
+  ));
+
+  return playerNumbers
+    .map((number) => getPlayerLabel(number))
+    .filter(Boolean);
 }
 
 function applyPlayerNameMap(names, overwriteExisting = false) {
