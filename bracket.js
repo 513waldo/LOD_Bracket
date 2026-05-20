@@ -204,40 +204,10 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
 });
 
 document.querySelector("#seedTicketTestCase").addEventListener("click", () => {
-  const namedPlayers = getCurrentPlayersForTicketSeed();
-
-  if (!namedPlayers.length) {
-    showMessage("Add player names first.");
-    return;
+  const seededCount = populateTicketToolsFromCurrentPlayers({ resetBullseyeCurrentPot: true });
+  if (!seededCount) {
+    showMessage("Generate teams first, or add player names.");
   }
-
-  const amountPaid = 20;
-  const now = new Date().toISOString();
-  const makeEntry = (name) => ({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name,
-    amountPaid,
-    ticketCount: getSplitPotTicketsForAmount(amountPaid),
-    createdAt: now,
-  });
-
-  stopSplitPotDrawAnimation();
-  stopBullseyeShootDrawAnimation();
-  splitPotEntries = namedPlayers.map(makeEntry);
-  splitPotWinner = null;
-  bullseyeShootEntries = namedPlayers.map(makeEntry);
-  bullseyeShootWinner = null;
-  if (bullseyeShootCurrentPotInput) {
-    bullseyeShootCurrentPotInput.value = "0";
-  }
-  bullseyeShootCurrentPot = 0;
-  saveSplitPot();
-  saveBullseyeShoot();
-  renderSplitPot();
-  renderBullseyeShoot();
-  sendSplitPotPortalNotice();
-  sendBullseyeShootPortalNotice();
-  showMessage(`Loaded ${namedPlayers.length} test player${namedPlayers.length === 1 ? "" : "s"} into both ticket tools at $20 each.`);
 });
 
 if (pdfLayoutSelect) {
@@ -539,6 +509,7 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
   blockedGenerateCount = 0;
   hideTeamDrawWarning();
   renderTeams(currentTeams);
+  populateTicketToolsFromCurrentPlayers();
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
@@ -2050,6 +2021,43 @@ function getPlayerNameMap() {
   });
 
   return names;
+}
+
+function populateTicketToolsFromCurrentPlayers({ resetBullseyeCurrentPot = false } = {}) {
+  const namedPlayers = getCurrentPlayersForTicketSeed();
+  if (!namedPlayers.length) {
+    return 0;
+  }
+
+  const amountPaid = 20;
+  const now = new Date().toISOString();
+  const makeEntry = (name) => ({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    amountPaid,
+    ticketCount: getSplitPotTicketsForAmount(amountPaid),
+    createdAt: now,
+  });
+
+  stopSplitPotDrawAnimation();
+  stopBullseyeShootDrawAnimation();
+  splitPotEntries = namedPlayers.map(makeEntry);
+  splitPotWinner = null;
+  bullseyeShootEntries = namedPlayers.map(makeEntry);
+  bullseyeShootWinner = null;
+  if (resetBullseyeCurrentPot && bullseyeShootCurrentPotInput) {
+    bullseyeShootCurrentPotInput.value = "0";
+  }
+  if (resetBullseyeCurrentPot) {
+    bullseyeShootCurrentPot = 0;
+  }
+  saveSplitPot();
+  saveBullseyeShoot();
+  renderSplitPot();
+  renderBullseyeShoot();
+  sendSplitPotPortalNotice();
+  sendBullseyeShootPortalNotice();
+  return namedPlayers.length;
 }
 
 function getCurrentPlayersForTicketSeed() {
