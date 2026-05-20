@@ -156,6 +156,12 @@ textarea:focus {
   margin: 0 auto 10px;
 }
 
+.portal-stack {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
 .qr-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -2165,6 +2171,10 @@ button.player-button .loser-source-text {
   }
 
   .bullseye-share-row {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-stack {
     grid-template-columns: 1fr;
   }
 
