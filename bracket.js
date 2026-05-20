@@ -2277,31 +2277,19 @@ function getProjectedD20Model() {
   const vertices = getProjectedD20Vertices();
   const faces = getProjectedD20Faces(vertices);
   const visibleFaces = faces.filter((face) => face.visible);
-  const centerX = 120;
-  const centerY = 118;
+  const centerFace = [...visibleFaces]
+    .sort((a, b) => (b.facing - a.facing) || (a.depth - b.depth))[0] || faces[0];
 
-  let centerFaceIndex = 0;
-  let centerFaceDistance = Number.POSITIVE_INFINITY;
-
-  visibleFaces.forEach((face, index) => {
-    const distance = Math.hypot(face.cx - centerX, face.cy - centerY);
-    if (distance < centerFaceDistance) {
-      centerFaceDistance = distance;
-      centerFaceIndex = index;
-    }
-  });
-
-  const centerFace = visibleFaces[centerFaceIndex] || visibleFaces[0] || faces[0];
   const surroundingFaces = visibleFaces
-    .filter((face, index) => index !== centerFaceIndex && sharesEdge(face.indices, centerFace.indices))
+    .filter((face) => face !== centerFace && sharesEdge(face.indices, centerFace.indices))
     .sort((a, b) => a.angle - b.angle);
 
   if (surroundingFaces.length < 5) {
     const fallbackFaces = visibleFaces
-      .filter((_, index) => index !== centerFaceIndex)
+      .filter((face) => face !== centerFace)
       .map((face) => ({
         ...face,
-        distance: Math.hypot(face.cx - centerX, face.cy - centerY),
+        distance: Math.hypot(face.cx - centerFace.cx, face.cy - centerFace.cy),
       }))
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 5)
@@ -2365,6 +2353,7 @@ function getProjectedD20Faces(vertices) {
 
   return faceIndices.map((indices) => {
     const points = indices.map((index) => vertices[index]);
+    const normal = getFaceNormal(points);
     const cx = points.reduce((sum, point) => sum + point.x, 0) / points.length;
     const cy = points.reduce((sum, point) => sum + point.y, 0) / points.length;
     const depth = points.reduce((sum, point) => sum + point.z, 0) / points.length;
@@ -2379,6 +2368,7 @@ function getProjectedD20Faces(vertices) {
       depth,
       visible,
       angle,
+      facing: normal.z,
     };
   });
 }
@@ -2569,11 +2559,19 @@ function isFrontFacingFace(points) {
     return false;
   }
 
+  const normal = getFaceNormal(points);
+  return normal.z < 0;
+}
+
+function getFaceNormal(points) {
   const [a, b, c] = points;
   const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
   const ac = { x: c.x - a.x, y: c.y - a.y, z: c.z - a.z };
-  const normalZ = (ab.x * ac.y) - (ab.y * ac.x);
-  return normalZ < 0;
+  return {
+    x: (ab.y * ac.z) - (ab.z * ac.y),
+    y: (ab.z * ac.x) - (ab.x * ac.z),
+    z: (ab.x * ac.y) - (ab.y * ac.x),
+  };
 }
 
 function setDieValue(index, value) {
