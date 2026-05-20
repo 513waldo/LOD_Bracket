@@ -65,6 +65,8 @@ const portalAutoNoticeInput = document.querySelector("#portalAutoNoticeInput");
 const portalAutoNoticeStatus = document.querySelector("#portalAutoNoticeStatus");
 const portalBracketNoticeInput = document.querySelector("#portalBracketNoticeInput");
 const portalBracketNoticeStatus = document.querySelector("#portalBracketNoticeStatus");
+const portalBullshootNoticeInput = document.querySelector("#portalBullshootNoticeInput");
+const portalBullshootNoticeStatus = document.querySelector("#portalBullshootNoticeStatus");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
@@ -158,6 +160,8 @@ let portalAutoNotice = "";
 let portalAutoNoticeAt = "";
 let portalBracketNotice = "";
 let portalBracketNoticeAt = "";
+let portalBullshootNotice = "";
+let portalBullshootNoticeAt = "";
 let splitPotEntries = [];
 let splitPotWinner = null;
 let bullseyeShootEntries = [];
@@ -1520,7 +1524,7 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
     ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
   ].join("\n");
-  return setAutomatedPortalNotice(message);
+  return setBullshootPortalNotice(message);
 }
 
 function setAutomatedPortalNotice(message) {
@@ -1554,6 +1558,24 @@ function setBracketPortalNotice(message) {
   if (portalBracketNoticeStatus) {
     portalBracketNoticeStatus.textContent = text
       ? (didPublish ? `Bracket message sent at ${stamp}.` : `Bracket message ready at ${stamp}; set an LOD code to publish.`)
+      : "";
+  }
+  return didPublish;
+}
+
+function setBullshootPortalNotice(message) {
+  const text = String(message || "").trim();
+  portalBullshootNotice = text;
+  portalBullshootNoticeAt = text ? new Date().toISOString() : "";
+  if (portalBullshootNoticeInput) {
+    portalBullshootNoticeInput.value = text;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalBullshootNoticeStatus) {
+    portalBullshootNoticeStatus.textContent = text
+      ? (didPublish ? `Bullshoot message sent at ${stamp}.` : `Bullshoot message ready at ${stamp}; set an LOD code to publish.`)
       : "";
   }
   return didPublish;
@@ -4131,6 +4153,8 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     portalAutoNoticeAt,
     portalBracketNotice,
     portalBracketNoticeAt,
+    portalBullshootNotice,
+    portalBullshootNoticeAt,
   };
 }
 
@@ -4175,6 +4199,8 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   portalAutoNoticeAt = "";
   portalBracketNotice = "";
   portalBracketNoticeAt = "";
+  portalBullshootNotice = "";
+  portalBullshootNoticeAt = "";
   if (portalNoticeInput) {
     portalNoticeInput.value = "";
   }
@@ -4192,6 +4218,12 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   }
   if (portalBracketNoticeStatus) {
     portalBracketNoticeStatus.textContent = "";
+  }
+  if (portalBullshootNoticeInput) {
+    portalBullshootNoticeInput.value = "";
+  }
+  if (portalBullshootNoticeStatus) {
+    portalBullshootNoticeStatus.textContent = "";
   }
   championOutput.textContent = "Champion: pending";
   groupsOutput.className = "groups empty";
@@ -4348,6 +4380,18 @@ function restoreBracketDraft() {
     portalBracketNoticeInput.value = portalBracketNotice;
   }
 
+  if (typeof draft.portalBullshootNotice === "string") {
+    portalBullshootNotice = draft.portalBullshootNotice;
+  }
+
+  if (typeof draft.portalBullshootNoticeAt === "string") {
+    portalBullshootNoticeAt = draft.portalBullshootNoticeAt;
+  }
+
+  if (portalBullshootNoticeInput) {
+    portalBullshootNoticeInput.value = portalBullshootNotice;
+  }
+
   if (typeof draft.mysteryOut === "string") {
     mysteryOut = draft.mysteryOut;
     renderMysteryOut();
@@ -4458,6 +4502,8 @@ function buildBracketDraft() {
     portalAutoNoticeAt,
     portalBracketNotice,
     portalBracketNoticeAt,
+    portalBullshootNotice,
+    portalBullshootNoticeAt,
   };
 }
 

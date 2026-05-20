@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Players Portal</title>
-  <link rel="stylesheet" href="portal.css?v=13">
+  <link rel="stylesheet" href="portal.css?v=14">
 </head>
 <body>
   <main class="app">
@@ -61,6 +61,10 @@
         <p class="portal-message-label">Bracket messages</p>
         <p id="portalBracketMessage" class="message board-call bracket-call" aria-live="polite">No bracket messages yet.</p>
       </div>
+      <div id="portalBullshootMessageWrap" class="portal-bullshoot-message-wrap portal-message-card">
+        <p class="portal-message-label">Bullshoot messages</p>
+        <p id="portalBullshootMessage" class="message board-call bullshoot-call" aria-live="polite">No Bullshoot messages yet.</p>
+      </div>
     </section>
 
     <section class="bracket-shell" aria-labelledby="portalBracketTitle">
@@ -75,6 +79,6 @@
   </main>
 
   <script src="config.js?v=3"></script>
-  <script src="portal.js?v=24"></script>
+  <script src="portal.js?v=25"></script>
 </body>
 </html>

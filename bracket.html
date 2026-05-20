@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-90">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-91">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -159,6 +159,19 @@
               <textarea id="portalBracketNoticeInput" rows="5" spellcheck="false" readonly placeholder="Bracket winner messages will appear here."></textarea>
             </label>
             <p id="portalBracketNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
+          </section>
+          <section class="portal-bullshoot-notice-panel" aria-labelledby="portalBullshootNoticeTitle">
+            <div class="panel-title">
+              <div>
+                <p class="step-label">Bullshoot</p>
+                <h3 id="portalBullshootNoticeTitle">Bullshoot Messages</h3>
+              </div>
+            </div>
+            <label class="portal-notice-field">
+              Latest Bullshoot message
+              <textarea id="portalBullshootNoticeInput" rows="5" spellcheck="false" readonly placeholder="Bullshoot winner messages will appear here."></textarea>
+            </label>
+            <p id="portalBullshootNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
           </section>
           <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
             <div class="panel-title">
@@ -423,6 +436,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-82"></script>
+  <script src="bracket.js?v=interactive-tools-83"></script>
 </body>
 </html>

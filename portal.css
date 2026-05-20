@@ -274,6 +274,11 @@ h1 {
   gap: 8px;
 }
 
+.portal-bullshoot-message-wrap {
+  display: grid;
+  gap: 8px;
+}
+
 .portal-message-card {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -297,6 +302,10 @@ h1 {
 
 .message.board-call.bracket-call {
   border-style: solid;
+}
+
+.message.board-call.bullshoot-call {
+  border-style: dotted;
 }
 
 .pdf-visual-section {
