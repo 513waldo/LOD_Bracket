@@ -1570,19 +1570,20 @@ button.player-button .loser-source-text {
 }
 
 .die-soft {
-  border-color: rgba(175, 0, 0, 0.95);
-  background:
-    radial-gradient(circle, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 8px),
-    linear-gradient(135deg, #ff2a2a, #d60000),
-    #e00000;
-  background-size: 12px 12px, auto, auto;
-  color: #0d6b1d;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+  border-color: #8f0000;
+  background: #e10000;
+  color: #0f5b18;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
 }
 
 .die-soft .die-label {
-  opacity: 0.92;
-  color: #0d6b1d;
+  opacity: 0.96;
+  color: #0f5b18;
+}
+
+.die-soft .die-value {
+  color: #0f5b18;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .die-button.rolling {
