@@ -1486,20 +1486,6 @@ button.player-button .loser-source-text {
   gap: 8px;
 }
 
-.dice-tray {
-  margin-bottom: 10px;
-}
-
-.dice-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.dice-actions #rollDice {
-  width: auto;
-  min-width: 220px;
-}
-
 .dice-roller-heading {
   display: flex;
   justify-content: space-between;
@@ -1510,6 +1496,28 @@ button.player-button .loser-source-text {
 .dice-roller-heading h3 {
   margin: 0;
   font-size: 1rem;
+}
+
+.dice-stage {
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+}
+
+.dice-tray {
+  width: min(100%, 340px);
+  margin: 0 auto;
+}
+
+.dice-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.dice-actions #rollDice {
+  width: auto;
+  min-width: 220px;
 }
 
 .dice-total {
@@ -1533,6 +1541,7 @@ button.player-button .loser-source-text {
   place-items: center;
   justify-self: center;
   width: 100%;
+  aspect-ratio: 1 / 1;
   min-height: 118px;
   border: 1px solid var(--line);
   border-radius: 8px;

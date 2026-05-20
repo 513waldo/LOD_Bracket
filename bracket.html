@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-105">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-106">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -310,15 +310,17 @@
             <h3 id="diceRollerTitle">D20 roller</h3>
             <div id="diceTotal" class="dice-total">Total: 2</div>
           </div>
-          <div class="dice-tray" aria-live="polite">
-            <button id="dieOne" class="die-button die-steel" type="button" data-die-index="0" aria-label="Roll die one">
-              <span class="die-label">Triple</span>
-              <span class="die-value">1</span>
-            </button>
-            <button id="dieTwo" class="die-button die-soft" type="button" data-die-index="1" aria-label="Roll die two">
-              <span class="die-label">Double</span>
-              <span class="die-value">1</span>
-            </button>
+          <div class="dice-stage">
+            <div class="dice-tray" aria-live="polite">
+              <button id="dieOne" class="die-button die-steel" type="button" data-die-index="0" aria-label="Roll die one">
+                <span class="die-label">Triple</span>
+                <span class="die-value">1</span>
+              </button>
+              <button id="dieTwo" class="die-button die-soft" type="button" data-die-index="1" aria-label="Roll die two">
+                <span class="die-label">Double</span>
+                <span class="die-value">1</span>
+              </button>
+            </div>
           </div>
           <div class="dice-actions">
             <button id="rollDice" type="button">Roll both dice</button>
