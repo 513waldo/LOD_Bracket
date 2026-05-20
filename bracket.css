@@ -1501,13 +1501,14 @@ button.player-button .loser-source-text {
 .dice-stage {
   display: grid;
   place-items: center;
-  min-height: 186px;
-  padding-top: 22px;
+  min-height: 220px;
+  padding-top: 0;
 }
 
 .dice-tray {
   width: min(100%, 340px);
   margin: 0 auto;
+  align-self: center;
 }
 
 .dice-actions {
