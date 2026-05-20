@@ -820,7 +820,7 @@ function getPayoutSplitByPlaces(places) {
     return [0.5, 0.3, 0.2];
   }
   if (places === 2) {
-    return [0.7, 0.3];
+    return [0.5, 0.5];
   }
   return [1];
 }
