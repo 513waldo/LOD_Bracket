@@ -4172,20 +4172,13 @@ function normalizeLodCode(value) {
 
 function getPortalLink() {
   const code = normalizeLodCode(lodCode);
-  const url = new URL(getPortalPath(), window.location.href);
+  const url = new URL("portal.html", window.location.href);
 
   if (code) {
     url.searchParams.set("lod", code);
   }
 
   return url.toString();
-}
-
-function getPortalPath() {
-  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""]);
-  return localHosts.has(window.location.hostname) || window.location.protocol === "file:"
-    ? "portal.html"
-    : "/portal";
 }
 
 function getApiBaseUrls() {
