@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-97">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-98">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -143,7 +143,7 @@
             </div>
             <label class="portal-notice-field">
               Latest Split The Pot message
-              <textarea id="portalAutoNoticeInput" rows="5" spellcheck="false" readonly placeholder="Split The Pot and ticket messages will appear here."></textarea>
+              <div id="portalAutoNoticeInput" class="portal-notice-display" aria-live="polite"></div>
             </label>
             <p id="portalAutoNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
           </section>
@@ -156,7 +156,7 @@
             </div>
             <label class="portal-notice-field">
               Latest Bullshoot message
-              <textarea id="portalBullshootNoticeInput" rows="5" spellcheck="false" readonly placeholder="Bullshoot winner messages will appear here."></textarea>
+              <div id="portalBullshootNoticeInput" class="portal-notice-display" aria-live="polite"></div>
             </label>
             <p id="portalBullshootNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
           </section>
@@ -423,6 +423,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-88"></script>
+  <script src="bracket.js?v=interactive-tools-89"></script>
 </body>
 </html>
