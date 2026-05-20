@@ -856,16 +856,19 @@ function addSplitPotEntry() {
     return;
   }
 
-  splitPotEntries.push({
+  const entry = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name,
     amountPaid,
     ticketCount,
     createdAt: new Date().toISOString(),
-  });
+  };
+  splitPotEntries.push(entry);
   splitPotWinner = null;
   saveSplitPot();
   renderSplitPot();
+  const addedRow = getSplitPotEntryRows().find((row) => row.id === entry.id);
+  const didSendNotice = sendSplitPotPortalNotice(addedRow);
 
   if (splitPotNameInput) {
     splitPotNameInput.value = "";
@@ -875,7 +878,7 @@ function addSplitPotEntry() {
     splitPotTicketsInput.value = "5";
   }
 
-  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.`);
+  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Build a bracket to send player portal messages."}`);
 }
 
 function drawSplitPotWinner() {
@@ -981,6 +984,31 @@ function getSplitPotEntryRows() {
 
 function getSplitPotTickets() {
   return getSplitPotEntryRows().flatMap((entry) => entry.tickets);
+}
+
+function sendSplitPotPortalNotice(row) {
+  if (!row) {
+    return false;
+  }
+
+  const pot = getSplitPotEntryRows().reduce((sum, entry) => sum + entry.amountPaid, 0);
+  const ticketLabel = row.ticketCount === 1 ? "ticket" : "tickets";
+  const message = `Split The Pot: ${row.name} bought ${formatMoney(row.amountPaid)} for ${row.ticketCount} ${ticketLabel} (${formatSplitPotTicketRange(row)}). Pot is ${formatMoney(pot)}.`;
+  portalNotice = message;
+  portalNoticeDraft = message;
+  portalNoticeAt = new Date().toISOString();
+  if (portalNoticeInput) {
+    portalNoticeInput.value = message;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = didPublish
+      ? `Auto sent at ${stamp}.`
+      : `Auto message ready at ${stamp}; build a bracket to publish.`;
+  }
+  return didPublish;
 }
 
 function formatSplitPotTicketRange(row) {
@@ -3299,7 +3327,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
 
 function savePortalSnapshotToLocalStorage() {
   if (!state) {
-    return;
+    return false;
   }
 
   const snapshot = buildPortalSnapshot();
@@ -3311,6 +3339,7 @@ function savePortalSnapshotToLocalStorage() {
     }
   }
   queuePortalSnapshotPublish(snapshot);
+  return true;
 }
 
 function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
