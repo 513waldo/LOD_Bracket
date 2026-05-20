@@ -1570,13 +1570,13 @@ button.player-button .loser-source-text {
 }
 
 .die-soft {
-  border-color: rgba(141, 28, 28, 0.45);
+  border-color: rgba(180, 30, 30, 0.7);
   background:
     radial-gradient(circle, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 8px),
-    linear-gradient(135deg, rgba(171, 24, 24, 0.95), rgba(118, 12, 12, 0.9)),
-    #a21717;
+    linear-gradient(135deg, rgba(255, 56, 56, 0.98), rgba(190, 18, 18, 0.95)),
+    #d11a1a;
   background-size: 12px 12px, auto, auto;
-  color: #88ff66;
+  color: #0f5c1f;
 }
 
 .die-button.rolling {
