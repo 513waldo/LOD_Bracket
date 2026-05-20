@@ -147,15 +147,6 @@ textarea:focus {
   margin: 0;
 }
 
-.bullseye-share-row {
-  display: grid;
-  grid-template-columns: minmax(420px, 440px) minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
-  width: min(100%, 1180px);
-  margin: 0 auto 10px;
-}
-
 .portal-stack {
   display: grid;
   gap: 18px;
@@ -1859,6 +1850,10 @@ button.player-button .loser-source-text {
   grid-column: 1 / -1;
 }
 
+.bullseye-nested-panel {
+  margin-top: 18px;
+}
+
 .split-pot-winner {
   display: grid;
   gap: 5px;
@@ -2167,10 +2162,6 @@ button.player-button .loser-source-text {
   }
 
   .share-row {
-    grid-template-columns: 1fr;
-  }
-
-  .bullseye-share-row {
     grid-template-columns: 1fr;
   }
 

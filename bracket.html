@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-70">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-71">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -189,6 +189,45 @@
             </div>
 
             <div id="splitPotWinner" class="split-pot-winner" aria-live="polite"></div>
+
+            <details class="panel tool-panel split-pot-panel bullseye-nested-panel" open>
+              <summary>Bullseye Shoot</summary>
+              <div class="tool-body">
+                <div class="panel-title">
+                  <div>
+                    <h2 id="bullseyeShootTitle">Bullseye Shoot</h2>
+                    <p>Track physical tickets and draw one winning ticket.</p>
+                  </div>
+                </div>
+
+                <div class="split-pot-form">
+                  <label>
+                    Name
+                    <input id="bullseyeShootName" type="text" autocomplete="off" placeholder="Ticket buyer">
+                  </label>
+                  <label>
+                    Dollars paid
+                    <input id="bullseyeShootTickets" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0" placeholder="0">
+                  </label>
+                  <label class="bullseye-current-pot">
+                    Current pot
+                    <input id="bullseyeShootCurrentPot" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0">
+                  </label>
+                  <button id="addBullseyeShootEntry" type="button">Add tickets</button>
+                </div>
+
+                <div id="bullseyeShootSummary" class="split-pot-summary" aria-live="polite"></div>
+                <div id="bullseyeShootEntries" class="split-pot-entries"></div>
+
+                <div class="split-pot-actions">
+                  <button id="drawBullseyeShootWinner" type="button">Draw winner</button>
+                  <button id="clearBullseyeShootWinner" class="secondary" type="button">Clear winner</button>
+                  <button id="clearBullseyeShootEntries" class="danger" type="button">Clear entries</button>
+                </div>
+
+                <div id="bullseyeShootWinner" class="split-pot-winner" aria-live="polite"></div>
+              </div>
+            </details>
           </div>
         </details>
         <details class="panel tool-panel dice-roller">
@@ -214,46 +253,6 @@
 
       </div>
     </div>
-
-    <div class="bullseye-share-row">
-      <details class="panel tool-panel split-pot-panel" open>
-        <summary>Bullseye Shoot</summary>
-        <div class="tool-body">
-          <div class="panel-title">
-            <div>
-              <h2 id="bullseyeShootTitle">Bullseye Shoot</h2>
-              <p>Track physical tickets and draw one winning ticket.</p>
-            </div>
-          </div>
-
-          <div class="split-pot-form">
-            <label>
-              Name
-              <input id="bullseyeShootName" type="text" autocomplete="off" placeholder="Ticket buyer">
-            </label>
-            <label>
-              Dollars paid
-              <input id="bullseyeShootTickets" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0" placeholder="0">
-            </label>
-            <label class="bullseye-current-pot">
-              Current pot
-              <input id="bullseyeShootCurrentPot" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0">
-            </label>
-            <button id="addBullseyeShootEntry" type="button">Add tickets</button>
-          </div>
-
-          <div id="bullseyeShootSummary" class="split-pot-summary" aria-live="polite"></div>
-          <div id="bullseyeShootEntries" class="split-pot-entries"></div>
-
-          <div class="split-pot-actions">
-            <button id="drawBullseyeShootWinner" type="button">Draw winner</button>
-            <button id="clearBullseyeShootWinner" class="secondary" type="button">Clear winner</button>
-            <button id="clearBullseyeShootEntries" class="danger" type="button">Clear entries</button>
-          </div>
-
-          <div id="bullseyeShootWinner" class="split-pot-winner" aria-live="polite"></div>
-        </div>
-      </details>
 
       <div class="portal-stack">
         <section class="panel portal-notice-panel" aria-labelledby="portalNoticeTitle">
