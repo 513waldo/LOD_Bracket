@@ -1850,10 +1850,6 @@ button.player-button .loser-source-text {
   grid-column: 1 / -1;
 }
 
-.bullseye-nested-panel {
-  margin-top: 18px;
-}
-
 .split-pot-winner {
   display: grid;
   gap: 5px;
