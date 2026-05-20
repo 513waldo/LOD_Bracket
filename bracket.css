@@ -40,7 +40,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background-image:
     linear-gradient(rgba(9, 10, 8, 0.12), rgba(9, 10, 8, 0.22)),
@@ -50,6 +50,11 @@ body::before {
   background-position: center top, center top, center 10px, center 20px;
   background-repeat: no-repeat, repeat-x, repeat-x, repeat-x;
   background-size: auto, 100% auto, 100% auto, 100% auto;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 button,
