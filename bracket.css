@@ -145,7 +145,8 @@ textarea:focus {
   gap: 12px;
   justify-items: start;
   align-items: start;
-  width: fit-content;
+  width: 100%;
+  justify-self: stretch;
   max-width: 100%;
   margin: 0;
   border: 1px solid var(--line);
@@ -222,7 +223,7 @@ textarea:focus {
 
 .portal-notice-panel {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
 }
@@ -249,7 +250,7 @@ textarea:focus {
 
 .lod-registry-panel {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -257,7 +258,7 @@ textarea:focus {
   border-radius: 8px;
   background: var(--blue-panel);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 12px 14px;
 }
 
 .lod-registry-list {
@@ -412,6 +413,7 @@ h2 {
 
 .bracket-shell {
   border-top: 4px solid var(--primary);
+  padding: clamp(12px, 2.8vw, 18px);
 }
 
 .panel {
@@ -457,8 +459,8 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 58px;
-  padding: 0 18px;
+  min-height: 50px;
+  padding: 0 14px;
   color: var(--ink);
   cursor: pointer;
   font-size: 1rem;
@@ -486,12 +488,12 @@ h2 {
 }
 
 .tool-body {
-  padding: clamp(14px, 3vw, 20px);
+  padding: clamp(10px, 2vw, 16px);
 }
 
 .top-workspace {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   align-items: start;
   margin-bottom: 10px;
   width: 100%;
@@ -501,14 +503,14 @@ h2 {
 
 .setup-stack {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
 }
 
 .setup-stack .panel,
 .top-side-stack {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -730,20 +732,20 @@ textarea {
 
 .bracket {
   display: grid;
-  gap: 32px;
+  gap: 14px;
 }
 
 .bracket-section {
   min-width: 0;
   border-radius: 8px;
   background: rgba(16, 17, 14, 0.18);
-  padding: 14px;
+  padding: 8px;
 }
 
 .bracket-section h3 {
-  margin: 0 0 12px;
+  margin: 0 0 6px;
   color: #fffaf0;
-  font-size: 1.05rem;
+  font-size: 1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -752,9 +754,9 @@ textarea {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 290px;
-  gap: 46px;
+  gap: 26px;
   overflow-x: auto;
-  padding: 8px 18px 20px 0;
+  padding: 4px 12px 8px 0;
   align-items: start;
 }
 
@@ -762,20 +764,20 @@ textarea {
   position: relative;
   display: grid;
   align-content: start;
-  gap: 20px;
-  padding-top: 12px;
+  gap: 12px;
+  padding-top: 4px;
 }
 
 .round:nth-of-type(2) {
-  padding-top: 46px;
+  padding-top: 24px;
 }
 
 .round:nth-of-type(3) {
-  padding-top: 104px;
+  padding-top: 66px;
 }
 
 .round:nth-of-type(4) {
-  padding-top: 172px;
+  padding-top: 118px;
 }
 
 .round:not(:last-child)::after {
@@ -870,8 +872,8 @@ textarea {
   border-radius: 8px;
   background: var(--blue-surface-strong);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
-  padding: 12px;
-  margin-bottom: 10px;
+  padding: 8px;
+  margin-bottom: 4px;
 }
 
 .match::after {
@@ -1751,7 +1753,7 @@ button.player-button .loser-source-text {
 .split-pot-form {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(110px, 0.7fr);
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 
@@ -1766,8 +1768,8 @@ button.player-button .loser-source-text {
 .split-pot-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 14px 0;
+  gap: 8px;
+  margin: 12px 0;
 }
 
 #bullseyeShootSummary.split-pot-summary {
@@ -1781,7 +1783,7 @@ button.player-button .loser-source-text {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--blue-surface);
-  padding: 12px;
+  padding: 10px;
 }
 
 .split-pot-summary span,
@@ -1801,8 +1803,8 @@ button.player-button .loser-source-text {
 
 .split-pot-entries {
   display: grid;
-  gap: 10px;
-  max-height: 360px;
+  gap: 8px;
+  max-height: 260px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -1812,7 +1814,7 @@ button.player-button .loser-source-text {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--blue-surface);
-  padding: 12px;
+  padding: 10px;
 }
 
 .split-pot-entry-heading {
@@ -1820,7 +1822,7 @@ button.player-button .loser-source-text {
   justify-content: space-between;
   gap: 10px;
   align-items: start;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .split-pot-entry-heading > div {
@@ -1860,7 +1862,7 @@ button.player-button .loser-source-text {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .split-pot-actions .danger {
@@ -1870,7 +1872,7 @@ button.player-button .loser-source-text {
 .split-pot-winner {
   display: grid;
   gap: 5px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .split-pot-winner.rolling {
@@ -2078,9 +2080,9 @@ button.player-button .loser-source-text {
 
   .setup-stack {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 14px;
     align-items: start;
-    margin-top: 18px;
+    margin-top: 14px;
   }
 
   .portal-notice-panel {

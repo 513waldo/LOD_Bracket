@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-76">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-84">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -121,7 +121,7 @@
           <div class="panel-title">
             <div>
               <p class="step-label">Alert</p>
-              <h2 id="portalNoticeTitle">Portal message</h2>
+              <h2 id="portalNoticeTitle">Player Portal Message</h2>
             </div>
             <p>Send a board call to the viewer portal.</p>
           </div>
@@ -134,17 +134,16 @@
             <button id="clearPortalNotice" class="secondary" type="button">Clear message</button>
           </div>
           <p id="portalNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
-        </section>
-
-        <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
-          <div class="panel-title">
-            <div>
-              <p class="step-label">Active</p>
-              <h2 id="lodRegistryTitle">Active LODs</h2>
+          <section class="panel lod-registry-panel" aria-labelledby="lodRegistryTitle">
+            <div class="panel-title">
+              <div>
+                <p class="step-label">Active</p>
+                <h2 id="lodRegistryTitle">Active LODs</h2>
+              </div>
+              <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
             </div>
-            <button id="refreshRegistry" class="secondary" type="button">Refresh</button>
-          </div>
-          <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
+            <div id="lodRegistryList" class="lod-registry-list">Loading active LODs...</div>
+          </section>
         </section>
       </div>
 
