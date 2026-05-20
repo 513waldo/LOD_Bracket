@@ -867,8 +867,7 @@ function addSplitPotEntry() {
   splitPotWinner = null;
   saveSplitPot();
   renderSplitPot();
-  const addedRow = getSplitPotEntryRows().find((row) => row.id === entry.id);
-  const didSendNotice = sendSplitPotPortalNotice(addedRow);
+  const didSendNotice = sendSplitPotPortalNotice();
 
   if (splitPotNameInput) {
     splitPotNameInput.value = "";
@@ -986,14 +985,22 @@ function getSplitPotTickets() {
   return getSplitPotEntryRows().flatMap((entry) => entry.tickets);
 }
 
-function sendSplitPotPortalNotice(row) {
-  if (!row) {
+function sendSplitPotPortalNotice() {
+  const rows = getSplitPotEntryRows();
+  if (!rows.length) {
     return false;
   }
 
-  const pot = getSplitPotEntryRows().reduce((sum, entry) => sum + entry.amountPaid, 0);
-  const ticketLabel = row.ticketCount === 1 ? "ticket" : "tickets";
-  const message = `Split The Pot: ${row.name} bought ${formatMoney(row.amountPaid)} for ${row.ticketCount} ${ticketLabel} (${formatSplitPotTicketRange(row)}). Pot is ${formatMoney(pot)}.`;
+  const ticketTotal = rows.reduce((sum, entry) => sum + entry.ticketCount, 0);
+  const pot = rows.reduce((sum, entry) => sum + entry.amountPaid, 0);
+  const ticketList = rows.map((entry) => {
+    const ticketLabel = entry.ticketCount === 1 ? "ticket" : "tickets";
+    return `${entry.name}: ${formatSplitPotTicketRange(entry)} (${entry.ticketCount} ${ticketLabel}, ${formatMoney(entry.amountPaid)})`;
+  });
+  const message = [
+    `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
+    ...ticketList,
+  ].join("\n");
   portalNotice = message;
   portalNoticeDraft = message;
   portalNoticeAt = new Date().toISOString();
