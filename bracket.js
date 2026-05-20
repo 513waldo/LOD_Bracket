@@ -63,6 +63,8 @@ const clearLodCodeButton = document.querySelector("#clearLodCode");
 const portalNoticeInput = document.querySelector("#portalNoticeInput");
 const portalAutoNoticeInput = document.querySelector("#portalAutoNoticeInput");
 const portalAutoNoticeStatus = document.querySelector("#portalAutoNoticeStatus");
+const portalBracketNoticeInput = document.querySelector("#portalBracketNoticeInput");
+const portalBracketNoticeStatus = document.querySelector("#portalBracketNoticeStatus");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
@@ -154,6 +156,8 @@ let portalNoticeAt = "";
 let portalNoticeDraft = "";
 let portalAutoNotice = "";
 let portalAutoNoticeAt = "";
+let portalBracketNotice = "";
+let portalBracketNoticeAt = "";
 let splitPotEntries = [];
 let splitPotWinner = null;
 let bullseyeShootEntries = [];
@@ -1537,13 +1541,31 @@ function setAutomatedPortalNotice(message) {
   return didPublish;
 }
 
+function setBracketPortalNotice(message) {
+  const text = String(message || "").trim();
+  portalBracketNotice = text;
+  portalBracketNoticeAt = text ? new Date().toISOString() : "";
+  if (portalBracketNoticeInput) {
+    portalBracketNoticeInput.value = text;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalBracketNoticeStatus) {
+    portalBracketNoticeStatus.textContent = text
+      ? (didPublish ? `Bracket message sent at ${stamp}.` : `Bracket message ready at ${stamp}; set an LOD code to publish.`)
+      : "";
+  }
+  return didPublish;
+}
+
 function sendBracketLegWinnerPortalNotice(match, winnerName) {
   if (!match || !winnerName || !state || state.mode !== "graph") {
     return false;
   }
 
   const winnerLine = `Bracket leg winner: ${formatMatchTitle(match)} - ${winnerName}`;
-  return setAutomatedPortalNotice(winnerLine);
+  return setBracketPortalNotice(winnerLine);
 }
 
 function formatSplitPotTicketRange(row) {
@@ -4107,6 +4129,8 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     portalNoticeAt,
     portalAutoNotice,
     portalAutoNoticeAt,
+    portalBracketNotice,
+    portalBracketNoticeAt,
   };
 }
 
@@ -4149,6 +4173,8 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   portalNoticeDraft = "";
   portalAutoNotice = "";
   portalAutoNoticeAt = "";
+  portalBracketNotice = "";
+  portalBracketNoticeAt = "";
   if (portalNoticeInput) {
     portalNoticeInput.value = "";
   }
@@ -4160,6 +4186,12 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   }
   if (portalAutoNoticeStatus) {
     portalAutoNoticeStatus.textContent = "";
+  }
+  if (portalBracketNoticeInput) {
+    portalBracketNoticeInput.value = "";
+  }
+  if (portalBracketNoticeStatus) {
+    portalBracketNoticeStatus.textContent = "";
   }
   championOutput.textContent = "Champion: pending";
   groupsOutput.className = "groups empty";
@@ -4304,6 +4336,18 @@ function restoreBracketDraft() {
     portalAutoNoticeInput.value = portalAutoNotice;
   }
 
+  if (typeof draft.portalBracketNotice === "string") {
+    portalBracketNotice = draft.portalBracketNotice;
+  }
+
+  if (typeof draft.portalBracketNoticeAt === "string") {
+    portalBracketNoticeAt = draft.portalBracketNoticeAt;
+  }
+
+  if (portalBracketNoticeInput) {
+    portalBracketNoticeInput.value = portalBracketNotice;
+  }
+
   if (typeof draft.mysteryOut === "string") {
     mysteryOut = draft.mysteryOut;
     renderMysteryOut();
@@ -4410,6 +4454,10 @@ function buildBracketDraft() {
     expiresAt: getBracketCleanupAt(lodCode) || "",
     portalNotice,
     portalNoticeDraft,
+    portalAutoNotice,
+    portalAutoNoticeAt,
+    portalBracketNotice,
+    portalBracketNoticeAt,
   };
 }
 

@@ -6,6 +6,8 @@ const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
 const portalAutoMessage = document.querySelector("#portalAutoMessage");
 const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
+const portalBracketMessage = document.querySelector("#portalBracketMessage");
+const portalBracketMessageWrap = document.querySelector("#portalBracketMessageWrap");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
@@ -257,6 +259,8 @@ function normalizeSnapshot(data) {
       portalNoticeAt: String(data.portalNoticeAt || ""),
       portalAutoNotice: String(data.portalAutoNotice || ""),
       portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
+      portalBracketNotice: String(data.portalBracketNotice || ""),
+      portalBracketNoticeAt: String(data.portalBracketNoticeAt || ""),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -272,6 +276,8 @@ function normalizeSnapshot(data) {
     portalNoticeAt: String(data.portalNoticeAt || ""),
     portalAutoNotice: String(data.portalAutoNotice || ""),
     portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
+    portalBracketNotice: String(data.portalBracketNotice || ""),
+    portalBracketNoticeAt: String(data.portalBracketNoticeAt || ""),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -299,24 +305,28 @@ function shouldPreferSnapshot(candidate, current) {
   const currentNotice = String(current.portalNotice || "").trim();
   const candidateAutoNotice = String(candidate.portalAutoNotice || "").trim();
   const currentAutoNotice = String(current.portalAutoNotice || "").trim();
+  const candidateBracketNotice = String(candidate.portalBracketNotice || "").trim();
+  const currentBracketNotice = String(current.portalBracketNotice || "").trim();
   const candidateStamp = Number(new Date(
+    candidate.portalBracketNoticeAt ||
     candidate.portalAutoNoticeAt ||
     candidate.portalNoticeAt ||
     candidate.exportedAt ||
     0,
   ));
   const currentStamp = Number(new Date(
+    current.portalBracketNoticeAt ||
     current.portalAutoNoticeAt ||
     current.portalNoticeAt ||
     current.exportedAt ||
     0,
   ));
 
-  if ((candidateNotice || candidateAutoNotice) && !(currentNotice || currentAutoNotice)) {
+  if ((candidateNotice || candidateAutoNotice || candidateBracketNotice) && !(currentNotice || currentAutoNotice || currentBracketNotice)) {
     return true;
   }
 
-  if (!(candidateNotice || candidateAutoNotice) && (currentNotice || currentAutoNotice)) {
+  if (!(candidateNotice || candidateAutoNotice || candidateBracketNotice) && (currentNotice || currentAutoNotice || currentBracketNotice)) {
     return false;
   }
 
@@ -346,6 +356,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
   setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
   setAutomatedMessage(formatPortalCall(snapshot.portalAutoNotice, snapshot.portalAutoNoticeAt));
+  setBracketMessage(formatPortalCall(snapshot.portalBracketNotice, snapshot.portalBracketNoticeAt));
 
   if (!state) {
     portalBracket.className = "bracket empty";
@@ -370,6 +381,7 @@ function renderEmptyPortal() {
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
   setMessage("");
   setAutomatedMessage("");
+  setBracketMessage("");
 }
 
 function focusActiveMatch(state) {
@@ -731,6 +743,16 @@ function setAutomatedMessage(text) {
   const value = String(text || "").trim() || "No automated messages yet.";
   portalAutoMessage.textContent = value;
   portalAutoMessageWrap.hidden = false;
+}
+
+function setBracketMessage(text) {
+  if (!portalBracketMessage || !portalBracketMessageWrap) {
+    return;
+  }
+
+  const value = String(text || "").trim() || "No bracket messages yet.";
+  portalBracketMessage.textContent = value;
+  portalBracketMessageWrap.hidden = false;
 }
 
 function formatPortalCall(message, stamp) {
