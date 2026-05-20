@@ -34,6 +34,14 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   color: var(--ink);
   background-color: #11120f;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
     linear-gradient(rgba(9, 10, 8, 0.12), rgba(9, 10, 8, 0.22)),
     url("assets/background.png?v=5"),
@@ -42,7 +50,6 @@ body {
   background-position: center top, center top, center 10px, center 20px;
   background-repeat: no-repeat, repeat-x, repeat-x, repeat-x;
   background-size: auto, 100% auto, 100% auto, 100% auto;
-  background-attachment: fixed, scroll, scroll, scroll;
 }
 
 button,
