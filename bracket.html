@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-50">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-51">
 </head>
 <body>
   <main class="app">
@@ -206,6 +206,10 @@
                 Dollars paid
                 <select id="bullseyeShootTickets"></select>
               </label>
+              <label class="bullseye-current-pot">
+                Current pot
+                <input id="bullseyeShootCurrentPot" type="number" min="0" step="1" inputmode="numeric" autocomplete="off" value="0">
+              </label>
               <button id="addBullseyeShootEntry" type="button">Add tickets</button>
             </div>
 
@@ -392,6 +396,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-65"></script>
+  <script src="bracket.js?v=interactive-tools-66"></script>
 </body>
 </html>

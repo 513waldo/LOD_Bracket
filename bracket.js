@@ -43,6 +43,7 @@ const clearSplitPotEntriesButton = document.querySelector("#clearSplitPotEntries
 const splitPotWinnerOutput = document.querySelector("#splitPotWinner");
 const bullseyeShootNameInput = document.querySelector("#bullseyeShootName");
 const bullseyeShootTicketsInput = document.querySelector("#bullseyeShootTickets");
+const bullseyeShootCurrentPotInput = document.querySelector("#bullseyeShootCurrentPot");
 const addBullseyeShootEntryButton = document.querySelector("#addBullseyeShootEntry");
 const bullseyeShootSummary = document.querySelector("#bullseyeShootSummary");
 const bullseyeShootEntriesOutput = document.querySelector("#bullseyeShootEntries");
@@ -152,6 +153,7 @@ let splitPotEntries = [];
 let splitPotWinner = null;
 let bullseyeShootEntries = [];
 let bullseyeShootWinner = null;
+let bullseyeShootCurrentPot = 0;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -431,6 +433,20 @@ bullseyeShootTicketsInput?.addEventListener("keydown", (event) => {
 });
 
 drawBullseyeShootWinnerButton?.addEventListener("click", drawBullseyeShootWinner);
+
+bullseyeShootCurrentPotInput?.addEventListener("input", () => {
+  bullseyeShootCurrentPot = getBullseyeShootCurrentPot();
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  queueBracketDraftSave();
+});
+
+bullseyeShootCurrentPotInput?.addEventListener("change", () => {
+  bullseyeShootCurrentPot = getBullseyeShootCurrentPot();
+  saveBullseyeShoot();
+  renderBullseyeShoot();
+  queueBracketDraftSave();
+});
 
 clearBullseyeShootWinnerButton?.addEventListener("click", () => {
   bullseyeShootWinner = null;
@@ -1062,12 +1078,18 @@ function renderBullseyeShoot() {
 
   const ticketRows = getBullseyeShootEntryRows();
   const ticketTotal = ticketRows.reduce((sum, row) => sum + row.ticketCount, 0);
-  const pot = ticketRows.reduce((sum, row) => sum + row.amountPaid, 0);
+  const ticketSales = ticketRows.reduce((sum, row) => sum + row.amountPaid, 0);
+  const currentPot = getBullseyeShootCurrentPot();
+  const pot = currentPot + ticketSales;
 
   bullseyeShootSummary.innerHTML = `
     <div>
       <span>Tickets sold</span>
       <strong>${ticketTotal}</strong>
+    </div>
+    <div>
+      <span>Ticket sales</span>
+      <strong>${formatMoney(ticketSales)}</strong>
     </div>
     <div>
       <span>Total pot</span>
@@ -1172,6 +1194,10 @@ function getBullseyeShootTickets() {
   return getBullseyeShootEntryRows().flatMap((entry) => entry.tickets);
 }
 
+function getBullseyeShootCurrentPot() {
+  return Math.max(0, Math.floor(Number(bullseyeShootCurrentPotInput?.value ?? bullseyeShootCurrentPot) || 0));
+}
+
 function sendSplitPotPortalNotice({ winner = null } = {}) {
   const rows = getSplitPotEntryRows();
   if (!rows.length) {
@@ -1215,7 +1241,7 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
   }
 
   const ticketTotal = rows.reduce((sum, entry) => sum + entry.ticketCount, 0);
-  const pot = rows.reduce((sum, entry) => sum + entry.amountPaid, 0);
+  const pot = getBullseyeShootCurrentPot() + rows.reduce((sum, entry) => sum + entry.amountPaid, 0);
   const ticketList = rows.map((entry) => {
     const ticketLabel = entry.ticketCount === 1 ? "ticket" : "tickets";
     return `${entry.name}: ${formatSplitPotTicketRange(entry)} (${entry.ticketCount} ${ticketLabel}, ${formatMoney(entry.amountPaid)})`;
@@ -1363,6 +1389,7 @@ function saveBullseyeShoot() {
   try {
     localStorage.setItem(bullseyeShootStorageKey, JSON.stringify({
       version: 1,
+      currentPot: getBullseyeShootCurrentPot(),
       entries: bullseyeShootEntries,
       winner: bullseyeShootWinner,
     }));
@@ -1382,6 +1409,7 @@ function loadBullseyeShoot() {
       return;
     }
 
+    bullseyeShootCurrentPot = Math.max(0, Math.floor(Number(data.currentPot ?? data.currentPotAmount ?? 0) || 0));
     bullseyeShootEntries = Array.isArray(data.entries)
       ? data.entries.map((entry) => ({
         id: String(entry.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
@@ -1392,9 +1420,16 @@ function loadBullseyeShoot() {
       })).filter((entry) => entry.name && entry.amountPaid > 0)
       : [];
     bullseyeShootWinner = data.winner && typeof data.winner === "object" ? data.winner : null;
+    if (bullseyeShootCurrentPotInput) {
+      bullseyeShootCurrentPotInput.value = String(bullseyeShootCurrentPot);
+    }
   } catch {
+    bullseyeShootCurrentPot = 0;
     bullseyeShootEntries = [];
     bullseyeShootWinner = null;
+    if (bullseyeShootCurrentPotInput) {
+      bullseyeShootCurrentPotInput.value = "0";
+    }
   }
 }
 

@@ -1718,11 +1718,19 @@ button.player-button .loser-source-text {
   grid-column: 1 / -1;
 }
 
+.bullseye-current-pot {
+  grid-column: 1 / -1;
+}
+
 .split-pot-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0;
+}
+
+#bullseyeShootSummary.split-pot-summary {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .split-pot-summary div {
