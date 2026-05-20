@@ -306,6 +306,10 @@ h1 {
   border-style: dotted;
 }
 
+.message.board-call.winner-call {
+  color: #0b7a43;
+}
+
 .pdf-visual-section {
   border: 1px solid #d7d2c8;
   background: #f7f4ee;
