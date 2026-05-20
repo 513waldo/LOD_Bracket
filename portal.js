@@ -35,6 +35,7 @@ loadLodCodeButton?.addEventListener("click", () => {
     return;
   }
 
+  beginPortalLoad(code);
   activeLodCode = code;
   saveStoredPortalLodCode(code);
   clearPortalExpiry(code);
@@ -101,6 +102,7 @@ async function boot() {
     return;
   }
 
+  beginPortalLoad(activeLodCode);
   const localSnapshot = readStoredSnapshot(activeLodCode);
   if (localSnapshot) {
     if (shouldExpirePortalSession(activeLodCode, localSnapshot)) {
@@ -125,6 +127,10 @@ async function loadPublishedSnapshot(code, announceFailure) {
       setMessage("Enter a LOD code to load a published snapshot.");
     }
     return;
+  }
+
+  if (normalizedCode !== activeLodCode) {
+    beginPortalLoad(normalizedCode);
   }
 
   const localSnapshot = readStoredSnapshot(normalizedCode);
@@ -218,6 +224,20 @@ function clearPortalCode() {
   syncPortalCodeInput();
   renderEmptyPortal();
   setMessage("LOD code cleared.");
+}
+
+function beginPortalLoad(code) {
+  const normalizedCode = normalizeLodCode(code);
+  const isSameCode = normalizedCode && normalizedCode === activeLodCode;
+
+  if (!isSameCode) {
+    activeSnapshot = null;
+    autoFocusAppliedForCode = "";
+    clearPortalExpiry(normalizedCode);
+    renderEmptyPortal();
+  } else if (!activeSnapshot) {
+    renderEmptyPortal();
+  }
 }
 
 function normalizeSnapshot(data) {
