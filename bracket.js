@@ -1461,6 +1461,37 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
   return didPublish;
 }
 
+function sendBracketLegWinnerPortalNotice(match, winnerName) {
+  if (!match || !winnerName || !state || state.mode !== "graph") {
+    return false;
+  }
+
+  const winnerLine = `Bracket leg winner: ${formatMatchTitle(match)} - ${winnerName}`;
+  const previousNotice = String(portalNoticeDraft || portalNotice || "").trim();
+  const message = previousNotice
+    ? `${previousNotice}\n${winnerLine}`
+    : winnerLine;
+  portalNotice = message;
+  portalNoticeDraft = message;
+  portalNoticeAt = new Date().toISOString();
+
+  if (portalNoticeInput) {
+    portalNoticeInput.value = message;
+  }
+
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = didPublish
+      ? `Auto sent at ${stamp}.`
+      : `Auto message ready at ${stamp}; set an LOD code to publish.`;
+  }
+
+  return didPublish;
+}
+
 function formatSplitPotTicketRange(row) {
   if (!row?.tickets?.length) {
     return "";
@@ -3132,6 +3163,7 @@ function chooseWinner(matchId, winnerName) {
     placeGraphPlayer(state, match.loserTo, loserName);
   }
 
+  sendBracketLegWinnerPortalNotice(match, winnerName);
   settleGraphByesAndSources(state);
   renderBracket();
 }
@@ -3667,6 +3699,7 @@ function chooseWinnerLegacy(type, roundIndex, matchIndex, winnerName) {
     return;
   }
 
+  sendBracketLegWinnerPortalNotice(match, winnerName);
   autoAdvanceByes(state);
   refreshGameNumbersAndSources(state);
   renderBracket();
