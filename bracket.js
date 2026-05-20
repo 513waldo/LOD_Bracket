@@ -895,7 +895,8 @@ function drawSplitPotWinner() {
   };
   saveSplitPot();
   renderSplitPot();
-  showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.`);
+  const didSendNotice = sendSplitPotPortalNotice({ winner: winnerTicket });
+  showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
 
 function renderSplitPot() {
@@ -985,7 +986,7 @@ function getSplitPotTickets() {
   return getSplitPotEntryRows().flatMap((entry) => entry.tickets);
 }
 
-function sendSplitPotPortalNotice() {
+function sendSplitPotPortalNotice({ winner = null } = {}) {
   const rows = getSplitPotEntryRows();
   if (!rows.length) {
     return false;
@@ -998,7 +999,10 @@ function sendSplitPotPortalNotice() {
     return `${entry.name}: ${formatSplitPotTicketRange(entry)} (${entry.ticketCount} ${ticketLabel}, ${formatMoney(entry.amountPaid)})`;
   });
   const message = [
-    `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
+    winner
+      ? `Split The Pot Winner: ${winner.name} - ${winner.ticketLabel}`
+      : `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
+    ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
   ].join("\n");
   portalNotice = message;
