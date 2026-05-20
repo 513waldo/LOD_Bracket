@@ -1940,6 +1940,12 @@ button.player-button .loser-source-text {
   margin-top: 12px;
 }
 
+.name-backup-history .backup-list {
+  max-height: calc(2 * 84px + 10px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
 .backup-actions {
   display: grid;
   gap: 10px;
