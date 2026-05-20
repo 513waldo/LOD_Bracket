@@ -901,6 +901,27 @@ function formatMoney(value) {
   return `$${Math.round(value).toLocaleString()}`;
 }
 
+function getSplitPotPrizeAmount() {
+  const ticketRows = getSplitPotEntryRows();
+  const pot = ticketRows.reduce((sum, row) => sum + row.amountPaid, 0);
+  return pot / 2;
+}
+
+function formatPayoutAmount(value) {
+  const amount = Math.max(0, Number(value) || 0);
+  const rounded = Math.round(amount * 100) / 100;
+  if (Number.isInteger(rounded)) {
+    return `$${rounded.toLocaleString()}`;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(rounded);
+}
+
 function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) {
   if (!tickets.length) {
     return null;
@@ -1009,7 +1030,7 @@ function drawSplitPotWinner() {
   stopSplitPotDrawAnimation();
   splitPotDrawAnimation = startTicketDrawAnimation({
     tickets,
-    durationMs: 4000,
+    durationMs: 8000,
     onFrame: (ticket) => {
       if (splitPotDrawAnimation) {
         splitPotDrawAnimation.ticket = ticket;
@@ -1231,10 +1252,11 @@ function renderSplitPotWinnerDisplay() {
   }
 
   splitPotWinnerOutput.className = "split-pot-winner";
+  const prizeAmount = getSplitPotPrizeAmount();
   splitPotWinnerOutput.innerHTML = `
     <span>Winning ticket</span>
     <strong>${escapeHtml(splitPotWinner.ticketLabel)}</strong>
-    <b>${escapeHtml(splitPotWinner.name)}</b>
+    <b>${escapeHtml(splitPotWinner.name)} wins ${escapeHtml(formatPayoutAmount(prizeAmount))}</b>
   `;
 }
 
@@ -1340,13 +1362,14 @@ function sendSplitPotPortalNotice({ winner = null } = {}) {
 
   const ticketTotal = rows.reduce((sum, entry) => sum + entry.ticketCount, 0);
   const pot = rows.reduce((sum, entry) => sum + entry.amountPaid, 0);
+  const prizeAmount = pot / 2;
   const ticketList = rows.map((entry) => {
     const ticketLabel = entry.ticketCount === 1 ? "ticket" : "tickets";
     return `${entry.name}: ${formatSplitPotTicketRange(entry)} (${entry.ticketCount} ${ticketLabel}, ${formatMoney(entry.amountPaid)})`;
   });
   const message = [
     winner
-      ? `Split The Pot Winner: ${winner.name} - ${winner.ticketLabel}`
+      ? `Split The Pot Winner: ${winner.name} - ${winner.ticketLabel} - Wins ${formatPayoutAmount(prizeAmount)}`
       : `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
     ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
