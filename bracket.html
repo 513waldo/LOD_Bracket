@@ -153,6 +153,40 @@
             <div id="payoutResults" class="payout-results"></div>
           </div>
         </details>
+        <details class="panel tool-panel split-pot-panel" open>
+          <summary>Split The Pot</summary>
+          <div class="tool-body">
+            <div class="panel-title">
+              <div>
+                <h2 id="splitPotTitle">Split The Pot</h2>
+                <p>Track physical tickets and draw one winning ticket.</p>
+              </div>
+            </div>
+
+            <div class="split-pot-form">
+              <label>
+                Name
+                <input id="splitPotName" type="text" autocomplete="off" placeholder="Ticket buyer">
+              </label>
+              <label>
+                Dollars paid
+                <select id="splitPotTickets"></select>
+              </label>
+              <button id="addSplitPotEntry" type="button">Add tickets</button>
+            </div>
+
+            <div id="splitPotSummary" class="split-pot-summary" aria-live="polite"></div>
+            <div id="splitPotEntries" class="split-pot-entries"></div>
+
+            <div class="split-pot-actions">
+              <button id="drawSplitPotWinner" type="button">Draw winner</button>
+              <button id="clearSplitPotWinner" class="secondary" type="button">Clear winner</button>
+              <button id="clearSplitPotEntries" class="danger" type="button">Clear entries</button>
+            </div>
+
+            <div id="splitPotWinner" class="split-pot-winner" aria-live="polite"></div>
+          </div>
+        </details>
         <details class="panel tool-panel dice-roller">
           <summary>D20 Roller</summary>
           <div class="tool-body">
@@ -324,6 +358,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=4"></script>
-  <script src="bracket.js?v=interactive-tools-58"></script>
+  <script src="bracket.js?v=interactive-tools-59"></script>
 </body>
 </html>

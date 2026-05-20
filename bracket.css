@@ -528,7 +528,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -537,7 +538,8 @@ textarea {
   padding: 12px;
 }
 
-input {
+input,
+select {
   min-height: 48px;
 }
 
@@ -1703,6 +1705,142 @@ button.player-button .loser-source-text {
   padding: 12px;
   text-align: center;
   font-weight: 900;
+}
+
+.split-pot-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(110px, 0.7fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.split-pot-form button {
+  grid-column: 1 / -1;
+}
+
+.split-pot-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.split-pot-summary div {
+  display: grid;
+  gap: 4px;
+  min-height: 70px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-surface);
+  padding: 12px;
+}
+
+.split-pot-summary span,
+.split-pot-entry span,
+.split-pot-winner span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.split-pot-summary strong {
+  color: var(--primary-dark);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.split-pot-entries {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.split-pot-entry,
+.split-pot-winner {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-surface);
+  padding: 12px;
+}
+
+.split-pot-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.split-pot-entry-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.split-pot-entry-heading strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.split-pot-entry-heading button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+}
+
+.split-pot-ticket-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.split-pot-ticket-list code {
+  border: 1px solid rgba(11, 122, 67, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--primary-dark);
+  padding: 5px 7px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.split-pot-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.split-pot-actions .danger {
+  grid-column: 1 / -1;
+}
+
+.split-pot-winner {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.split-pot-winner strong {
+  color: var(--primary-dark);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.split-pot-winner b {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.split-pot-winner.empty,
+.split-pot-empty {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
 }
 
 @keyframes d20-roll {

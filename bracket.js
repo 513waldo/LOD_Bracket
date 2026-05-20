@@ -32,6 +32,15 @@ const payoutPercentInputs = document.querySelector("#payoutPercentInputs");
 const payoutPercentStatus = document.querySelector("#payoutPercentStatus");
 const payoutSummary = document.querySelector("#payoutSummary");
 const payoutResults = document.querySelector("#payoutResults");
+const splitPotNameInput = document.querySelector("#splitPotName");
+const splitPotTicketsInput = document.querySelector("#splitPotTickets");
+const addSplitPotEntryButton = document.querySelector("#addSplitPotEntry");
+const splitPotSummary = document.querySelector("#splitPotSummary");
+const splitPotEntriesOutput = document.querySelector("#splitPotEntries");
+const drawSplitPotWinnerButton = document.querySelector("#drawSplitPotWinner");
+const clearSplitPotWinnerButton = document.querySelector("#clearSplitPotWinner");
+const clearSplitPotEntriesButton = document.querySelector("#clearSplitPotEntries");
+const splitPotWinnerOutput = document.querySelector("#splitPotWinner");
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
@@ -56,6 +65,7 @@ const maxBracketBackups = 25;
 const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
 const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
 const outShotStorageKey = "dartsTournamentOutShots";
+const splitPotStorageKey = "dartsTournamentSplitPot";
 const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
 const bracketDraftStorageKey = "dartsTournamentBracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
@@ -63,6 +73,8 @@ const lodCodeStorageKey = "dartsTournamentLodCode";
 const lodCodeClearedValue = "__CLEARED__";
 const bracketCleanupDurationMs = 60 * 60 * 1000;
 const outShotSlotCount = 100;
+const splitPotFirstTicketNumber = 100;
+const splitPotMaxPurchaseAmount = 50;
 const dartScores = [
   ...Array.from({ length: 20 }, (_, index) => index + 1),
   ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
@@ -126,6 +138,8 @@ let mysteryOut = "";
 let portalNotice = "";
 let portalNoticeAt = "";
 let portalNoticeDraft = "";
+let splitPotEntries = [];
+let splitPotWinner = null;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -143,6 +157,9 @@ renderNameBackups();
 renderOutShotSheet();
 renderDice();
 renderMysteryOut();
+loadSplitPot();
+renderSplitPotPurchaseOptions();
+renderSplitPot();
 syncPayoutTeamsFromPlayerCount();
 updatePayoutCalculator();
 renderPdfLayoutOptions();
@@ -363,6 +380,31 @@ payoutPercentInputs?.addEventListener("input", (event) => {
 });
 
 clearPayoutButton?.addEventListener("click", clearPayoutInputs);
+
+addSplitPotEntryButton?.addEventListener("click", addSplitPotEntry);
+
+splitPotTicketsInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addSplitPotEntry();
+  }
+});
+
+drawSplitPotWinnerButton?.addEventListener("click", drawSplitPotWinner);
+
+clearSplitPotWinnerButton?.addEventListener("click", () => {
+  splitPotWinner = null;
+  saveSplitPot();
+  renderSplitPot();
+});
+
+clearSplitPotEntriesButton?.addEventListener("click", () => {
+  splitPotEntries = [];
+  splitPotWinner = null;
+  saveSplitPot();
+  renderSplitPot();
+  showMessage("Split The Pot entries cleared.");
+});
 
 playerList.addEventListener("input", () => {
   syncPayoutTeams();
@@ -796,6 +838,257 @@ function formatPlace(place) {
 function formatMoney(value) {
   return `$${Math.round(value).toLocaleString()}`;
 }
+
+function addSplitPotEntry() {
+  const name = String(splitPotNameInput?.value || "").trim();
+  const amountPaid = Math.floor(Number(splitPotTicketsInput?.value) || 0);
+  const ticketCount = getSplitPotTicketsForAmount(amountPaid);
+
+  if (!name) {
+    showMessage("Enter a Split The Pot name.");
+    splitPotNameInput?.focus();
+    return;
+  }
+
+  if (!Number.isInteger(amountPaid) || amountPaid < 1) {
+    showMessage("Choose at least $1 for Split The Pot.");
+    splitPotTicketsInput?.focus();
+    return;
+  }
+
+  splitPotEntries.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    amountPaid,
+    ticketCount,
+    createdAt: new Date().toISOString(),
+  });
+  splitPotWinner = null;
+  saveSplitPot();
+  renderSplitPot();
+
+  if (splitPotNameInput) {
+    splitPotNameInput.value = "";
+    splitPotNameInput.focus();
+  }
+  if (splitPotTicketsInput) {
+    splitPotTicketsInput.value = "5";
+  }
+
+  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.`);
+}
+
+function drawSplitPotWinner() {
+  const tickets = getSplitPotTickets();
+
+  if (!tickets.length) {
+    showMessage("Add Split The Pot tickets before drawing.");
+    return;
+  }
+
+  const winnerTicket = tickets[getRandomIndex(tickets.length)];
+  splitPotWinner = {
+    ...winnerTicket,
+    drawnAt: new Date().toISOString(),
+  };
+  saveSplitPot();
+  renderSplitPot();
+  showMessage(`Split The Pot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.`);
+}
+
+function renderSplitPot() {
+  if (!splitPotSummary || !splitPotEntriesOutput || !splitPotWinnerOutput) {
+    return;
+  }
+
+  const ticketRows = getSplitPotEntryRows();
+  const ticketTotal = ticketRows.reduce((sum, row) => sum + row.ticketCount, 0);
+  const pot = ticketRows.reduce((sum, row) => sum + row.amountPaid, 0);
+
+  splitPotSummary.innerHTML = `
+    <div>
+      <span>Tickets sold</span>
+      <strong>${ticketTotal}</strong>
+    </div>
+    <div>
+      <span>Total pot</span>
+      <strong>${formatMoney(pot)}</strong>
+    </div>
+    <div>
+      <span>Next ticket</span>
+      <strong>${formatTicketNumber(splitPotFirstTicketNumber + ticketTotal)}</strong>
+    </div>
+  `;
+
+  if (!ticketRows.length) {
+    splitPotEntriesOutput.innerHTML = `<p class="split-pot-empty">No Split The Pot tickets entered yet.</p>`;
+  } else {
+    splitPotEntriesOutput.innerHTML = ticketRows.map((row) => `
+      <article class="split-pot-entry">
+        <div class="split-pot-entry-heading">
+          <div>
+            <strong>${escapeHtml(row.name)}</strong>
+            <span>${formatMoney(row.amountPaid)} • ${row.ticketCount} ticket${row.ticketCount === 1 ? "" : "s"}</span>
+          </div>
+          <button class="danger" type="button" data-split-pot-delete="${escapeAttribute(row.id)}">Delete</button>
+        </div>
+        <div class="split-pot-ticket-list" aria-label="Tickets for ${escapeAttribute(row.name)}">
+          <code>${escapeHtml(formatSplitPotTicketRange(row))}</code>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  if (!splitPotWinner) {
+    splitPotWinnerOutput.className = "split-pot-winner empty";
+    splitPotWinnerOutput.textContent = "No winner drawn.";
+    return;
+  }
+
+  splitPotWinnerOutput.className = "split-pot-winner";
+  splitPotWinnerOutput.innerHTML = `
+    <span>Winning ticket</span>
+    <strong>${escapeHtml(splitPotWinner.ticketLabel)}</strong>
+    <b>${escapeHtml(splitPotWinner.name)}</b>
+  `;
+}
+
+function getSplitPotEntryRows() {
+  let nextTicketNumber = splitPotFirstTicketNumber;
+
+  return splitPotEntries.map((entry) => {
+    const amountPaid = Math.max(0, Math.floor(Number(entry.amountPaid ?? calculateSplitPotAmount(entry.ticketCount)) || 0));
+    const ticketCount = getSplitPotTicketsForAmount(amountPaid);
+    const tickets = Array.from({ length: ticketCount }, (_, index) => {
+      const ticketNumber = nextTicketNumber + index;
+      return {
+        entryId: entry.id,
+        name: entry.name,
+        ticketNumber,
+        ticketLabel: formatTicketNumber(ticketNumber),
+      };
+    });
+    nextTicketNumber += ticketCount;
+
+    return {
+      ...entry,
+      amountPaid,
+      ticketCount,
+      tickets,
+    };
+  }).filter((entry) => entry.ticketCount > 0);
+}
+
+function getSplitPotTickets() {
+  return getSplitPotEntryRows().flatMap((entry) => entry.tickets);
+}
+
+function formatSplitPotTicketRange(row) {
+  if (!row?.tickets?.length) {
+    return "";
+  }
+
+  return `${row.tickets[0].ticketLabel} - ${row.tickets[row.tickets.length - 1].ticketLabel}`;
+}
+
+function calculateSplitPotAmount(ticketCount) {
+  const count = Math.max(0, Math.floor(Number(ticketCount) || 0));
+  return Math.floor(count / 6) * 5 + (count % 6);
+}
+
+function getSplitPotTicketsForAmount(amountPaid) {
+  const dollars = Math.max(0, Math.min(splitPotMaxPurchaseAmount, Math.floor(Number(amountPaid) || 0)));
+  return dollars < 5 ? dollars : Math.floor(dollars / 5) * 6;
+}
+
+function renderSplitPotPurchaseOptions() {
+  if (!splitPotTicketsInput) {
+    return;
+  }
+
+  const purchaseAmounts = [
+    1,
+    2,
+    3,
+    4,
+    ...Array.from({ length: splitPotMaxPurchaseAmount / 5 }, (_, index) => (index + 1) * 5),
+  ];
+
+  splitPotTicketsInput.innerHTML = purchaseAmounts.map((amount) => {
+    const ticketCount = getSplitPotTicketsForAmount(amount);
+    return `<option value="${amount}"${amount === 5 ? " selected" : ""}>${formatMoney(amount)} - ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}</option>`;
+  }).join("");
+}
+
+function formatTicketNumber(number) {
+  return String(Math.max(0, Number(number) || 0)).padStart(6, "0");
+}
+
+function getRandomIndex(length) {
+  if (window.crypto?.getRandomValues) {
+    const values = new Uint32Array(1);
+    window.crypto.getRandomValues(values);
+    return values[0] % length;
+  }
+
+  return Math.floor(Math.random() * length);
+}
+
+function saveSplitPot() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(splitPotStorageKey, JSON.stringify({
+      version: 1,
+      entries: splitPotEntries,
+      winner: splitPotWinner,
+    }));
+  } catch {
+    showMessage("Split The Pot could not be saved in this browser.");
+  }
+}
+
+function loadSplitPot() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    const data = JSON.parse(localStorage.getItem(splitPotStorageKey) || "null");
+    if (!data || typeof data !== "object") {
+      return;
+    }
+
+    splitPotEntries = Array.isArray(data.entries)
+      ? data.entries.map((entry) => ({
+        id: String(entry.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        name: String(entry.name || "").trim(),
+        amountPaid: Math.max(0, Math.floor(Number(entry.amountPaid ?? calculateSplitPotAmount(entry.ticketCount)) || 0)),
+        ticketCount: Math.max(0, Math.floor(Number(entry.ticketCount) || 0)),
+        createdAt: String(entry.createdAt || ""),
+      })).filter((entry) => entry.name && entry.amountPaid > 0)
+      : [];
+    splitPotWinner = data.winner && typeof data.winner === "object" ? data.winner : null;
+  } catch {
+    splitPotEntries = [];
+    splitPotWinner = null;
+  }
+}
+
+splitPotEntriesOutput?.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-split-pot-delete]");
+  if (!deleteButton) {
+    return;
+  }
+
+  splitPotEntries = splitPotEntries.filter((entry) => entry.id !== deleteButton.dataset.splitPotDelete);
+  splitPotWinner = null;
+  saveSplitPot();
+  renderSplitPot();
+  showMessage("Split The Pot entry deleted.");
+});
 
 function showTeamDrawWarning(text) {
   teamDrawWarning.hidden = false;
