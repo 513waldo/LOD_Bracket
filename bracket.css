@@ -143,16 +143,8 @@ textarea:focus {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
   gap: 18px;
   align-items: start;
-  width: 100%;
-  margin: 0;
-}
-
-.bullseye-share-row {
-  display: grid;
-  gap: 18px;
-  align-items: start;
   width: min(100%, 1180px);
-  margin: 0 0 10px;
+  margin: 0 auto 10px;
 }
 
 .qr-panel {
@@ -2066,10 +2058,6 @@ button.player-button .loser-source-text {
   .out-shot-actions {
     grid-template-columns: 1fr 1fr;
   }
-
-  .bullseye-share-row {
-    grid-template-columns: minmax(420px, 440px) minmax(0, 1fr);
-  }
 }
 
 @media (min-width: 1040px) {
@@ -2164,10 +2152,6 @@ button.player-button .loser-source-text {
   }
 
   .share-row {
-    grid-template-columns: 1fr;
-  }
-
-  .bullseye-share-row {
     grid-template-columns: 1fr;
   }
 
