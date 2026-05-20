@@ -2053,6 +2053,11 @@ function getPlayerNameMap() {
 }
 
 function getCurrentPlayersForTicketSeed() {
+  const playersFromList = extractPlayersFromCurrentPlayerList();
+  if (playersFromList.length) {
+    return playersFromList;
+  }
+
   const currentNames = Array.from(nameList.querySelectorAll("[data-player-number]"))
     .map((input) => String(input.value || "").trim())
     .filter(Boolean);
@@ -2069,6 +2074,31 @@ function getCurrentPlayersForTicketSeed() {
   return playerNumbers
     .map((number) => getPlayerLabel(number))
     .filter(Boolean);
+}
+
+function extractPlayersFromCurrentPlayerList() {
+  const players = [];
+  const seen = new Set();
+
+  playerList.value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .forEach((line) => {
+      line.split("/")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .forEach((part) => {
+          const match = /^(.*)\s*\(#\d+\)\s*$/.exec(part);
+          const name = String(match?.[1] || part).trim();
+          if (name && !seen.has(name)) {
+            seen.add(name);
+            players.push(name);
+          }
+        });
+    });
+
+  return players;
 }
 
 function applyPlayerNameMap(names, overwriteExisting = false) {
