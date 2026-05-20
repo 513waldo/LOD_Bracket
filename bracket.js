@@ -769,10 +769,23 @@ function updatePayoutCalculator() {
   const amounts = shouldBalanceToPot
     ? getBalancedPayoutAmounts(pot, split)
     : split.map((percent) => Math.round(pot * percent));
+
+  if (split.length === 2) {
+    const half = pot / 2;
+    payoutResults.innerHTML = `
+      <div class="payout-row payout-row-two-place">
+        <span>1st / 2nd place</span>
+        <strong>${formatMoney(pot)}</strong>
+        <small>${formatMoneyExact(half)} - ${formatMoneyExact(half)}</small>
+      </div>
+    `;
+    return;
+  }
+
   payoutResults.innerHTML = split.map((percent, index) => {
     const amount = amounts[index];
-    const displayedAmount = split.length === 2 ? pot / 2 : amount / 2;
-    const displayedPercent = split.length === 2 ? 50 : percent * 100;
+    const displayedAmount = amount;
+    const displayedPercent = percent * 100;
     return `
       <div class="payout-row">
         <span>${formatPlace(index + 1)}</span>
@@ -910,6 +923,11 @@ function formatPlace(place) {
 
 function formatMoney(value) {
   return `$${Math.round(value).toLocaleString()}`;
+}
+
+function formatMoneyExact(value) {
+  const amount = Number(value) || 0;
+  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 function getSplitPotPrizeAmount() {
