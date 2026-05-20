@@ -4,6 +4,8 @@ const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
+const portalAutoMessage = document.querySelector("#portalAutoMessage");
+const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
@@ -253,6 +255,8 @@ function normalizeSnapshot(data) {
       expiresAt: Number(data.expiresAt || 0) || 0,
       portalNotice: String(data.portalNotice || ""),
       portalNoticeAt: String(data.portalNoticeAt || ""),
+      portalAutoNotice: String(data.portalAutoNotice || ""),
+      portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -266,6 +270,8 @@ function normalizeSnapshot(data) {
     expiresAt: Number(data.expiresAt || 0) || 0,
     portalNotice: String(data.portalNotice || ""),
     portalNoticeAt: String(data.portalNoticeAt || ""),
+    portalAutoNotice: String(data.portalAutoNotice || ""),
+    portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -291,8 +297,18 @@ function shouldPreferSnapshot(candidate, current) {
 
   const candidateNotice = String(candidate.portalNotice || "").trim();
   const currentNotice = String(current.portalNotice || "").trim();
-  const candidateStamp = Number(new Date(candidate.portalNoticeAt || candidate.exportedAt || 0));
-  const currentStamp = Number(new Date(current.portalNoticeAt || current.exportedAt || 0));
+  const candidateStamp = Number(new Date(
+    candidate.portalAutoNoticeAt ||
+    candidate.portalNoticeAt ||
+    candidate.exportedAt ||
+    0,
+  ));
+  const currentStamp = Number(new Date(
+    current.portalAutoNoticeAt ||
+    current.portalNoticeAt ||
+    current.exportedAt ||
+    0,
+  ));
 
   if (candidateNotice && !currentNotice) {
     return true;
@@ -327,6 +343,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
   setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
+  setAutomatedMessage(formatPortalCall(snapshot.portalAutoNotice, snapshot.portalAutoNoticeAt));
 
   if (!state) {
     portalBracket.className = "bracket empty";
@@ -350,6 +367,7 @@ function renderEmptyPortal() {
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
   setMessage("");
+  setAutomatedMessage("");
 }
 
 function focusActiveMatch(state) {
@@ -698,9 +716,19 @@ function getTeamCount(state) {
 }
 
 function setMessage(text) {
-  const value = String(text || "").trim();
+  const value = String(text || "").trim() || "No manual messages yet.";
   portalMessage.textContent = value;
-  portalMessage.hidden = !value;
+  portalMessage.hidden = false;
+}
+
+function setAutomatedMessage(text) {
+  if (!portalAutoMessage || !portalAutoMessageWrap) {
+    return;
+  }
+
+  const value = String(text || "").trim() || "No automated messages yet.";
+  portalAutoMessage.textContent = value;
+  portalAutoMessageWrap.hidden = false;
 }
 
 function formatPortalCall(message, stamp) {

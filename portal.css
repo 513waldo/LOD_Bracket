@@ -254,8 +254,40 @@ h1 {
   white-space: pre-line;
 }
 
-.message.board-call:empty {
-  display: none;
+.portal-message-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.portal-message-group {
+  display: grid;
+  gap: 8px;
+}
+
+.portal-auto-message-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.portal-message-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+.portal-message-label {
+  margin: 0;
+  color: #fffaf0;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.message.board-call.automated-call {
+  border-style: dashed;
 }
 
 .pdf-visual-section {
