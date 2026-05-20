@@ -44,12 +44,10 @@ body::before {
   pointer-events: none;
   background-image:
     linear-gradient(rgba(9, 10, 8, 0.12), rgba(9, 10, 8, 0.22)),
-    url("assets/background.png?v=5"),
-    url("assets/background.png?v=5"),
     url("assets/background.png?v=5");
-  background-position: center top, center top, center 10px, center 20px;
-  background-repeat: no-repeat, repeat-x, repeat-x, repeat-x;
-  background-size: auto, 60vmin 60vmin, 60vmin 60vmin, 60vmin 60vmin;
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
+  background-size: auto, contain;
 }
 
 body > * {
