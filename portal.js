@@ -21,7 +21,8 @@ const portalSessionDurationMs = 60 * 60 * 1000;
 
 let activeSnapshot = null;
 const storedLodCode = getStoredPortalLodCode();
-let activeLodCode = storedLodCode !== null ? storedLodCode : getRequestedLodCode();
+const requestedLodCode = getRequestedLodCode();
+let activeLodCode = requestedLodCode || (storedLodCode !== null ? storedLodCode : "");
 let refreshTimer = null;
 let portalExpiryTimer = null;
 let autoFocusAppliedForCode = "";

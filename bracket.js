@@ -277,16 +277,16 @@ portalNoticeInput?.addEventListener("input", () => {
 sendPortalNoticeButton?.addEventListener("click", () => {
   portalNotice = portalNoticeDraft || "";
   portalNoticeAt = portalNotice ? new Date().toISOString() : "";
-  savePortalSnapshotToLocalStorage();
+  const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
   const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalNoticeStatus) {
     portalNoticeStatus.textContent = portalNotice
-      ? `Sent at ${stamp}.`
+      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
       : `Cleared at ${stamp}.`;
   }
   showMessage(portalNotice
-    ? `Board call sent to players portal at ${stamp}.`
+    ? (didPublish ? `Board call sent to players portal at ${stamp}.` : `Board call saved at ${stamp}; set an LOD code to publish.`)
     : `Board call cleared at ${stamp}.`);
 });
 
@@ -878,7 +878,7 @@ function addSplitPotEntry() {
     splitPotTicketsInput.value = "5";
   }
 
-  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Build a bracket to send player portal messages."}`);
+  showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
 
 function drawSplitPotWinner() {
@@ -1006,7 +1006,7 @@ function sendSplitPotPortalNotice(row) {
   if (portalNoticeStatus) {
     portalNoticeStatus.textContent = didPublish
       ? `Auto sent at ${stamp}.`
-      : `Auto message ready at ${stamp}; build a bracket to publish.`;
+      : `Auto message ready at ${stamp}; set an LOD code to publish.`;
   }
   return didPublish;
 }
@@ -3326,10 +3326,6 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
 }
 
 function savePortalSnapshotToLocalStorage() {
-  if (!state) {
-    return false;
-  }
-
   const snapshot = buildPortalSnapshot();
   if (canUseLocalStorage()) {
     try {
@@ -3338,8 +3334,7 @@ function savePortalSnapshotToLocalStorage() {
       // Local portal caching is optional; bracket clicks must keep working.
     }
   }
-  queuePortalSnapshotPublish(snapshot);
-  return true;
+  return queuePortalSnapshotPublish(snapshot);
 }
 
 function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
@@ -3813,7 +3808,7 @@ function downloadPortalSnapshot() {
 
 function queuePortalSnapshotPublish(snapshot) {
   if (!API_BASE_URLS.length || !snapshot || !snapshot.lodCode) {
-    return;
+    return false;
   }
 
   if (portalPublishTimer) {
@@ -3824,6 +3819,7 @@ function queuePortalSnapshotPublish(snapshot) {
     portalPublishTimer = null;
     publishPortalSnapshotToApi(snapshot);
   }, API_PUBLISH_DEBOUNCE_MS);
+  return true;
 }
 
 async function publishPortalSnapshotToApi(snapshot) {
@@ -4176,13 +4172,20 @@ function normalizeLodCode(value) {
 
 function getPortalLink() {
   const code = normalizeLodCode(lodCode);
-  const url = new URL("portal.html", window.location.href);
+  const url = new URL(getPortalPath(), window.location.href);
 
   if (code) {
     url.searchParams.set("lod", code);
   }
 
   return url.toString();
+}
+
+function getPortalPath() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""]);
+  return localHosts.has(window.location.hostname) || window.location.protocol === "file:"
+    ? "portal.html"
+    : "/portal";
 }
 
 function getApiBaseUrls() {
