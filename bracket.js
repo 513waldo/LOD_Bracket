@@ -1493,7 +1493,7 @@ function sendSplitPotPortalNotice({ winner = null } = {}) {
   });
   const message = [
     winner
-      ? `Split The Pot Winner: ${winner.name} - ${winner.ticketLabel} - Wins ${formatPayoutAmount(prizeAmount)}`
+      ? `Split The Pot winner - ${winner.name} - ${winner.ticketLabel} -wins ${formatPayoutAmount(prizeAmount)}`
       : `Split The Pot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
     ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
@@ -1515,7 +1515,7 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
   });
   const message = [
     winner
-      ? `Bullseye Shoot Winner: ${winner.name} - ${winner.ticketLabel}`
+      ? `Bullshoot winner - ${winner.name} - ${winner.ticketLabel}`
       : `Bullseye Shoot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
     ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,

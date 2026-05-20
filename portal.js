@@ -743,7 +743,7 @@ function setAutomatedMessage(text) {
   const value = String(text || "").trim() || "No Split The Pot messages yet.";
   portalAutoMessage.textContent = value;
   portalAutoMessageWrap.hidden = false;
-  portalAutoMessage.classList.toggle("winner-call", /^Split The Pot Winner:/i.test(value));
+  portalAutoMessage.classList.toggle("winner-call", /^Split The Pot winner\b/i.test(value));
 }
 
 function setBullshootMessage(text) {
@@ -754,7 +754,7 @@ function setBullshootMessage(text) {
   const value = String(text || "").trim() || "No Bullshoot messages yet.";
   portalBullshootMessage.textContent = value;
   portalBullshootMessageWrap.hidden = false;
-  portalBullshootMessage.classList.toggle("winner-call", /^Bullseye Shoot Winner:/i.test(value) || /^Bullshoot Winner:/i.test(value));
+  portalBullshootMessage.classList.toggle("winner-call", /^Bullshoot winner\b/i.test(value));
 }
 
 function formatPortalCall(message, stamp) {
