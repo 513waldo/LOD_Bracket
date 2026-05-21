@@ -2307,6 +2307,30 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   ctx.textBaseline = "middle";
   ctx.fillText(numStr, 0, r * 0.1);
 
+  if (!flash && numStr === "6") {
+    ctx.save();
+    ctx.strokeStyle = faceText;
+    ctx.lineWidth = Math.max(1.5, r * 0.05);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.15, r * 0.34);
+    ctx.lineTo(r * 0.15, r * 0.34);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (!flash && numStr === "9") {
+    ctx.save();
+    ctx.strokeStyle = faceText;
+    ctx.lineWidth = Math.max(1.5, r * 0.05);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.15, -r * 0.06);
+    ctx.lineTo(r * 0.15, -r * 0.06);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   if (!flash) {
     ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
     ctx.fillStyle = faceLabel;
