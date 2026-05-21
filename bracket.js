@@ -4665,6 +4665,14 @@ function queueBracketDraftSave() {
   }, 150);
 }
 
+function flushBracketDraftSave() {
+  if (bracketDraftSaveTimer) {
+    clearTimeout(bracketDraftSaveTimer);
+    bracketDraftSaveTimer = null;
+  }
+  saveBracketDraft();
+}
+
 function restoreBracketDraft() {
   const draft = readBracketDraft();
   if (!draft) {
@@ -5371,6 +5379,8 @@ function deleteAllPlayerNameBackups() {
 }
 
 document.querySelector("#resetBracket").addEventListener("click", resetTournament);
+window.addEventListener("beforeunload", flushBracketDraftSave);
+window.addEventListener("pagehide", flushBracketDraftSave);
 
 function readNameBackupIndex() {
   if (!canUseLocalStorage()) {
