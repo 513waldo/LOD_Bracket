@@ -2230,7 +2230,7 @@ function resolveD20Collision(a, b) {
   b.shadeOffset = Math.floor(Math.random() * 6);
 }
 
-function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
+function drawD20Hex(cx, cy, r, angle, color, numStr, label, flash) {
   if (!d20Context) {
     return;
   }
@@ -2466,10 +2466,10 @@ function drawD20Frame(now) {
     die.color.shadeOffset = die.shadeOffset;
     if (die.stopped) {
       drawD20Shadow(die.x, die.y);
-      drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
+      drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), die.label, false);
     } else {
       drawD20Shadow(die.x, die.y);
-      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.colliding);
+      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.label, die.colliding);
     }
   });
 
