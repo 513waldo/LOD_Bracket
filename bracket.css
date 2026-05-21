@@ -1547,27 +1547,28 @@ button.player-button .loser-source-text {
   grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: center;
+  min-height: 0;
 }
 
 .die-button {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   justify-items: center;
   align-content: center;
   justify-self: center;
   width: 100%;
-  min-height: 340px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--blue-panel);
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
-  padding: 24px 18px 18px;
+  padding: 0;
   transition: transform 160ms ease, filter 160ms ease;
 }
 
 .die-button:hover {
   filter: brightness(1.04);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .die-steel {
@@ -1594,7 +1595,7 @@ button.player-button .loser-source-text {
 
 .die-visual {
   display: block;
-  width: min(100%, 290px);
+  width: min(100%, 320px);
   aspect-ratio: 1 / 1;
 }
 
@@ -1607,8 +1608,8 @@ button.player-button .loser-source-text {
 }
 
 .d20-face polygon {
-  stroke: rgba(255, 255, 255, 0.42);
-  stroke-width: 2;
+  stroke: rgba(255, 255, 255, 0.58);
+  stroke-width: 2.2;
   stroke-linejoin: round;
 }
 
@@ -1626,13 +1627,32 @@ button.player-button .loser-source-text {
 
 .d20-face text {
   fill: var(--die-number-color);
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: middle;
   paint-order: stroke;
   stroke: rgba(0, 0, 0, 0.28);
   stroke-width: 1;
+}
+
+.dice-runway .die-label {
+  display: none;
+}
+
+.dice-runway .dice-roller-heading,
+.dice-runway .dice-actions {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.dice-runway .dice-stage {
+  width: 100%;
+}
+
+.dice-runway .dice-total {
+  backdrop-filter: blur(6px);
 }
 
 .die-button.rolling {
@@ -2495,7 +2515,7 @@ button.player-button .loser-source-text {
   }
 
   .die-button {
-    min-height: 220px;
+    min-height: 0;
   }
 
   .dice-runway {
