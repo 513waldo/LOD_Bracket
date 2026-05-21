@@ -1886,7 +1886,7 @@ function resetTournament() {
   clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
 
   if (totalPlayers) {
-    totalPlayers.value = "0";
+    totalPlayers.value = "";
   }
   if (playersPerGroup) {
     playersPerGroup.value = "2";
