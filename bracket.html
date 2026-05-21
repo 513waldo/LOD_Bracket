@@ -303,14 +303,14 @@
           </div>
         </details>
 
-        <details class="panel tool-panel dice-roller">
+        <details class="panel tool-panel dice-roller" open>
           <summary>D20 Roller</summary>
           <div class="tool-body">
           <div class="dice-stage">
             <canvas id="d20Canvas" class="d20-canvas" width="680" height="480" aria-label="Animated D20 dice roll"></canvas>
           </div>
           <div class="dice-actions">
-            <button id="rollDice" type="button">Roll both dice</button>
+            <button id="rollDice" type="button" onclick="rollDice()">Roll both dice</button>
           </div>
           </div>
         </details>
@@ -414,6 +414,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-114"></script>
+  <script src="bracket.js?v=interactive-tools-115"></script>
 </body>
 </html>
