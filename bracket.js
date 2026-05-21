@@ -2265,7 +2265,7 @@ function resizeDiceRollerCanvasForViewport() {
 
   const availableWidth = Math.max(320, window.innerWidth - 48);
   const availableHeight = Math.max(240, window.innerHeight - 180);
-  const scale = Math.min(1, availableWidth / d20CanvasWidth, availableHeight / d20CanvasHeight);
+  const scale = Math.min(availableWidth / d20CanvasWidth, availableHeight / d20CanvasHeight);
   const width = Math.max(320, Math.floor(d20CanvasWidth * scale));
   const height = Math.max(240, Math.floor(d20CanvasHeight * scale));
   d20Canvas.style.width = `${width}px`;
