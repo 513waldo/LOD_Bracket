@@ -1483,7 +1483,7 @@ button.player-button .loser-source-text {
 
 .dice-roller {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   position: relative;
 }
 
@@ -1501,12 +1501,12 @@ button.player-button .loser-source-text {
 .dice-stage {
   display: grid;
   place-items: center;
-  min-height: 180px;
+  min-height: 150px;
   padding-top: 0;
 }
 
 .dice-tray {
-  width: min(100%, 300px);
+  width: min(100%, 260px);
   margin: 0 auto;
   align-self: center;
 }
@@ -1519,7 +1519,7 @@ button.player-button .loser-source-text {
 
 .dice-actions #rollDice {
   width: auto;
-  min-width: 180px;
+  min-width: 160px;
 }
 
 .dice-total {
@@ -1536,7 +1536,7 @@ button.player-button .loser-source-text {
 .dice-tray {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -1547,12 +1547,12 @@ button.player-button .loser-source-text {
   align-content: center;
   justify-self: center;
   width: 100%;
-  min-height: 168px;
+  min-height: 140px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--blue-panel);
   color: var(--ink);
-  padding: 10px;
+  padding: 8px;
   transition: transform 160ms ease, filter 160ms ease;
 }
 
@@ -1586,7 +1586,7 @@ button.player-button .loser-source-text {
 .die-visual {
   display: grid;
   place-items: center;
-  width: min(100%, 146px);
+  width: min(100%, 126px);
   aspect-ratio: 1 / 1;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -1607,7 +1607,7 @@ button.player-button .loser-source-text {
 
 .die-face-number {
   color: var(--die-number-color);
-  font-size: 2.8rem;
+  font-size: 2.4rem;
   font-weight: 900;
   line-height: 1;
 }
