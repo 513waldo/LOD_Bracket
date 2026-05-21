@@ -533,7 +533,12 @@ function generatePlayers() {
 
   const players = Array.from({ length: count }, (_, index) => String(index + 1));
   const teams = chunk(shuffle(players), groupSize);
-  savePlayerNameBackup(count);
+  try {
+    savePlayerNameBackup(count);
+  } catch (error) {
+    console.error(error);
+    showMessage("Teams generated, but the saved-name backup could not be written.");
+  }
   currentTeams = teams;
   hasGeneratedTeams = true;
   blockedGenerateCount = 0;
@@ -566,12 +571,10 @@ function generatePlayers() {
 // });
 
 async function buildBracket() {
-  const players = getPlayers();
-  const activePlayers = players.length >= 2
-    ? players
-    : currentTeams.length
-      ? currentTeams.map(formatTeam)
-      : [];
+  const rawPlayers = getPlayers();
+  const activePlayers = currentTeams.length
+    ? currentTeams.map(formatTeam)
+    : rawPlayers;
 
   if (activePlayers.length < 2) {
     showMessage("Add at least 2 players to build a bracket.");
