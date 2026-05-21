@@ -1,7 +1,18 @@
 function createPortalQrDataUrl(text, size = 360) {
-  const encoded = encodeURIComponent(String(text || ""));
   const safeSize = Math.max(256, Math.round(size));
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${safeSize}x${safeSize}&margin=12&data=${encoded}&cb=${Date.now()}`;
+  const matrix = createQrMatrix(String(text || ""));
+  const moduleCount = matrix.length;
+  const marginModules = 4;
+  const totalModules = moduleCount + (marginModules * 2);
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize}" height="${safeSize}" viewBox="0 0 ${totalModules} ${totalModules}" shape-rendering="crispEdges">`,
+    `<rect width="${totalModules}" height="${totalModules}" fill="#fff"/>`,
+    `<g fill="#000">`,
+    ...matrix.flatMap((row, y) => row.map((cell, x) => (cell ? `<rect x="${x + marginModules}" y="${y + marginModules}" width="1" height="1"/>` : ""))).filter(Boolean),
+    `</g>`,
+    `</svg>`,
+  ].join("");
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 function createQrMatrix(text) {
