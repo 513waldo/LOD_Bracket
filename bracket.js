@@ -394,6 +394,8 @@ outShotSheet.addEventListener("input", (event) => {
 rollDiceButton.addEventListener("click", rollDice);
 window.rollDice = rollDice;
 window.toggleDiceRollerSize = toggleDiceRollerSize;
+window.addSplitPotEntry = addSplitPotEntry;
+window.addBullseyeShootEntry = addBullseyeShootEntry;
 
 toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
 document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
