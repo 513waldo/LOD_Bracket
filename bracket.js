@@ -187,6 +187,9 @@ let registryRefreshTimer = null;
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 
+window.generatePlayers = generatePlayers;
+window.buildBracket = buildBracket;
+
 saveStoredLodCode(lodCode);
 renderPortalLink();
 
@@ -518,12 +521,21 @@ playerList.addEventListener("input", () => {
 });
 
 function generatePlayers() {
-  const count = Number(totalPlayers.value);
+  const enteredCount = Number(totalPlayers.value);
+  const fallbackCount = Number(nameList?.querySelectorAll("[data-player-number]").length || 0);
+  const count = Number.isInteger(enteredCount) && enteredCount >= 2
+    ? enteredCount
+    : fallbackCount;
   const groupSize = Number(playersPerGroup.value);
 
   if (!Number.isInteger(count) || count < 2 || count > 200) {
     showMessage("Enter 2 to 200 players.");
     return;
+  }
+
+  if (String(totalPlayers.value || "") !== String(count)) {
+    totalPlayers.value = String(count);
+    renderNameInputs(count);
   }
 
   if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > count) {
@@ -600,9 +612,6 @@ async function buildBracket() {
   updatePayoutCalculator();
   showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
-
-document.querySelector("#generatePlayers").addEventListener("click", generatePlayers);
-document.querySelector("#buildBracket").addEventListener("click", buildBracket);
 
 document.querySelector("#resetBracket").addEventListener("click", () => {
   resetTournament();

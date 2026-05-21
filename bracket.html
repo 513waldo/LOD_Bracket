@@ -77,7 +77,7 @@
             <textarea id="playerList" rows="8" spellcheck="false"></textarea>
           </label>
           <div class="actions single-action">
-            <button id="generatePlayers" type="button">Generate teams</button>
+            <button id="generatePlayers" type="button" onclick="window.generatePlayers()">Generate teams</button>
             <!-- <button id="drawGroups" type="button">Randomize teams</button> -->
           </div>
         </section>
@@ -92,7 +92,7 @@
           </div>
           <div id="groupsOutput" class="groups empty">No groups drawn yet.</div>
           <div class="actions single-action">
-            <button id="buildBracket" type="button">Build bracket</button>
+            <button id="buildBracket" type="button" onclick="window.buildBracket()">Build bracket</button>
           </div>
           <p id="message" class="message" aria-live="polite"></p>
         </section>
@@ -417,6 +417,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=11"></script>
-  <script src="bracket.js?v=interactive-tools-174"></script>
+  <script src="bracket.js?v=interactive-tools-176"></script>
 </body>
 </html>
