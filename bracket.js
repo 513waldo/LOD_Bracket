@@ -2387,26 +2387,6 @@ function drawD20Trail(die) {
   ctx.restore();
 }
 
-function drawD20Timer(now) {
-  if (!d20Context || !d20RollState || !d20RollState.active) {
-    return;
-  }
-
-  const ctx = d20Context;
-  const elapsed = now - d20RollState.startedAt;
-  const durationMs = d20RollState.durationMs || d20RollDurationMaxMs;
-  const remaining = Math.max(0, Math.ceil((durationMs - elapsed) / 1000));
-  const done = d20RollState.dies.every((die) => die.stopped);
-
-  ctx.save();
-  ctx.font = "500 14px sans-serif";
-  ctx.fillStyle = done ? "rgba(128,200,128,0.9)" : "rgba(180,180,180,0.6)";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "top";
-  ctx.fillText(done ? "rolled!" : `stopping in ${remaining}s`, d20CanvasWidth - 10, 10);
-  ctx.restore();
-}
-
 function drawD20Frame(now) {
   if (!d20Context || !d20Canvas || !d20RollState) {
     return;
@@ -2422,8 +2402,6 @@ function drawD20Frame(now) {
   const globalElapsed = now - state.startedAt;
   const durationMs = state.durationMs || d20RollDurationMaxMs;
   const timeUp = globalElapsed >= durationMs;
-
-  drawD20Timer(now);
 
   state.dies.forEach((die) => updateD20Die(die, dt));
   resolveD20Collision(state.dies[0], state.dies[1]);
