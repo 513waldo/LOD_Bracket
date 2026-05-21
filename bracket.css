@@ -1487,15 +1487,12 @@ button.player-button .loser-source-text {
   position: relative;
   width: min(100%, 360px);
   justify-self: start;
-}
-
-.dice-roller,
-.dice-roller .tool-body,
-.dice-roller .tool-body .dice-stage {
-  background: #b8b8b8;
+  background: #9c9c9c;
+  border-color: rgba(0, 0, 0, 0.14);
 }
 
 .dice-roller .tool-body {
+  background: #bcbcbc;
   padding: 12px;
 }
 
@@ -1515,6 +1512,7 @@ button.player-button .loser-source-text {
   place-items: center;
   min-height: 0;
   padding-top: 0;
+  background: transparent;
 }
 
 .dice-actions {
