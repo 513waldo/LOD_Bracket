@@ -517,7 +517,7 @@ playerList.addEventListener("input", () => {
   updatePayoutCalculator();
 });
 
-document.querySelector("#generatePlayers").addEventListener("click", () => {
+function generatePlayers() {
   const count = Number(totalPlayers.value);
   const groupSize = Number(playersPerGroup.value);
 
@@ -549,7 +549,7 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
-});
+}
 
 // document.querySelector("#drawGroups").addEventListener("click", () => {
 //   const groupSize = Number(playersPerGroup.value);
@@ -572,7 +572,7 @@ document.querySelector("#generatePlayers").addEventListener("click", () => {
 //   showMessage(`Redrew ${currentTeams.length} random team${currentTeams.length === 1 ? "" : "s"}.`);
 // });
 
-document.querySelector("#buildBracket").addEventListener("click", async () => {
+async function buildBracket() {
   const players = getPlayers();
 
   if (players.length < 2) {
@@ -598,7 +598,10 @@ document.querySelector("#buildBracket").addEventListener("click", async () => {
   syncPayoutTeams(players.length);
   updatePayoutCalculator();
   showMessage(`Bracket built for ${players.length} player${players.length === 1 ? "" : "s"}.`);
-});
+}
+
+window.generatePlayers = generatePlayers;
+window.buildBracket = buildBracket;
 
 document.querySelector("#resetBracket").addEventListener("click", () => {
   resetTournament();
