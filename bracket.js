@@ -2076,17 +2076,6 @@ function animateDieRoll(index) {
     clearTimeout(diceRollTimers[index].timeout);
   }
 
-  const direction = index === 0 ? -1 : 1;
-  const driftX = `${direction * (48 + Math.random() * 36)}px`;
-  const driftY = `${20 + Math.random() * 18}px`;
-  const spin = `${(5 + Math.random() * 3) * 360}deg`;
-  const tiltX = `${(42 + Math.random() * 18) * (Math.random() > 0.5 ? 1 : -1)}deg`;
-  const tiltY = `${(34 + Math.random() * 16) * (Math.random() > 0.5 ? 1 : -1)}deg`;
-  button.style.setProperty("--roll-drift-x", driftX);
-  button.style.setProperty("--roll-drift-y", driftY);
-  button.style.setProperty("--roll-spin", spin);
-  button.style.setProperty("--roll-tilt-x", tiltX);
-  button.style.setProperty("--roll-tilt-y", tiltY);
   button.classList.add("rolling");
   diceRollTimers[index] = {
     interval: setInterval(() => {
@@ -2220,6 +2209,11 @@ function setMysteryOutMode(mode) {
   });
 }
 
+function getD20VisibleNumbers(value) {
+  const top = normalizeD20Number(value);
+  return Array.from({ length: 6 }, (_, index) => normalizeD20Number(top + index));
+}
+
 function normalizeD20Number(value) {
   const numeric = Math.floor(Number(value) || 1);
   const wrapped = ((numeric - 1) % 20 + 20) % 20;
@@ -2228,275 +2222,40 @@ function normalizeD20Number(value) {
 
 function buildD20DieMarkup(index, value) {
   const label = index === 0 ? "Triple" : "Double";
-  const palette = index === 0
-    ? {
-      facePrimary: "#111111",
-      faceSecondary: "#242424",
-      faceHighlight: "#383838",
-      number: "#ff8c00",
-    }
-    : {
-      facePrimary: "#6d33a9",
-      faceSecondary: "#4a207a",
-      faceHighlight: "#8f57d3",
-      number: "#39ff14",
-    };
+  const numbers = getD20VisibleNumbers(value);
 
   return `
     <span class="die-visual" aria-hidden="true">
-      ${buildD20SvgMarkup(value, palette)}
+      <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
+        <g class="d20-face d20-face-center">
+          <polygon points="120,58 158,82 158,128 120,152 82,128 82,82"></polygon>
+          <text x="120" y="115">${numbers[0]}</text>
+        </g>
+        <g class="d20-face d20-face-top">
+          <polygon points="120,12 152,40 88,40"></polygon>
+          <text x="120" y="31">${numbers[1]}</text>
+        </g>
+        <g class="d20-face d20-face-top-right">
+          <polygon points="176,68 206,98 170,118"></polygon>
+          <text x="183" y="95">${numbers[2]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom-right">
+          <polygon points="174,172 204,142 168,122"></polygon>
+          <text x="182" y="145">${numbers[3]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom">
+          <polygon points="120,228 152,200 88,200"></polygon>
+          <text x="120" y="209">${numbers[4]}</text>
+        </g>
+        <g class="d20-face d20-face-bottom-left">
+          <polygon points="64,172 34,142 70,122"></polygon>
+          <text x="58" y="145">${numbers[5]}</text>
+        </g>
+      </svg>
     </span>
     <span class="die-label">${label}</span>
   `;
 }
-
-function buildD20SvgMarkup(value, palette) {
-  const numbers = Array.from({ length: 7 }, (_, index) => normalizeD20Number(value + index));
-
-  return `
-    <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
-      <ellipse cx="120" cy="130" rx="88" ry="78" fill="rgba(0, 0, 0, 0.20)"></ellipse>
-      <polygon points="120,18 180,58 165,160 120,196 75,160 60,58" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.52)" stroke-width="2.5" stroke-linejoin="round"></polygon>
-      <g class="d20-face d20-face-center">
-        <polygon points="120,54 148,70 138,98 102,98 92,70"></polygon>
-        <text x="120" y="79" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[0]}</text>
-      </g>
-      <g class="d20-face d20-face-top">
-        <polygon points="120,18 148,70 92,70"></polygon>
-        <text x="120" y="46" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[1]}</text>
-      </g>
-      <g class="d20-face d20-face-top-right">
-        <polygon points="148,70 180,102 138,98"></polygon>
-        <text x="160" y="86" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[2]}</text>
-      </g>
-      <g class="d20-face d20-face-bottom-right">
-        <polygon points="138,98 165,160 120,128"></polygon>
-        <text x="149" y="132" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[3]}</text>
-      </g>
-      <g class="d20-face d20-face-bottom">
-        <polygon points="120,128 165,160 75,160"></polygon>
-        <text x="120" y="150" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[4]}</text>
-      </g>
-      <g class="d20-face d20-face-bottom-left">
-        <polygon points="102,98 75,160 60,102"></polygon>
-        <text x="90" y="132" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[5]}</text>
-      </g>
-      <g class="d20-face d20-face-top-left">
-        <polygon points="92,70 60,102 120,18"></polygon>
-        <text x="80" y="86" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[6]}</text>
-      </g>
-    </svg>
-  `;
-}
-
-function getProjectedD20Model() {
-  const vertices = getProjectedD20Vertices();
-  const faces = getProjectedD20Faces(vertices);
-  const visibleFaces = faces.filter((face) => face.visible);
-  const centerFace = [...visibleFaces]
-    .sort((a, b) => (b.facing - a.facing) || (a.depth - b.depth))[0] || faces[0];
-
-  const surroundingFaces = visibleFaces
-    .filter((face) => face !== centerFace && sharesEdge(face.indices, centerFace.indices))
-    .sort((a, b) => a.angle - b.angle);
-
-  if (surroundingFaces.length < 5) {
-    const fallbackFaces = visibleFaces
-      .filter((face) => face !== centerFace)
-      .map((face) => ({
-        ...face,
-        distance: Math.hypot(face.cx - centerFace.cx, face.cy - centerFace.cy),
-      }))
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 5)
-      .sort((a, b) => a.angle - b.angle);
-
-    return {
-      centerFace,
-      surroundingFaces: fallbackFaces,
-    };
-  }
-
-  return {
-    centerFace,
-    surroundingFaces,
-  };
-}
-
-function getProjectedD20Vertices() {
-  const phi = (1 + Math.sqrt(5)) / 2;
-  const rawVertices = [
-    [-1, phi, 0],
-    [1, phi, 0],
-    [-1, -phi, 0],
-    [1, -phi, 0],
-    [0, -1, phi],
-    [0, 1, phi],
-    [0, -1, -phi],
-    [0, 1, -phi],
-    [phi, 0, -1],
-    [phi, 0, 1],
-    [-phi, 0, -1],
-    [-phi, 0, 1],
-  ];
-
-  return rawVertices.map(([x, y, z]) => projectD20Vertex(x, y, z));
-}
-
-function getProjectedD20Faces(vertices) {
-  const faceIndices = [
-    [0, 11, 5],
-    [0, 5, 1],
-    [0, 1, 7],
-    [0, 7, 10],
-    [0, 10, 11],
-    [1, 5, 9],
-    [5, 11, 4],
-    [11, 10, 2],
-    [10, 7, 6],
-    [7, 1, 8],
-    [3, 9, 4],
-    [3, 4, 2],
-    [3, 2, 6],
-    [3, 6, 8],
-    [3, 8, 9],
-    [4, 9, 5],
-    [2, 4, 11],
-    [6, 2, 10],
-    [8, 6, 7],
-    [9, 8, 1],
-  ];
-
-  return faceIndices.map((indices) => {
-    const points = indices.map((index) => vertices[index]);
-    const normal = getFaceNormal(points);
-    const cx = points.reduce((sum, point) => sum + point.x, 0) / points.length;
-    const cy = points.reduce((sum, point) => sum + point.y, 0) / points.length;
-    const depth = points.reduce((sum, point) => sum + point.z, 0) / points.length;
-    const visible = isFrontFacingFace(points);
-    const angle = Math.atan2(cy - 118, cx - 120);
-
-    return {
-      points: points.map((point) => `${point.x},${point.y}`).join(" "),
-      indices,
-      cx,
-      cy,
-      depth,
-      visible,
-      angle,
-      facing: normal.z,
-    };
-  });
-}
-
-function projectD20Vertex(x, y, z) {
-  const rotated = rotatePoint3D(x, y, z, {
-    x: -0.92,
-    y: 0.36,
-    z: 0.02,
-  });
-  const scale = 58;
-  const perspective = 4.6 / (4.6 - rotated.z * 0.58);
-  return {
-    x: 120 + rotated.x * scale * perspective,
-    y: 116 + rotated.y * scale * perspective,
-    z: rotated.z,
-  };
-}
-
-function getD20FaceFill(palette, face) {
-  const depthFactor = Math.max(-1, Math.min(1, face.depth / 2));
-  if (face.center) {
-    return palette.facePrimary;
-  }
-
-  if (depthFactor < -0.35) {
-    return palette.faceHighlight;
-  }
-
-  if (depthFactor > 0.4) {
-    return palette.faceSecondary;
-  }
-
-  return mixHexColors(palette.faceSecondary, palette.faceHighlight, 0.42);
-}
-
-function sharesEdge(firstIndices, secondIndices) {
-  if (!Array.isArray(firstIndices) || !Array.isArray(secondIndices)) {
-    return false;
-  }
-
-  let shared = 0;
-  for (const index of firstIndices) {
-    if (secondIndices.includes(index)) {
-      shared += 1;
-    }
-    if (shared >= 2) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function buildD20SilhouettePath(faces) {
-  const points = faces.flatMap((face) => {
-    return face.points.split(" ").map((pair) => {
-      const [x, y] = pair.split(",").map(Number);
-      return { x, y };
-    });
-  });
-
-  const hull = buildConvexHull(points);
-  if (!hull.length) {
-    return "";
-  }
-
-  return `M ${hull.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" L ")} Z`;
-}
-
-function buildConvexHull(points) {
-  const uniquePoints = [];
-  const seen = new Set();
-
-  points.forEach((point) => {
-    const key = `${point.x.toFixed(2)}:${point.y.toFixed(2)}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      uniquePoints.push(point);
-    }
-  });
-
-  if (uniquePoints.length < 3) {
-    return uniquePoints;
-  }
-
-  const sorted = [...uniquePoints].sort((a, b) => (a.x - b.x) || (a.y - b.y));
-
-  const cross = (origin, a, b) => ((a.x - origin.x) * (b.y - origin.y)) - ((a.y - origin.y) * (b.x - origin.x));
-
-  const lower = [];
-  for (const point of sorted) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
-      lower.pop();
-    }
-    lower.push(point);
-  }
-
-  const upper = [];
-  for (let index = sorted.length - 1; index >= 0; index -= 1) {
-    const point = sorted[index];
-    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
-      upper.pop();
-    }
-    upper.push(point);
-  }
-
-  lower.pop();
-  upper.pop();
-  return lower.concat(upper);
-}
-
 function mixHexColors(startHex, endHex, amount) {
   const ratio = Math.max(0, Math.min(1, amount));
   const start = hexToRgb(startHex);

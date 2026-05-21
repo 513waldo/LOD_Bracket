@@ -1481,52 +1481,40 @@ button.player-button .loser-source-text {
   margin-top: 12px;
 }
 
+.dice-roller {
+  display: grid;
+  gap: 8px;
+  position: relative;
+}
+
 .dice-roller-heading {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  justify-content: space-between;
 }
 
-.dice-roller-heading h2 {
+.dice-roller-heading h3 {
   margin: 0;
-  font-size: 1.1rem;
-}
-
-.dice-runway {
-  position: fixed;
-  inset: 112px 0 20px;
-  z-index: 18;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 14px;
-  padding: 0 18px;
-  pointer-events: none;
-  background: transparent;
+  font-size: 1rem;
 }
 
 .dice-stage {
   display: grid;
   place-items: center;
-  min-height: min(66vh, 760px);
-  padding: 12px 0 8px;
-  pointer-events: none;
-  perspective: 1800px;
+  min-height: 220px;
+  padding-top: 0;
 }
 
 .dice-tray {
-  width: min(100%, 1180px);
+  width: min(100%, 340px);
   margin: 0 auto;
   align-self: center;
-  pointer-events: auto;
-  transform-style: preserve-3d;
 }
 
 .dice-actions {
   display: flex;
   justify-content: center;
   margin-top: 6px;
-  pointer-events: auto;
 }
 
 .dice-actions #rollDice {
@@ -1535,8 +1523,9 @@ button.player-button .loser-source-text {
 }
 
 .dice-total {
-  position: static;
-  margin-left: auto;
+  position: absolute;
+  top: 12px;
+  right: 12px;
   border-radius: 999px;
   background: var(--soft);
   color: var(--primary-dark);
@@ -1547,32 +1536,29 @@ button.player-button .loser-source-text {
 .dice-tray {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 12px;
   align-items: center;
-  min-height: 0;
 }
 
 .die-button {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   justify-items: center;
   align-content: center;
   justify-self: center;
   width: 100%;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  min-height: 208px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--blue-panel);
   color: var(--ink);
-  padding: 0;
+  padding: 14px;
   transition: transform 160ms ease, filter 160ms ease;
-  transform-style: preserve-3d;
-  will-change: transform, filter;
 }
 
 .die-button:hover {
   filter: brightness(1.04);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .die-steel {
@@ -1599,23 +1585,19 @@ button.player-button .loser-source-text {
 
 .die-visual {
   display: block;
-  width: min(100%, 320px);
+  width: min(100%, 180px);
   aspect-ratio: 1 / 1;
-  transform-origin: 50% 50%;
-  will-change: transform, filter;
 }
 
 .d20-svg {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
-  shape-rendering: geometricPrecision;
 }
 
 .d20-face polygon {
-  stroke: rgba(255, 255, 255, 0.58);
-  stroke-width: 2.2;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 2;
   stroke-linejoin: round;
 }
 
@@ -1624,7 +1606,6 @@ button.player-button .loser-source-text {
 }
 
 .d20-face-top polygon,
-.d20-face-top-left polygon,
 .d20-face-top-right polygon,
 .d20-face-bottom-right polygon,
 .d20-face-bottom polygon,
@@ -1634,7 +1615,7 @@ button.player-button .loser-source-text {
 
 .d20-face text {
   fill: var(--die-number-color);
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -1643,32 +1624,8 @@ button.player-button .loser-source-text {
   stroke-width: 1;
 }
 
-.dice-runway .die-label {
-  display: none;
-}
-
-.dice-runway .dice-roller-heading,
-.dice-runway .dice-actions {
-  max-width: 1180px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.dice-runway .dice-stage {
-  width: 100%;
-}
-
-.dice-runway .dice-total {
-  backdrop-filter: blur(6px);
-}
-
 .die-button.rolling {
-  animation: d20-roll-path 1600ms cubic-bezier(0.18, 0.72, 0.14, 1);
-}
-
-.die-button.rolling .die-visual {
-  animation: d20-tumble 1600ms cubic-bezier(0.18, 0.72, 0.14, 1);
-  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.22));
+  animation: d20-roll 620ms cubic-bezier(0.22, 0.8, 0.28, 1);
 }
 
 .die-label {
@@ -2083,51 +2040,25 @@ button.player-button .loser-source-text {
   font-weight: 800;
 }
 
-@keyframes d20-roll-path {
+@keyframes d20-roll {
   0% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    transform: rotate(0deg) scale(1);
   }
 
-  18% {
-    transform: translate3d(calc(var(--roll-drift-x, 0px) * 0.24), calc(var(--roll-drift-y, 0px) * -0.22), 0) rotate(calc(var(--roll-spin, 0deg) * 0.16)) scale(1.06);
+  24% {
+    transform: rotate(46deg) scale(1.08);
   }
 
-  40% {
-    transform: translate3d(calc(var(--roll-drift-x, 0px) * 0.62), calc(var(--roll-drift-y, 0px) * 0.04), 0) rotate(calc(var(--roll-spin, 0deg) * 0.44)) scale(1.09);
+  52% {
+    transform: rotate(-28deg) scale(0.96);
   }
 
-  68% {
-    transform: translate3d(calc(var(--roll-drift-x, 0px) * 0.9), calc(var(--roll-drift-y, 0px) * 0.56), 0) rotate(calc(var(--roll-spin, 0deg) * 0.74)) scale(0.98);
+  78% {
+    transform: rotate(19deg) scale(1.04);
   }
 
   100% {
-    transform: translate3d(var(--roll-drift-x, 0px), var(--roll-drift-y, 0px), 0) rotate(var(--roll-spin, 0deg)) scale(1);
-  }
-}
-
-@keyframes d20-tumble {
-  0% {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
-  }
-
-  20% {
-    transform: rotateX(calc(var(--roll-tilt-x, 0deg) * 0.5)) rotateY(calc(var(--roll-tilt-y, 0deg) * 0.5)) rotateZ(calc(var(--roll-spin, 0deg) * 0.12)) scale(1.04);
-  }
-
-  42% {
-    transform: rotateX(calc(var(--roll-tilt-x, 0deg) * 0.9)) rotateY(calc(var(--roll-tilt-y, 0deg) * 0.85)) rotateZ(calc(var(--roll-spin, 0deg) * 0.38)) scale(1.08);
-  }
-
-  64% {
-    transform: rotateX(calc(var(--roll-tilt-x, 0deg) * 1.1)) rotateY(calc(var(--roll-tilt-y, 0deg) * 1.05)) rotateZ(calc(var(--roll-spin, 0deg) * 0.66)) scale(1.02);
-  }
-
-  84% {
-    transform: rotateX(calc(var(--roll-tilt-x, 0deg) * 0.45)) rotateY(calc(var(--roll-tilt-y, 0deg) * 0.4)) rotateZ(calc(var(--roll-spin, 0deg) * 0.9)) scale(0.99);
-  }
-
-  100% {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+    transform: rotate(0deg) scale(1);
   }
 }
 
@@ -2556,17 +2487,8 @@ button.player-button .loser-source-text {
     min-height: 0;
   }
 
-  .dice-runway {
-    inset: 100px 0 18px;
-    padding: 0 12px;
-  }
-
   .dice-stage {
-    min-height: 42vh;
-  }
-
-  .dice-roller-heading h2 {
-    font-size: 1rem;
+    min-height: 300px;
   }
 
   .mystery-out-value {
