@@ -600,8 +600,8 @@ async function buildBracket() {
   showMessage(`Bracket built for ${players.length} player${players.length === 1 ? "" : "s"}.`);
 }
 
-window.generatePlayers = generatePlayers;
-window.buildBracket = buildBracket;
+document.querySelector("#generatePlayers").addEventListener("click", generatePlayers);
+document.querySelector("#buildBracket").addEventListener("click", buildBracket);
 
 document.querySelector("#resetBracket").addEventListener("click", () => {
   resetTournament();
