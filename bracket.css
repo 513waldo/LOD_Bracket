@@ -1,5 +1,5 @@
 :root {
-  --bg: #f1f2ef;
+  --bg: #1a1b18;
   --panel: rgba(241, 242, 239, 0.62);
   --ink: #171512;
   --muted: #171512;
@@ -31,7 +31,7 @@ body {
   min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
   color: var(--ink);
-  background-color: var(--bg);
+  background-color: #11120f;
   overflow-x: clip;
 }
 
