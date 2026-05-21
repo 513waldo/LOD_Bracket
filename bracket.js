@@ -2089,8 +2089,8 @@ function renderDice() {
 }
 
 function createD20RollState() {
-  const BLACK = { body: "#ff9f1a", dark: "#111111", mid: "#ffc24d", light: "#ffe1a3", text: "#111111", label: "#111111" };
-  const PURPLE = { body: "#d62d20", dark: "#7a120e", mid: "#ef5d4d", light: "#f7b6ad", text: "#ffffff", label: "#ffffff" };
+  const BLACK = { body: "#ff6a00", dark: "#111111", mid: "#ff8f33", light: "#ffc48f", text: "#111111", label: "#111111" };
+  const PURPLE = { body: "#ffffff", dark: "#d9d9d9", mid: "#f1f1f1", light: "#cfcfcf", text: "#c1121f", label: "#c1121f" };
 
   const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
     color,
