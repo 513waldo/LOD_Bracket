@@ -5408,7 +5408,7 @@ function renderPortalLink(forceRefresh = false) {
   }
 
   if (portalQrCode) {
-    renderPortalQrCode(portalQrCode, link, 500);
+    portalQrCode.src = createPortalQrDataUrl(link, 500);
   }
 
   if (lodCodeInput) {
