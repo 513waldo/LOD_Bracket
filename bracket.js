@@ -2282,14 +2282,14 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.lineTo(shadowA[0], shadowA[1]);
     ctx.lineTo(shadowB[0], shadowB[1]);
     ctx.closePath();
-    ctx.fillStyle = faceDark;
-    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = color.body === "#f4f4f4" ? "#9c9c9c" : faceDark;
+    ctx.globalAlpha = 0.78;
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = faceLight;
-    ctx.lineWidth = 0.7;
-    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = color.body === "#f4f4f4" ? "#8a8a8a" : faceLight;
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.55;
     for (let i = 0; i < 6; i++) {
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -2407,8 +2407,8 @@ function drawD20Frame(now) {
     }
 
     const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
-    if (spd > 0.6 && now - die.lastShadeShift > 140) {
-      die.shadeOffset = Math.floor(Math.random() * 6);
+    if (spd > 0.35 && now - die.lastShadeShift > 90) {
+      die.shadeOffset = (die.shadeOffset + 1 + Math.floor(Math.random() * 2)) % 6;
       die.lastShadeShift = now;
     }
     if (spd > 1.2) {
