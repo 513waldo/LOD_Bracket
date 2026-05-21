@@ -170,6 +170,7 @@ let splitPotDrawAnimation = null;
 let bullseyeShootDrawAnimation = null;
 let d20RollState = null;
 let d20RollFrame = null;
+let d20RollInterval = null;
 let d20RollStartTime = 0;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
@@ -378,9 +379,8 @@ outShotSheet.addEventListener("input", (event) => {
   saveOutShots();
 });
 
-rollDiceButton.addEventListener("click", () => {
-  rollDice();
-});
+rollDiceButton.addEventListener("click", rollDice);
+window.rollDice = rollDice;
 
 generateMysteryOutButton.addEventListener("click", () => {
   generateMysteryOut();
@@ -2140,13 +2140,12 @@ function startD20Roll() {
   if (d20RollFrame) {
     cancelAnimationFrame(d20RollFrame);
   }
+  if (d20RollInterval) {
+    clearInterval(d20RollInterval);
+  }
 
-  const frame = (now) => {
-    d20RollFrame = requestAnimationFrame(frame);
-    drawD20Frame(now);
-  };
-
-  d20RollFrame = requestAnimationFrame(frame);
+  d20RollInterval = setInterval(() => drawD20Frame(performance.now()), 16);
+  drawD20Frame(performance.now());
 }
 
 function updateD20Die(die, dt) {
@@ -2429,6 +2428,10 @@ function drawD20Frame(now) {
     if (d20RollFrame) {
       cancelAnimationFrame(d20RollFrame);
       d20RollFrame = null;
+    }
+    if (d20RollInterval) {
+      clearInterval(d20RollInterval);
+      d20RollInterval = null;
     }
     queueBracketDraftSave();
     return;
