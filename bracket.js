@@ -203,6 +203,9 @@ window.addBullseyeShootEntry = addBullseyeShootEntry;
 window.drawBullseyeShootWinner = drawBullseyeShootWinner;
 window.restoreBracketBackup = restoreBracketBackup;
 window.saveOutShots = saveOutShots;
+window.generateMysteryOut = generateMysteryOut;
+window.resetMysteryOut = resetMysteryOut;
+window.setMysteryOutMode = setMysteryOutMode;
 
 function syncTotalPlayersSection(force = false) {
   const rawCount = Number(totalPlayers?.value);
@@ -2194,6 +2197,103 @@ function renderMysteryOutWinner() {
   mysteryOutWinner.classList.remove("no-winner");
   mysteryOutWinnerTitle.textContent = "Winner";
   mysteryOutWinnerBody.textContent = `${winner.player || "Unnamed player"} - ${winner.number}`;
+}
+
+function renderMysteryOut() {
+  if (mysteryOutModeInputs.length) {
+    mysteryOutModeInputs.forEach((input) => {
+      input.checked = Boolean(mysteryOut && input.dataset.mysteryOutMode === mysteryOut.mode);
+    });
+  }
+
+  if (mysteryOutValue) {
+    const hasActiveRoll = Boolean(mysteryOutDrawAnimation?.active && mysteryOutDrawAnimation.value !== null);
+    const currentValue = hasActiveRoll
+      ? mysteryOutDrawAnimation.value
+      : (mysteryOut && Number.isFinite(Number(mysteryOut.score)) ? Number(mysteryOut.score) : null);
+    mysteryOutValue.textContent = currentValue ? String(currentValue) : "--";
+  }
+
+  if (resetMysteryOutButton) {
+    resetMysteryOutButton.hidden = !mysteryOut;
+  }
+
+  renderMysteryOutWinner();
+}
+
+function getMysteryOutValues(mode = mysteryOut?.mode || "double") {
+  const normalizedMode = ["open", "double", "master"].includes(String(mode)) ? String(mode) : "double";
+  if (normalizedMode === "open") {
+    return [...dartScores];
+  }
+  if (normalizedMode === "master") {
+    return [...masterOutFinishes];
+  }
+  return [...doubleOutFinishes];
+}
+
+function setMysteryOutMode(mode) {
+  const normalizedMode = ["open", "double", "master"].includes(String(mode)) ? String(mode) : "double";
+  mysteryOut = {
+    ...(mysteryOut && typeof mysteryOut === "object" ? mysteryOut : {}),
+    mode: normalizedMode,
+    score: mysteryOut && typeof mysteryOut === "object" ? mysteryOut.score || "" : "",
+  };
+  savePortalSnapshotToLocalStorage();
+  renderMysteryOut();
+  queueBracketDraftSave();
+}
+
+function generateMysteryOut() {
+  const mode = mysteryOut?.mode || Array.from(mysteryOutModeInputs).find((input) => input.checked)?.dataset?.mysteryOutMode || "double";
+  const values = getMysteryOutValues(mode);
+
+  if (!values.length) {
+    showMessage("No mystery out values are available for that mode.");
+    return;
+  }
+
+  stopMysteryOutDrawAnimation();
+  mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
+    values,
+    durationMs: 20000,
+    onFrame: (value) => {
+      if (mysteryOutValue) {
+        mysteryOutValue.textContent = String(value);
+      }
+    },
+    onComplete: (finalValue) => {
+      mysteryOut = {
+        mode,
+        score: Number(finalValue) || 0,
+        drawnAt: new Date().toISOString(),
+      };
+      mysteryOutDrawAnimation = null;
+      savePortalSnapshotToLocalStorage();
+      renderMysteryOut();
+      queueBracketDraftSave();
+    },
+  });
+
+  if (!mysteryOutDrawAnimation) {
+    showMessage("Mystery out could not start.");
+    return;
+  }
+
+  if (mysteryOutValue) {
+    mysteryOutValue.textContent = "--";
+  }
+  if (resetMysteryOutButton) {
+    resetMysteryOutButton.hidden = false;
+  }
+}
+
+function resetMysteryOut() {
+  stopMysteryOutDrawAnimation();
+  mysteryOut = "";
+  renderMysteryOut();
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
 }
 
 function renderHighestOutRecord() {
