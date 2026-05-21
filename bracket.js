@@ -15,6 +15,7 @@ const outShotSheet = document.querySelector("#outShotSheet");
 const d20Canvas = document.querySelector("#d20Canvas");
 const d20Context = d20Canvas ? d20Canvas.getContext("2d") : null;
 const diceRollerPanel = document.querySelector(".dice-roller");
+const diceRollerOverlay = document.createElement("div");
 const rollDiceButton = document.querySelector("#rollDice");
 const toggleDiceRollerSizeButton = document.querySelector("#toggleDiceRollerSize");
 const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
@@ -175,6 +176,8 @@ let d20RollState = null;
 let d20RollFrame = null;
 let d20RollInterval = null;
 let d20RollStartTime = 0;
+let diceRollerOriginalParent = null;
+let diceRollerOriginalNextSibling = null;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -185,6 +188,8 @@ let bracketCleanupTimer = null;
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
+
+diceRollerOverlay.className = "dice-roller-overlay";
 
 renderNameInputs(Number(totalPlayers.value));
 renderBackups();
@@ -2160,13 +2165,40 @@ function toggleDiceRollerSize() {
   if (isMaximized) {
     diceRollerPanel.classList.remove("is-maximized");
     document.body.classList.remove("dice-roller-maximized");
+    restoreDiceRollerPanel();
     syncDiceRollerFullscreenState();
     return;
   }
 
+  moveDiceRollerPanelToOverlay();
   diceRollerPanel.classList.add("is-maximized");
   document.body.classList.add("dice-roller-maximized");
   syncDiceRollerFullscreenState();
+}
+
+function moveDiceRollerPanelToOverlay() {
+  if (!diceRollerPanel || diceRollerPanel.parentElement === diceRollerOverlay) {
+    return;
+  }
+
+  diceRollerOriginalParent = diceRollerPanel.parentElement;
+  diceRollerOriginalNextSibling = diceRollerPanel.nextElementSibling;
+  if (!diceRollerOverlay.isConnected) {
+    document.body.appendChild(diceRollerOverlay);
+  }
+  diceRollerOverlay.appendChild(diceRollerPanel);
+}
+
+function restoreDiceRollerPanel() {
+  if (!diceRollerPanel || !diceRollerOriginalParent) {
+    return;
+  }
+
+  if (diceRollerOriginalNextSibling && diceRollerOriginalNextSibling.parentElement === diceRollerOriginalParent) {
+    diceRollerOriginalParent.insertBefore(diceRollerPanel, diceRollerOriginalNextSibling);
+  } else {
+    diceRollerOriginalParent.appendChild(diceRollerPanel);
+  }
 }
 
 function syncDiceRollerFullscreenState() {
