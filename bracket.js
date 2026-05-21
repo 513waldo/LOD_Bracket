@@ -2082,6 +2082,8 @@ function renderDice() {
     die.finalVal = die.displayNum;
     die.stoppedAngle = die.angle;
     die.shadeOffset = Math.floor(Math.random() * 6);
+    die.x = die.restX;
+    die.y = die.restY;
   });
 
   diceValues[0] = d20RollState.dies[0].displayNum;
@@ -2091,7 +2093,7 @@ function renderDice() {
 }
 
 function createD20RollState() {
-  const BLACK = { body: "#ff7a00", dark: "#111111", mid: "#ff9a33", light: "#ffc46b", text: "#111111", label: "#111111" };
+  const BLACK = { body: "#ff8c1a", dark: "#2d1a00", mid: "#ffae4d", light: "#ffd89a", text: "#111111", label: "#111111" };
   const PURPLE = { body: "#ffffff", dark: "#c1121f", mid: "#f3f3f3", light: "#e0e0e0", text: "#c1121f", label: "#c1121f" };
 
   const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
@@ -2287,8 +2289,8 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.lineTo(shadowA[0], shadowA[1]);
     ctx.lineTo(shadowB[0], shadowB[1]);
     ctx.closePath();
-    ctx.fillStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#7d7d7d" : faceDark);
-    ctx.globalAlpha = isWhiteDie ? 0.38 : 0.92;
+    ctx.fillStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#9b9b9b" : faceDark);
+    ctx.globalAlpha = isWhiteDie ? 0.34 : 0.82;
     ctx.fill();
     ctx.globalAlpha = 1;
 
