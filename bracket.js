@@ -2089,8 +2089,8 @@ function renderDice() {
 }
 
 function createD20RollState() {
-  const BLACK = { body: "#f39c12", dark: "#111111", mid: "#f6b24d", light: "#ffd28a", text: "#111111", label: "#111111" };
-  const PURPLE = { body: "#c0392b", dark: "#7f1d13", mid: "#d45c4f", light: "#f0b4ac", text: "#ffffff", label: "#ffffff" };
+  const BLACK = { body: "#ff9f1a", dark: "#111111", mid: "#ffc24d", light: "#ffe1a3", text: "#111111", label: "#111111" };
+  const PURPLE = { body: "#d62d20", dark: "#7a120e", mid: "#ef5d4d", light: "#f7b6ad", text: "#ffffff", label: "#ffffff" };
 
   const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
     color,
@@ -2435,8 +2435,8 @@ function drawD20Frame(now) {
   state.dies.forEach((die) => {
     die.color.shadeOffset = die.shadeOffset;
     if (die.stopped) {
-      drawD20Shadow(die.restX, die.restY);
-      drawD20Hex(die.restX, die.restY, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
+      drawD20Shadow(die.x, die.y);
+      drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
     } else {
       drawD20Shadow(die.x, die.y);
       drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.colliding);
