@@ -465,9 +465,7 @@ resetMysteryOutButton.addEventListener("click", () => {
 
 mysteryOutModeInputs.forEach((input) => {
   input.addEventListener("change", () => {
-    if (mysteryOut) {
-      setMysteryOutMode(mysteryOut.mode);
-    }
+    setMysteryOutMode(input.dataset.mysteryOutMode);
   });
 });
 
@@ -2260,7 +2258,8 @@ function setMysteryOutMode(mode) {
 }
 
 function generateMysteryOut() {
-  const mode = mysteryOut?.mode || Array.from(mysteryOutModeInputs).find((input) => input.checked)?.dataset?.mysteryOutMode || "double";
+  const selectedMode = Array.from(mysteryOutModeInputs).find((input) => input.checked)?.dataset?.mysteryOutMode;
+  const mode = selectedMode || mysteryOut?.mode || "double";
   const values = getMysteryOutValues(mode);
 
   if (!values.length) {
