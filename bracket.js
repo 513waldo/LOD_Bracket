@@ -387,6 +387,15 @@ window.rollDice = rollDice;
 
 toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
 document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && diceRollerPanel?.classList.contains("is-maximized")) {
+    diceRollerPanel.classList.remove("is-maximized");
+    if (document.fullscreenElement === diceRollerPanel && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    syncDiceRollerFullscreenState();
+  }
+});
 syncDiceRollerFullscreenState();
 
 generateMysteryOutButton.addEventListener("click", () => {
