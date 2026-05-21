@@ -202,6 +202,7 @@ window.clearBullShootEntries = clearBullShootEntries;
 window.addBullseyeShootEntry = addBullseyeShootEntry;
 window.drawBullseyeShootWinner = drawBullseyeShootWinner;
 window.restoreBracketBackup = restoreBracketBackup;
+window.saveOutShots = saveOutShots;
 
 function syncTotalPlayersSection(force = false) {
   const rawCount = Number(totalPlayers?.value);
@@ -2110,6 +2111,9 @@ function saveOutShots() {
   }
 
   localStorage.setItem(outShotStorageKey, JSON.stringify(getOutShots()));
+  updateOutShotWinners();
+  renderHighestOutRecord();
+  renderMysteryOutWinner();
   savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
 }
