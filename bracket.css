@@ -1584,44 +1584,30 @@ button.player-button .loser-source-text {
 }
 
 .die-visual {
-  display: block;
+  display: grid;
+  place-items: center;
   width: min(100%, 180px);
   aspect-ratio: 1 / 1;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--blue-panel);
+}
+
+.die-face-square {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.die-face-number {
+  color: var(--die-number-color);
+  font-size: 3.4rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .d20-svg {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.d20-face polygon {
-  stroke: rgba(255, 255, 255, 0.42);
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-
-.d20-face-center polygon {
-  fill: var(--die-face-primary);
-}
-
-.d20-face-top polygon,
-.d20-face-top-right polygon,
-.d20-face-bottom-right polygon,
-.d20-face-bottom polygon,
-.d20-face-bottom-left polygon {
-  fill: var(--die-face-secondary);
-}
-
-.d20-face text {
-  fill: var(--die-number-color);
-  font-size: 21px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.28);
-  stroke-width: 1;
 }
 
 .die-button.rolling {
