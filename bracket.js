@@ -1871,7 +1871,7 @@ function hideTeamDrawWarning() {
 function resetTournament() {
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
-  clearTournamentState({ preserveLodCode: false, clearDraft: true, code: lodCode });
+  clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
 
   if (totalPlayers) {
     totalPlayers.value = "0";
@@ -1925,7 +1925,7 @@ function resetTournament() {
 
   clearOutShots();
   renderMysteryOut();
-  showMessage("All page fields reset.");
+  showMessage("All page fields reset except the active QR code.");
 }
 
 function clearPlayerNames() {
