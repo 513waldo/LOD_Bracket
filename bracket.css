@@ -1552,10 +1552,10 @@ button.player-button .loser-source-text {
 }
 
 .dice-roller.is-maximized .d20-canvas {
-  width: min(100%, calc(100vh - 140px));
-  max-width: none;
+  width: auto;
   height: auto;
-  aspect-ratio: 680 / 480;
+  max-width: none;
+  max-height: none;
   justify-self: center;
 }
 

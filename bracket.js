@@ -400,6 +400,11 @@ document.addEventListener("keydown", (event) => {
     syncDiceRollerFullscreenState();
   }
 });
+window.addEventListener("resize", () => {
+  if (diceRollerPanel?.classList.contains("is-maximized")) {
+    resizeDiceRollerCanvasForViewport();
+  }
+});
 syncDiceRollerFullscreenState();
 
 generateMysteryOutButton.addEventListener("click", () => {
@@ -2178,6 +2183,7 @@ function toggleDiceRollerSize() {
   document.body.classList.add("dice-roller-maximized");
   document.body.style.overflow = "hidden";
   applyDiceRollerMaximizedStyles();
+  resizeDiceRollerCanvasForViewport();
   syncDiceRollerFullscreenState();
 }
 
@@ -2227,6 +2233,28 @@ function clearDiceRollerMaximizedStyles() {
   }
 
   diceRollerPanel.removeAttribute("style");
+  if (d20Canvas) {
+    d20Canvas.style.removeProperty("width");
+    d20Canvas.style.removeProperty("height");
+    d20Canvas.style.removeProperty("max-width");
+    d20Canvas.style.removeProperty("max-height");
+  }
+}
+
+function resizeDiceRollerCanvasForViewport() {
+  if (!d20Canvas) {
+    return;
+  }
+
+  const availableWidth = Math.max(320, window.innerWidth - 48);
+  const availableHeight = Math.max(240, window.innerHeight - 180);
+  const scale = Math.min(availableWidth / d20CanvasWidth, availableHeight / d20CanvasHeight);
+  const width = Math.max(320, Math.floor(d20CanvasWidth * scale));
+  const height = Math.max(240, Math.floor(d20CanvasHeight * scale));
+  d20Canvas.style.width = `${width}px`;
+  d20Canvas.style.height = `${height}px`;
+  d20Canvas.style.maxWidth = "none";
+  d20Canvas.style.maxHeight = "none";
 }
 
 function syncDiceRollerFullscreenState() {
