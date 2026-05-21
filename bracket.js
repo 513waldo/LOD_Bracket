@@ -1925,6 +1925,7 @@ function resetTournament() {
 
   clearOutShots();
   renderMysteryOut();
+  renderActiveLodCodes({ codes: [], updatedAt: "" }, "");
   showMessage("All page fields reset except the active QR code.");
 }
 
