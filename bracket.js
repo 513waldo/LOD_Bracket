@@ -396,6 +396,8 @@ window.rollDice = rollDice;
 window.toggleDiceRollerSize = toggleDiceRollerSize;
 window.addSplitPotEntry = addSplitPotEntry;
 window.addBullseyeShootEntry = addBullseyeShootEntry;
+window.drawSplitPotWinner = drawSplitPotWinner;
+window.drawBullseyeShootWinner = drawBullseyeShootWinner;
 
 toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
 document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
