@@ -270,14 +270,17 @@ document.querySelector("#downloadPortalSnapshot").addEventListener("click", () =
   showMessage(`Portal snapshot downloaded as lod-${lodCode}.json.`);
 });
 
-newLodCodeButton?.addEventListener("click", () => {
+function generateNewPortalCode() {
   lodCode = generateLodCode();
   saveStoredLodCode(lodCode);
-  renderPortalLink();
+  renderPortalLink(true);
   savePortalSnapshotToLocalStorage();
   queueActiveLodCodesRefresh();
   showMessage(`New LOD code generated: ${lodCode}.`);
-});
+}
+
+newLodCodeButton?.addEventListener("click", generateNewPortalCode);
+window.generateNewPortalCode = generateNewPortalCode;
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -2248,7 +2251,7 @@ function resizeDiceRollerCanvasForViewport() {
 
   const availableWidth = Math.max(320, window.innerWidth - 48);
   const availableHeight = Math.max(240, window.innerHeight - 180);
-  const scale = Math.min(availableWidth / d20CanvasWidth, availableHeight / d20CanvasHeight);
+  const scale = Math.min(1, availableWidth / d20CanvasWidth, availableHeight / d20CanvasHeight);
   const width = Math.max(320, Math.floor(d20CanvasWidth * scale));
   const height = Math.max(240, Math.floor(d20CanvasHeight * scale));
   d20Canvas.style.width = `${width}px`;
@@ -5396,7 +5399,7 @@ function getApiSnapshotUrl(baseUrl, code) {
   return `${baseUrl}/api/lod/${encodeURIComponent(normalizeLodCode(code))}`;
 }
 
-function renderPortalLink() {
+function renderPortalLink(forceRefresh = false) {
   const code = normalizeLodCode(lodCode) || "------";
   const link = getPortalLink();
 
@@ -5405,7 +5408,11 @@ function renderPortalLink() {
   }
 
   if (portalQrCode) {
-    portalQrCode.src = createPortalQrDataUrl(link, 500);
+    const qrSrc = createPortalQrDataUrl(link, 500);
+    if (forceRefresh) {
+      portalQrCode.removeAttribute("src");
+    }
+    portalQrCode.src = qrSrc;
   }
 
   if (lodCodeInput) {
