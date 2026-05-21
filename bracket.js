@@ -2076,6 +2076,17 @@ function animateDieRoll(index) {
     clearTimeout(diceRollTimers[index].timeout);
   }
 
+  const direction = index === 0 ? -1 : 1;
+  const driftX = `${direction * (48 + Math.random() * 36)}px`;
+  const driftY = `${20 + Math.random() * 18}px`;
+  const spin = `${(5 + Math.random() * 3) * 360}deg`;
+  const tiltX = `${(42 + Math.random() * 18) * (Math.random() > 0.5 ? 1 : -1)}deg`;
+  const tiltY = `${(34 + Math.random() * 16) * (Math.random() > 0.5 ? 1 : -1)}deg`;
+  button.style.setProperty("--roll-drift-x", driftX);
+  button.style.setProperty("--roll-drift-y", driftY);
+  button.style.setProperty("--roll-spin", spin);
+  button.style.setProperty("--roll-tilt-x", tiltX);
+  button.style.setProperty("--roll-tilt-y", tiltY);
   button.classList.add("rolling");
   diceRollTimers[index] = {
     interval: setInterval(() => {
