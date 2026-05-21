@@ -2093,7 +2093,7 @@ function renderDice() {
 }
 
 function createD20RollState() {
-  const BLACK = { body: "#ff8c1a", dark: "#2d1a00", mid: "#ffae4d", light: "#ffd89a", text: "#111111", label: "#111111" };
+  const BLACK = { body: "#ff8c1a", dark: "#8a5200", mid: "#ffae4d", light: "#ffd89a", text: "#111111", label: "#111111" };
   const PURPLE = { body: "#ffffff", dark: "#c1121f", mid: "#f3f3f3", light: "#e0e0e0", text: "#c1121f", label: "#c1121f" };
 
   const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
@@ -2289,14 +2289,14 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.lineTo(shadowA[0], shadowA[1]);
     ctx.lineTo(shadowB[0], shadowB[1]);
     ctx.closePath();
-    ctx.fillStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#9b9b9b" : faceDark);
-    ctx.globalAlpha = isWhiteDie ? 0.34 : 0.82;
+    ctx.fillStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#b0b0b0" : faceDark);
+    ctx.globalAlpha = isWhiteDie ? 0.34 : 0.62;
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#8a8a8a" : faceLight);
-    ctx.lineWidth = isWhiteDie ? 2.2 : 1.6;
-    ctx.globalAlpha = isWhiteDie ? 0.92 : 0.72;
+    ctx.strokeStyle = isWhiteDie ? "#c1121f" : (color.body === "#f4f4f4" ? "#9f9f9f" : faceLight);
+    ctx.lineWidth = isWhiteDie ? 2.2 : 1.4;
+    ctx.globalAlpha = isWhiteDie ? 0.92 : 0.54;
     for (let i = 0; i < 6; i++) {
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -2311,7 +2311,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(numStr, 0, r * 0.1);
-  if (isWhiteDie) {
+  if (isWhiteDie && numStr === "6") {
     ctx.lineWidth = Math.max(2, r * 0.07);
     ctx.strokeStyle = "#c1121f";
     ctx.strokeText(numStr, 0, r * 0.1);
