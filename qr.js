@@ -1,4 +1,7 @@
+let qrRenderNonce = 0;
+
 function createPortalQrDataUrl(text, size = 360) {
+  qrRenderNonce += 1;
   const safeSize = Math.max(256, Math.round(size));
   const matrix = createQrMatrix(String(text || ""));
   const moduleCount = matrix.length;
@@ -29,7 +32,7 @@ function createPortalQrDataUrl(text, size = 360) {
     }
   }
 
-  return canvas.toDataURL("image/png");
+  return `${canvas.toDataURL("image/png")}#${qrRenderNonce}`;
 }
 
 function createQrMatrix(text) {
