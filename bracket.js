@@ -1556,6 +1556,19 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
   return setBullshootPortalNotice(message);
 }
 
+function sendBullshootRollPortalNotice(dieValues = []) {
+  const [tripleValue, doubleValue] = Array.isArray(dieValues) ? dieValues : [];
+  const triple = Number(tripleValue);
+  const double = Number(doubleValue);
+  if (!Number.isFinite(triple) || !Number.isFinite(double)) {
+    return false;
+  }
+
+  const total = triple + double;
+  const message = `Bullshoot result - Triple ${triple}, Double ${double} - total ${total}`;
+  return setBullshootPortalNotice(message);
+}
+
 function setAutomatedPortalNotice(message) {
   const text = String(message || "").trim();
   portalAutoNotice = text;
@@ -2596,6 +2609,7 @@ function drawD20Frame(now) {
   diceValues[1] = state.dies[1].displayNum;
 
   if (timeUp && state.dies.every((die) => die.stopped)) {
+    sendBullshootRollPortalNotice(state.dies.map((die) => die.displayNum));
     state.active = false;
     if (d20RollFrame) {
       cancelAnimationFrame(d20RollFrame);
