@@ -2240,35 +2240,40 @@ function buildD20DieMarkup(index, value) {
 }
 
 function buildD20SvgMarkup(value, palette) {
-  const model = getProjectedD20Model();
-  const topValue = normalizeD20Number(value);
-  const surroundingFaces = model.surroundingFaces.map((face, index) => ({
-    ...face,
-    number: normalizeD20Number(topValue + index + 1),
-  }));
-  const drawFaces = [
-    ...surroundingFaces.sort((a, b) => a.depth - b.depth),
-    { ...model.centerFace, number: topValue, center: true },
-  ];
-  const silhouette = buildD20SilhouettePath(drawFaces);
+  const numbers = Array.from({ length: 7 }, (_, index) => normalizeD20Number(value + index));
 
   return `
     <svg class="d20-svg" viewBox="0 0 240 240" focusable="false">
       <ellipse cx="120" cy="130" rx="88" ry="78" fill="rgba(0, 0, 0, 0.20)"></ellipse>
-      <ellipse cx="120" cy="112" rx="44" ry="36" fill="rgba(255, 255, 255, 0.10)"></ellipse>
-      <path d="${silhouette}" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.52)" stroke-width="2.5" stroke-linejoin="round"></path>
-      ${drawFaces.map((face) => {
-        const fill = getD20FaceFill(palette, face);
-        const textX = face.cx + (face.center ? 0 : Math.cos(face.angle) * 1.5);
-        const textY = face.cy + (face.center ? 0 : Math.sin(face.angle) * 1.5);
-
-        return `
-          <g class="d20-face ${face.center ? "d20-face-center" : ""}">
-            <polygon points="${face.points}" style="fill:${fill};stroke:rgba(255,255,255,0.34);stroke-width:2;stroke-linejoin:round;"></polygon>
-            <text x="${textX}" y="${textY}" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${face.number}</text>
-          </g>
-        `;
-      }).join("")}
+      <polygon points="120,18 180,58 165,160 120,196 75,160 60,58" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.52)" stroke-width="2.5" stroke-linejoin="round"></polygon>
+      <g class="d20-face d20-face-center">
+        <polygon points="120,54 148,70 138,98 102,98 92,70"></polygon>
+        <text x="120" y="79" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[0]}</text>
+      </g>
+      <g class="d20-face d20-face-top">
+        <polygon points="120,18 148,70 92,70"></polygon>
+        <text x="120" y="46" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[1]}</text>
+      </g>
+      <g class="d20-face d20-face-top-right">
+        <polygon points="148,70 180,102 138,98"></polygon>
+        <text x="160" y="86" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[2]}</text>
+      </g>
+      <g class="d20-face d20-face-bottom-right">
+        <polygon points="138,98 165,160 120,128"></polygon>
+        <text x="149" y="132" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[3]}</text>
+      </g>
+      <g class="d20-face d20-face-bottom">
+        <polygon points="120,128 165,160 75,160"></polygon>
+        <text x="120" y="150" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[4]}</text>
+      </g>
+      <g class="d20-face d20-face-bottom-left">
+        <polygon points="102,98 75,160 60,102"></polygon>
+        <text x="90" y="132" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[5]}</text>
+      </g>
+      <g class="d20-face d20-face-top-left">
+        <polygon points="92,70 60,102 120,18"></polygon>
+        <text x="80" y="86" style="fill:${palette.number};stroke:rgba(0,0,0,0.34);stroke-width:1;paint-order:stroke;">${numbers[6]}</text>
+      </g>
     </svg>
   `;
 }
