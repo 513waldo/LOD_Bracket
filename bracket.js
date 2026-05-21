@@ -2143,7 +2143,9 @@ function startD20Roll() {
   d20RollState.active = true;
   d20RollState.startedAt = performance.now();
   d20RollState.lastTime = d20RollState.startedAt;
-  d20RollState.durationMs = rand(d20RollDurationMinMs, d20RollDurationMaxMs);
+  d20RollState.durationMs = Math.floor(
+    Math.random() * (d20RollDurationMaxMs - d20RollDurationMinMs + 1)
+  ) + d20RollDurationMinMs;
   diceValues[0] = d20RollState.dies[0].displayNum;
   diceValues[1] = d20RollState.dies[1].displayNum;
 
