@@ -187,8 +187,8 @@ let registryRefreshTimer = null;
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 
-window.generatePlayers = generatePlayers;
-window.buildBracket = buildBracket;
+window.startTeamGeneration = generatePlayers;
+window.startBracketBuild = buildBracket;
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
