@@ -12,9 +12,9 @@ const redrawWarning = document.querySelector("#redrawWarning");
 const teamDrawWarning = document.querySelector("#teamDrawWarning");
 const nameBackupList = document.querySelector("#nameBackupList");
 const outShotSheet = document.querySelector("#outShotSheet");
+const d20Canvas = document.querySelector("#d20Canvas");
+const d20Context = d20Canvas ? d20Canvas.getContext("2d") : null;
 const rollDiceButton = document.querySelector("#rollDice");
-const dieButtons = Array.from(document.querySelectorAll("[data-die-index]"));
-const diceTotal = document.querySelector("#diceTotal");
 const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
 const resetMysteryOutButton = document.querySelector("#resetMysteryOut");
 const mysteryOutValue = document.querySelector("#mysteryOutValue");
@@ -116,7 +116,10 @@ const mysteryOutRanges = {
   master: { min: 2, max: 180 },
 };
 const diceValues = [1, 1];
-const diceRollTimers = [null, null];
+const d20CanvasWidth = 680;
+const d20CanvasHeight = 480;
+const d20Radius = 76;
+const d20RollDurationMs = 10000;
 const pdfBracketLayouts = {
   3: { pdf: "3teamdouble.pdf", winner: "G1 / G2 / G4", loser: "G3 / G5", final: "G4", reset: "G5 from L4" },
   4: { pdf: "4teamDouble.pdf", winner: "G1,G2 / G3 / G6", loser: "G4 / G5 / G7", final: "G6", reset: "G7 from L6" },
@@ -165,6 +168,9 @@ let bullseyeShootWinner = null;
 let bullseyeShootCurrentPot = 0;
 let splitPotDrawAnimation = null;
 let bullseyeShootDrawAnimation = null;
+let d20RollState = null;
+let d20RollFrame = null;
+let d20RollStartTime = 0;
 const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
@@ -374,12 +380,6 @@ outShotSheet.addEventListener("input", (event) => {
 
 rollDiceButton.addEventListener("click", () => {
   rollDice();
-});
-
-dieButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    rollDie(Number(button.dataset.dieIndex));
-  });
 });
 
 generateMysteryOutButton.addEventListener("click", () => {
@@ -1808,8 +1808,10 @@ function resetTournament() {
     renderPdfColumnMirror(8);
   }
 
-  setDieValue(0, 1);
-  setDieValue(1, 1);
+  diceValues[0] = 1;
+  diceValues[1] = 1;
+  d20RollState = null;
+  renderDice();
 
   splitPotEntries = [];
   splitPotWinner = null;
@@ -2051,285 +2053,386 @@ function getOutShotNumberValue(input) {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
-function rollDice() {
-  diceValues.forEach((_, index) => {
-    animateDieRoll(index);
-  });
-}
-
-function rollDie(index) {
-  if (!Number.isInteger(index) || index < 0 || index >= diceValues.length) {
-    return;
-  }
-
-  animateDieRoll(index);
-}
-
-function animateDieRoll(index) {
-  const button = dieButtons[index];
-  if (!button) {
-    return;
-  }
-
-  if (diceRollTimers[index]) {
-    clearInterval(diceRollTimers[index].interval);
-    clearTimeout(diceRollTimers[index].timeout);
-  }
-
-  button.classList.add("rolling");
-  diceRollTimers[index] = {
-    interval: setInterval(() => {
-      setDieValue(index, randomD20());
-    }, 70),
-    timeout: setTimeout(() => {
-      clearInterval(diceRollTimers[index].interval);
-      diceRollTimers[index] = null;
-      setDieValue(index, randomD20());
-      button.classList.remove("rolling");
-      queueBracketDraftSave();
-    }, 1600),
-  };
-}
-
 function randomD20() {
   return Math.floor(Math.random() * 20) + 1;
 }
 
 function renderDice() {
-  dieButtons.forEach((button, index) => {
-    setDieValue(index, diceValues[index]);
+  if (!d20Context || !d20Canvas) {
+    return;
+  }
+
+  d20Canvas.width = d20CanvasWidth;
+  d20Canvas.height = d20CanvasHeight;
+
+  if (!d20RollState) {
+    d20RollState = createD20RollState();
+  }
+
+  d20RollState.active = false;
+  d20RollState.startedAt = performance.now();
+  d20RollState.lastTime = d20RollState.startedAt;
+  d20RollState.dies.forEach((die, index) => {
+    die.stopped = true;
+    die.vx = 0;
+    die.vy = 0;
+    die.displayNum = diceValues[index] || die.displayNum;
+    die.finalVal = die.displayNum;
+    die.stoppedAngle = die.angle;
   });
+
+  diceValues[0] = d20RollState.dies[0].displayNum;
+  diceValues[1] = d20RollState.dies[1].displayNum;
+  drawD20Frame(performance.now());
   queueBracketDraftSave();
 }
 
-function generateMysteryOut() {
-  if (mysteryOut || mysteryOutDrawAnimation) {
-    return;
-  }
+function createD20RollState() {
+  const BLACK = { body: "#111111", dark: "#000000", mid: "#1e1e1e", light: "#444444", text: "#FF6A00", label: "#884400" };
+  const PURPLE = { body: "#7F77DD", dark: "#3C3489", mid: "#534AB7", light: "#CECBF6", text: "#39FF14", label: "#1a7a00" };
 
-  const mode = getMysteryOutMode();
-  const availableOuts = getAvailableOuts(mode);
-  if (!availableOuts.length) {
-    showMessage("No mystery out values are available for that mode.");
-    return;
-  }
-
-  stopMysteryOutDrawAnimation();
-  mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
-    values: availableOuts,
-    durationMs: 20000,
-    onFrame: (score) => {
-      if (mysteryOutDrawAnimation) {
-        mysteryOutDrawAnimation.value = score;
-        mysteryOutDrawAnimation.active = true;
-      }
-      renderMysteryOut();
-    },
-    onComplete: (score) => {
-      if (mysteryOutDrawAnimation) {
-        mysteryOutDrawAnimation.active = false;
-      }
-      stopMysteryOutDrawAnimation();
-      mysteryOut = {
-        mode,
-        score,
-      };
-      renderMysteryOut();
-      savePortalSnapshotToLocalStorage();
-      queueBracketDraftSave();
-    },
+  const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
+    color,
+    spinDir,
+    restX,
+    restY,
+    x: startX,
+    y: startY,
+    vx,
+    vy,
+    angle: 0,
+    displayNum: randomD20(),
+    finalVal: randomD20(),
+    locked: false,
+    lastFlick: 0,
+    stopped: false,
+    stoppedAngle: 0,
+    trail: [],
+    colliding: false,
   });
-  renderMysteryOut();
-}
-
-function renderMysteryOut() {
-  const rollingScore = mysteryOutDrawAnimation?.active ? mysteryOutDrawAnimation.value : null;
-  mysteryOutValue.textContent = rollingScore !== null ? String(rollingScore) : (mysteryOut ? mysteryOut.score : "--");
-  generateMysteryOutButton.disabled = Boolean(mysteryOut || mysteryOutDrawAnimation);
-  generateMysteryOutButton.textContent = mysteryOutDrawAnimation
-    ? "Drawing..."
-    : mysteryOut
-      ? "Locked until reset"
-      : "Generate mystery out";
-  resetMysteryOutButton.hidden = !mysteryOut && !mysteryOutDrawAnimation;
-  mysteryOutModeInputs.forEach((input) => {
-    input.disabled = Boolean(mysteryOut || mysteryOutDrawAnimation);
-  });
-  updateOutShotWinners();
-  renderMysteryOutWinner();
-}
-
-function resetMysteryOut() {
-  stopMysteryOutDrawAnimation();
-  mysteryOut = "";
-  renderMysteryOut();
-  savePortalSnapshotToLocalStorage();
-  queueBracketDraftSave();
-}
-
-function getAvailableOuts(mode) {
-  const finishScores = getMysteryOutFinishes(mode);
-  const totals = new Set();
-
-  finishScores.forEach((finish) => totals.add(finish));
-  dartScores.forEach((first) => {
-    finishScores.forEach((finish) => totals.add(first + finish));
-    dartScores.forEach((second) => {
-      finishScores.forEach((finish) => totals.add(first + second + finish));
-    });
-  });
-
-  const exclusions = mysteryOutExclusions[mode] || [];
-  const range = mysteryOutRanges[mode] || mysteryOutRanges.double;
-
-  return [...totals]
-    .filter((score) => score >= range.min && score <= range.max && !exclusions.includes(score))
-    .sort((a, b) => a - b);
-}
-
-function getMysteryOutFinishes(mode) {
-  if (mode === "open") {
-    return dartScores;
-  }
-
-  if (mode === "master") {
-    return masterOutFinishes;
-  }
-
-  return doubleOutFinishes;
-}
-
-function getMysteryOutMode() {
-  return mysteryOutModeInputs.find((input) => input.checked)?.dataset.mysteryOutMode || "double";
-}
-
-function setMysteryOutMode(mode) {
-  mysteryOutModeInputs.forEach((input) => {
-    input.checked = input.dataset.mysteryOutMode === mode;
-  });
-}
-
-function normalizeD20Number(value) {
-  const numeric = Math.floor(Number(value) || 1);
-  const wrapped = ((numeric - 1) % 20 + 20) % 20;
-  return wrapped + 1;
-}
-
-function buildD20DieMarkup(index, value) {
-  const label = index === 0 ? "Triple" : "Double";
-  const dieValue = normalizeD20Number(value);
-
-  return `
-    <span class="die-visual die-face-square" aria-hidden="true">
-      <span class="die-face-number">${dieValue}</span>
-    </span>
-    <span class="die-label">${label}</span>
-  `;
-}
-function mixHexColors(startHex, endHex, amount) {
-  const ratio = Math.max(0, Math.min(1, amount));
-  const start = hexToRgb(startHex);
-  const end = hexToRgb(endHex);
-
-  if (!start || !end) {
-    return startHex;
-  }
-
-  const red = Math.round(start.red + (end.red - start.red) * ratio);
-  const green = Math.round(start.green + (end.green - start.green) * ratio);
-  const blue = Math.round(start.blue + (end.blue - start.blue) * ratio);
-
-  return rgbToHex(red, green, blue);
-}
-
-function hexToRgb(hex) {
-  const normalized = String(hex || "").trim().replace(/^#/, "");
-  const shorthand = normalized.length === 3
-    ? normalized.split("").map((char) => char + char).join("")
-    : normalized;
-
-  if (!/^[0-9a-fA-F]{6}$/.test(shorthand)) {
-    return null;
-  }
 
   return {
-    red: Number.parseInt(shorthand.slice(0, 2), 16),
-    green: Number.parseInt(shorthand.slice(2, 4), 16),
-    blue: Number.parseInt(shorthand.slice(4, 6), 16),
+    active: false,
+    startedAt: 0,
+    dies: [
+      makeDie(BLACK, 1, 140, 170, 3.1, 2.1, 170, 200),
+      makeDie(PURPLE, -1, 495, 290, -3.3, -1.7, 490, 320),
+    ],
   };
 }
 
-function rgbToHex(red, green, blue) {
-  return `#${[red, green, blue]
-    .map((value) => Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0"))
-    .join("")}`;
-}
-
-function rotatePoint3D(x, y, z, rotation) {
-  const rx = rotation.x || 0;
-  const ry = rotation.y || 0;
-  const rz = rotation.z || 0;
-
-  let px = x;
-  let py = y;
-  let pz = z;
-
-  // Rotate around X.
-  let sin = Math.sin(rx);
-  let cos = Math.cos(rx);
-  let ty = py * cos - pz * sin;
-  let tz = py * sin + pz * cos;
-  py = ty;
-  pz = tz;
-
-  // Rotate around Y.
-  sin = Math.sin(ry);
-  cos = Math.cos(ry);
-  let tx = px * cos + pz * sin;
-  tz = -px * sin + pz * cos;
-  px = tx;
-  pz = tz;
-
-  // Rotate around Z.
-  sin = Math.sin(rz);
-  cos = Math.cos(rz);
-  tx = px * cos - py * sin;
-  ty = px * sin + py * cos;
-
-  return { x: tx, y: ty, z: pz };
-}
-
-function isFrontFacingFace(points) {
-  if (points.length < 3) {
-    return false;
-  }
-
-  const normal = getFaceNormal(points);
-  return normal.z < 0;
-}
-
-function getFaceNormal(points) {
-  const [a, b, c] = points;
-  const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
-  const ac = { x: c.x - a.x, y: c.y - a.y, z: c.z - a.z };
-  return {
-    x: (ab.y * ac.z) - (ab.z * ac.y),
-    y: (ab.z * ac.x) - (ab.x * ac.z),
-    z: (ab.x * ac.y) - (ab.y * ac.x),
-  };
-}
-
-function setDieValue(index, value) {
-  const button = dieButtons[index];
-  if (!button) {
+function rollDice() {
+  if (!d20Context || !d20Canvas || d20RollState?.active) {
     return;
   }
 
-  diceValues[index] = value;
-  button.innerHTML = buildD20DieMarkup(index, value);
-  button.setAttribute("aria-label", `Roll die ${index + 1}, current value ${value}`);
+  startD20Roll();
+}
 
-  diceTotal.textContent = `Total: ${diceValues.reduce((sum, value) => sum + value, 0)}`;
+function startD20Roll() {
+  d20RollState = createD20RollState();
+  d20RollState.active = true;
+  d20RollState.startedAt = performance.now();
+  d20RollState.lastTime = d20RollState.startedAt;
+  diceValues[0] = d20RollState.dies[0].displayNum;
+  diceValues[1] = d20RollState.dies[1].displayNum;
+
+  if (d20RollFrame) {
+    cancelAnimationFrame(d20RollFrame);
+  }
+
+  const frame = (now) => {
+    d20RollFrame = requestAnimationFrame(frame);
+    drawD20Frame(now);
+  };
+
+  d20RollFrame = requestAnimationFrame(frame);
+}
+
+function updateD20Die(die, dt) {
+  if (die.stopped) {
+    return;
+  }
+
+  die.x += die.vx * dt * 60;
+  die.y += die.vy * dt * 60;
+
+  if (die.x - d20Radius < 0) { die.x = d20Radius; die.vx = Math.abs(die.vx) * 0.92; }
+  if (die.x + d20Radius > d20CanvasWidth) { die.x = d20CanvasWidth - d20Radius; die.vx = -Math.abs(die.vx) * 0.92; }
+  if (die.y - d20Radius < 0) { die.y = d20Radius; die.vy = Math.abs(die.vy) * 0.92; }
+  if (die.y + d20Radius > d20CanvasHeight) { die.y = d20CanvasHeight - d20Radius; die.vy = -Math.abs(die.vy) * 0.92; }
+
+  die.vx *= 0.995;
+  die.vy *= 0.995;
+
+  const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
+  die.angle += spd * 0.03 * die.spinDir;
+
+  die.trail.push({ x: die.x, y: die.y });
+  if (die.trail.length > 22) {
+    die.trail.shift();
+  }
+}
+
+function resolveD20Collision(a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const dist = Math.sqrt((dx * dx) + (dy * dy));
+  if (!dist) {
+    return;
+  }
+
+  const minDist = d20Radius * 2;
+  if (dist >= minDist) {
+    return;
+  }
+
+  a.colliding = true;
+  b.colliding = true;
+  setTimeout(() => {
+    a.colliding = false;
+    b.colliding = false;
+  }, 120);
+
+  const overlap = minDist - dist;
+  const nx = dx / dist;
+  const ny = dy / dist;
+  a.x -= nx * overlap * 0.5;
+  a.y -= ny * overlap * 0.5;
+  b.x += nx * overlap * 0.5;
+  b.y += ny * overlap * 0.5;
+
+  const dvx = a.vx - b.vx;
+  const dvy = a.vy - b.vy;
+  const dot = (dvx * nx) + (dvy * ny);
+  if (dot > 0) {
+    return;
+  }
+
+  const impulse = dot * 1.05;
+  a.vx -= impulse * nx;
+  a.vy -= impulse * ny;
+  b.vx += impulse * nx;
+  b.vy += impulse * ny;
+
+  a.vx += rand(-0.5, 0.5);
+  a.vy += rand(-0.5, 0.5);
+  b.vx += rand(-0.5, 0.5);
+  b.vy += rand(-0.5, 0.5);
+}
+
+function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
+  if (!d20Context) {
+    return;
+  }
+
+  const ctx = d20Context;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3 - Math.PI / 6;
+    pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+  }
+
+  ctx.beginPath();
+  pts.forEach(([x, y], i) => {
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.closePath();
+  ctx.fillStyle = flash ? "#ffffff" : color.body;
+  ctx.fill();
+  ctx.strokeStyle = flash ? "#ffffff" : color.dark;
+  ctx.lineWidth = flash ? 3 : 2;
+  ctx.stroke();
+
+  if (!flash) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(pts[0][0], pts[0][1]);
+    ctx.lineTo(pts[1][0], pts[1][1]);
+    ctx.closePath();
+    ctx.fillStyle = color.mid;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(pts[3][0], pts[3][1]);
+    ctx.lineTo(pts[4][0], pts[4][1]);
+    ctx.closePath();
+    ctx.fillStyle = color.dark;
+    ctx.globalAlpha = 0.6;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = color.light;
+    ctx.lineWidth = 0.7;
+    ctx.globalAlpha = 0.35;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.font = `700 ${Math.round(r * 0.52)}px sans-serif`;
+  ctx.fillStyle = flash ? color.body : color.text;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(numStr, 0, r * 0.1);
+
+  if (!flash) {
+    ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
+    ctx.fillStyle = color.label;
+    ctx.globalAlpha = 0.9;
+    ctx.fillText("d20", 0, -r * 0.48);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+function drawD20Shadow(x, y) {
+  if (!d20Context) {
+    return;
+  }
+
+  const depthFactor = y / d20CanvasHeight;
+  const ctx = d20Context;
+  ctx.save();
+  ctx.globalAlpha = 0.07 + depthFactor * 0.16;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(x, y + d20Radius * 0.88, d20Radius * 0.65 * (0.5 + depthFactor * 0.55), d20Radius * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawD20Trail(die) {
+  if (!d20Context || !die.trail || die.trail.length < 2) {
+    return;
+  }
+
+  const ctx = d20Context;
+  ctx.save();
+  for (let i = 1; i < die.trail.length; i++) {
+    const alpha = (i / die.trail.length) * 0.10;
+    const size = d20Radius * 0.30 * (i / die.trail.length);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = die.color.body;
+    ctx.beginPath();
+    ctx.arc(die.trail[i].x, die.trail[i].y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawD20Timer(now) {
+  if (!d20Context || !d20RollState || !d20RollState.active) {
+    return;
+  }
+
+  const ctx = d20Context;
+  const elapsed = now - d20RollState.startedAt;
+  const remaining = Math.max(0, Math.ceil((d20RollDurationMs - elapsed) / 1000));
+  const done = d20RollState.dies.every((die) => die.stopped);
+
+  ctx.save();
+  ctx.font = "500 14px sans-serif";
+  ctx.fillStyle = done ? "rgba(128,200,128,0.9)" : "rgba(180,180,180,0.6)";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(done ? "rolled!" : `stopping in ${remaining}s`, d20CanvasWidth - 10, 10);
+  ctx.restore();
+}
+
+function drawD20Frame(now) {
+  if (!d20Context || !d20Canvas || !d20RollState) {
+    return;
+  }
+
+  const ctx = d20Context;
+  const state = d20RollState;
+  const dt = state.active ? Math.min((now - (state.lastTime || now)) / 1000, 0.05) : 0;
+  state.lastTime = now;
+
+  ctx.clearRect(0, 0, d20CanvasWidth, d20CanvasHeight);
+
+  const globalElapsed = now - state.startedAt;
+  const timeUp = globalElapsed >= d20RollDurationMs;
+
+  drawD20Timer(now);
+
+  state.dies.forEach((die) => updateD20Die(die, dt));
+  resolveD20Collision(state.dies[0], state.dies[1]);
+
+  state.dies.forEach((die) => {
+    if (timeUp && !die.stopped) {
+      die.stopped = true;
+      die.finalVal = randomD20();
+      die.displayNum = die.finalVal;
+      die.stoppedAngle = die.angle;
+      die.vx = 0;
+      die.vy = 0;
+    }
+  });
+
+  state.dies.forEach((die) => {
+    if (die.stopped) {
+      return;
+    }
+
+    const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
+    if (spd > 1.2) {
+      die.locked = false;
+      const flickSpeed = Math.max(35, Math.floor(spd * 18));
+      if (now - die.lastFlick > flickSpeed) {
+        die.displayNum = randomD20();
+        die.lastFlick = now;
+      }
+    } else if (!die.locked) {
+      die.finalVal = randomD20();
+      die.locked = true;
+      die.displayNum = die.finalVal;
+    }
+  });
+
+  state.dies.forEach((die) => {
+    if (!die.stopped) {
+      drawD20Trail(die);
+    }
+  });
+
+  state.dies.forEach((die) => {
+    if (die.stopped) {
+      drawD20Shadow(die.restX, die.restY);
+      drawD20Hex(die.restX, die.restY, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
+    } else {
+      drawD20Shadow(die.x, die.y);
+      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.colliding);
+    }
+  });
+
+  diceValues[0] = state.dies[0].displayNum;
+  diceValues[1] = state.dies[1].displayNum;
+
+  if (timeUp && state.dies.every((die) => die.stopped)) {
+    state.active = false;
+    if (d20RollFrame) {
+      cancelAnimationFrame(d20RollFrame);
+      d20RollFrame = null;
+    }
+    queueBracketDraftSave();
+    return;
+  }
 }
 
 function renderNameInputs(count) {
@@ -4408,8 +4511,19 @@ function restoreBracketDraft() {
   if (Array.isArray(draft.diceValues) && draft.diceValues.length >= 2) {
     draft.diceValues.slice(0, 2).forEach((value, index) => {
       const numeric = Number(value) || 1;
-      setDieValue(index, numeric < 1 ? 1 : numeric);
+      diceValues[index] = numeric < 1 ? 1 : numeric;
     });
+    if (d20RollState?.dies) {
+      d20RollState.dies.slice(0, 2).forEach((die, index) => {
+        die.displayNum = diceValues[index];
+        die.finalVal = diceValues[index];
+        die.stopped = true;
+        die.vx = 0;
+        die.vy = 0;
+      });
+      d20RollState.active = false;
+    }
+    renderDice();
   }
 
   if (pdfLayoutSelect && Number.isInteger(Number(draft.pdfLayoutValue))) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-134">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-135">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -306,18 +306,8 @@
         <details class="panel tool-panel dice-roller">
           <summary>D20 Roller</summary>
           <div class="tool-body">
-          <div id="diceTotal" class="dice-total">Total: 2</div>
           <div class="dice-stage">
-            <div class="dice-tray" aria-live="polite">
-              <button id="dieOne" class="die-button die-steel" type="button" data-die-index="0" aria-label="Roll die one">
-                <span class="die-visual" aria-hidden="true"></span>
-                <span class="die-label">Triple</span>
-              </button>
-              <button id="dieTwo" class="die-button die-soft" type="button" data-die-index="1" aria-label="Roll die two">
-                <span class="die-visual" aria-hidden="true"></span>
-                <span class="die-label">Double</span>
-              </button>
-            </div>
+            <canvas id="d20Canvas" class="d20-canvas" width="680" height="480" aria-label="Animated D20 dice roll"></canvas>
           </div>
           <div class="dice-actions">
             <button id="rollDice" type="button">Roll both dice</button>
@@ -424,6 +414,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=6"></script>
-  <script src="bracket.js?v=interactive-tools-113"></script>
+  <script src="bracket.js?v=interactive-tools-114"></script>
 </body>
 </html>
