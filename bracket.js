@@ -398,6 +398,8 @@ window.addSplitPotEntry = addSplitPotEntry;
 window.addBullseyeShootEntry = addBullseyeShootEntry;
 window.drawSplitPotWinner = drawSplitPotWinner;
 window.drawBullseyeShootWinner = drawBullseyeShootWinner;
+window.mergePlayerNameBackup = mergePlayerNameBackup;
+window.deletePlayerNameBackup = deletePlayerNameBackup;
 
 toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
 document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
@@ -5292,8 +5294,8 @@ function renderNameBackups() {
           <small>${backup.nameCount} saved name${backup.nameCount === 1 ? "" : "s"} for ${backup.playerCount} player slots</small>
         </div>
         <div class="backup-item-actions">
-          <button class="secondary" type="button" data-merge-name-backup-id="${escapeAttribute(backup.id)}">Merge names</button>
-          <button class="danger" type="button" data-delete-name-backup-id="${escapeAttribute(backup.id)}">Delete</button>
+          <button class="secondary" type="button" onclick="mergePlayerNameBackup('${escapeAttribute(backup.id)}')">Merge names</button>
+          <button class="danger" type="button" onclick="deletePlayerNameBackup('${escapeAttribute(backup.id)}')">Delete</button>
         </div>
       </article>
     `;
