@@ -1892,7 +1892,7 @@ function resetTournament() {
   if (playersPerGroup) {
     playersPerGroup.value = "2";
   }
-  renderNameInputs(0);
+  nameList.innerHTML = "";
 
   clearPayoutInputs();
   if (payoutTeams) {
