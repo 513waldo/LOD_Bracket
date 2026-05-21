@@ -2311,11 +2311,6 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(numStr, 0, r * 0.1);
-  if (isWhiteDie && numStr === "6") {
-    ctx.lineWidth = Math.max(2, r * 0.07);
-    ctx.strokeStyle = "#c1121f";
-    ctx.strokeText(numStr, 0, r * 0.1);
-  }
 
   if (!flash && numStr === "6") {
     ctx.save();
