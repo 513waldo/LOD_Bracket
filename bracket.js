@@ -2395,8 +2395,7 @@ function drawD20Frame(now) {
   state.dies.forEach((die) => {
     if (timeUp && !die.stopped) {
       die.stopped = true;
-      die.finalVal = randomD20();
-      die.displayNum = die.finalVal;
+      die.finalVal = die.displayNum;
       die.stoppedAngle = die.angle;
       die.vx = 0;
       die.vy = 0;
@@ -2422,9 +2421,8 @@ function drawD20Frame(now) {
         die.lastFlick = now;
       }
     } else if (!die.locked) {
-      die.finalVal = randomD20();
+      die.finalVal = die.displayNum;
       die.locked = true;
-      die.displayNum = die.finalVal;
     }
   });
 
