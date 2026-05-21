@@ -1507,12 +1507,15 @@ button.player-button .loser-source-text {
 
 .dice-roller.is-maximized {
   position: fixed;
-  inset: 12px;
+  inset: 0;
   z-index: 2000;
-  width: auto;
+  width: 100vw;
+  height: 100vh;
   max-width: none;
   justify-self: stretch;
   margin: 0;
+  box-sizing: border-box;
+  padding: 12px;
   grid-template-rows: auto minmax(0, 1fr);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }

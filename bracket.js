@@ -390,9 +390,6 @@ document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && diceRollerPanel?.classList.contains("is-maximized")) {
     diceRollerPanel.classList.remove("is-maximized");
-    if (document.fullscreenElement === diceRollerPanel && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
     syncDiceRollerFullscreenState();
   }
 });
@@ -2160,20 +2157,13 @@ function toggleDiceRollerSize() {
 
   const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
   if (isMaximized) {
-    if (document.fullscreenElement === diceRollerPanel && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
     diceRollerPanel.classList.remove("is-maximized");
     syncDiceRollerFullscreenState();
     return;
   }
 
   diceRollerPanel.classList.add("is-maximized");
-  if (diceRollerPanel.requestFullscreen) {
-    diceRollerPanel.requestFullscreen().catch(() => {});
-  } else {
-    syncDiceRollerFullscreenState();
-  }
+  syncDiceRollerFullscreenState();
 }
 
 function syncDiceRollerFullscreenState() {
