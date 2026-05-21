@@ -1896,7 +1896,7 @@ function resetTournament() {
   deleteAllPlayerNameBackups();
 
   if (totalPlayers) {
-    totalPlayers.value = "";
+    totalPlayers.value = "0";
   }
   if (playersPerGroup) {
     playersPerGroup.value = "2";
