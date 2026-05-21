@@ -1491,9 +1491,47 @@ button.player-button .loser-source-text {
   border-color: rgba(0, 0, 0, 0.14);
 }
 
+.dice-maximize-toggle {
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .dice-roller .tool-body {
   background: #bcbcbc;
   padding: 12px;
+}
+
+.dice-roller.is-maximized {
+  position: fixed;
+  inset: 12px;
+  z-index: 2000;
+  width: auto;
+  max-width: none;
+  justify-self: stretch;
+  margin: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.dice-roller.is-maximized .tool-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.dice-roller.is-maximized .dice-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+.dice-roller.is-maximized .d20-canvas {
+  width: 100%;
+  max-width: none;
 }
 
 .dice-roller-heading {
@@ -1518,6 +1556,8 @@ button.player-button .loser-source-text {
 .dice-actions {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 10px;
   margin-top: 6px;
 }
 

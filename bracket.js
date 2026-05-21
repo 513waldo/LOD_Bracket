@@ -14,7 +14,9 @@ const nameBackupList = document.querySelector("#nameBackupList");
 const outShotSheet = document.querySelector("#outShotSheet");
 const d20Canvas = document.querySelector("#d20Canvas");
 const d20Context = d20Canvas ? d20Canvas.getContext("2d") : null;
+const diceRollerPanel = document.querySelector(".dice-roller");
 const rollDiceButton = document.querySelector("#rollDice");
+const toggleDiceRollerSizeButton = document.querySelector("#toggleDiceRollerSize");
 const generateMysteryOutButton = document.querySelector("#generateMysteryOut");
 const resetMysteryOutButton = document.querySelector("#resetMysteryOut");
 const mysteryOutValue = document.querySelector("#mysteryOutValue");
@@ -382,6 +384,10 @@ outShotSheet.addEventListener("input", (event) => {
 
 rollDiceButton.addEventListener("click", rollDice);
 window.rollDice = rollDice;
+
+toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
+document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
+syncDiceRollerFullscreenState();
 
 generateMysteryOutButton.addEventListener("click", () => {
   generateMysteryOut();
@@ -2136,6 +2142,41 @@ function rollDice() {
   }
 
   startD20Roll();
+}
+
+function toggleDiceRollerSize() {
+  if (!diceRollerPanel) {
+    return;
+  }
+
+  const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
+  if (isMaximized) {
+    if (document.fullscreenElement === diceRollerPanel && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    diceRollerPanel.classList.remove("is-maximized");
+    syncDiceRollerFullscreenState();
+    return;
+  }
+
+  diceRollerPanel.classList.add("is-maximized");
+  if (diceRollerPanel.requestFullscreen) {
+    diceRollerPanel.requestFullscreen().catch(() => {});
+  } else {
+    syncDiceRollerFullscreenState();
+  }
+}
+
+function syncDiceRollerFullscreenState() {
+  if (!diceRollerPanel || !toggleDiceRollerSizeButton) {
+    return;
+  }
+
+  const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
+  diceRollerPanel.classList.toggle("is-maximized", isMaximized);
+  toggleDiceRollerSizeButton.textContent = isMaximized ? "−" : "+";
+  toggleDiceRollerSizeButton.title = isMaximized ? "Restore D20 roller" : "Maximize D20 roller";
+  toggleDiceRollerSizeButton.setAttribute("aria-label", toggleDiceRollerSizeButton.title);
 }
 
 function startD20Roll() {
