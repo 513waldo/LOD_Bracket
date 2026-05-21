@@ -2251,7 +2251,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     }
   });
   ctx.closePath();
-  ctx.fillStyle = flash ? "#ffffff" : faceBody;
+  ctx.fillStyle = faceBody;
   ctx.fill();
   ctx.strokeStyle = flash ? "#ffffff" : faceDark;
   ctx.lineWidth = flash ? 3 : 2;
@@ -2289,7 +2289,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   }
 
   ctx.font = `700 ${Math.round(r * 0.52)}px sans-serif`;
-  ctx.fillStyle = flash ? faceBody : faceText;
+  ctx.fillStyle = faceText;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(numStr, 0, r * 0.1);
