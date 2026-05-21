@@ -5318,6 +5318,7 @@ function mergePlayerNameBackup(id) {
   }
 
   applyPlayerNameMap(backup.names, false);
+  queueBracketDraftSave();
   showMessage("Player names merged. Existing typed names were kept.");
 }
 
