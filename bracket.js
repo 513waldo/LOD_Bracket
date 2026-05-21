@@ -186,6 +186,7 @@ let lastPublishedPortalSnapshot = "";
 let registryRefreshTimer = null;
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
+let resetBracketClickLock = false;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -1881,6 +1882,14 @@ function hideTeamDrawWarning() {
 }
 
 function resetTournament() {
+  if (resetBracketClickLock) {
+    return;
+  }
+  resetBracketClickLock = true;
+  window.setTimeout(() => {
+    resetBracketClickLock = false;
+  }, 0);
+
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
   clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
@@ -4566,6 +4575,10 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
     clearTimeout(portalPublishTimer);
     portalPublishTimer = null;
   }
+  if (bracketDraftSaveTimer) {
+    clearTimeout(bracketDraftSaveTimer);
+    bracketDraftSaveTimer = null;
+  }
   lastPublishedPortalSnapshot = "";
   clearBracketCleanupTimer();
   if (cleanupCode) {
@@ -5356,6 +5369,8 @@ function deleteAllPlayerNameBackups() {
   localStorage.removeItem(nameBackupIndexKey);
   renderNameBackups();
 }
+
+document.querySelector("#resetBracket").addEventListener("click", resetTournament);
 
 function readNameBackupIndex() {
   if (!canUseLocalStorage()) {
