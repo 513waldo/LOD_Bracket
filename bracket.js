@@ -119,7 +119,8 @@ const diceValues = [1, 1];
 const d20CanvasWidth = 680;
 const d20CanvasHeight = 480;
 const d20Radius = 76;
-const d20RollDurationMs = 10000;
+const d20RollDurationMinMs = 5000;
+const d20RollDurationMaxMs = 15000;
 const pdfBracketLayouts = {
   3: { pdf: "3teamdouble.pdf", winner: "G1 / G2 / G4", loser: "G3 / G5", final: "G4", reset: "G5 from L4" },
   4: { pdf: "4teamDouble.pdf", winner: "G1,G2 / G3 / G6", loser: "G4 / G5 / G7", final: "G6", reset: "G7 from L6" },
@@ -2121,6 +2122,7 @@ function createD20RollState() {
   return {
     active: false,
     startedAt: 0,
+    durationMs: d20RollDurationMaxMs,
     dies: [
       makeDie(BLACK, 1, 140, 170, 3.1, 2.1, 170, 200),
       makeDie(PURPLE, -1, 495, 290, -3.3, -1.7, 490, 320),
@@ -2141,6 +2143,7 @@ function startD20Roll() {
   d20RollState.active = true;
   d20RollState.startedAt = performance.now();
   d20RollState.lastTime = d20RollState.startedAt;
+  d20RollState.durationMs = rand(d20RollDurationMinMs, d20RollDurationMaxMs);
   diceValues[0] = d20RollState.dies[0].displayNum;
   diceValues[1] = d20RollState.dies[1].displayNum;
 
@@ -2389,7 +2392,8 @@ function drawD20Timer(now) {
 
   const ctx = d20Context;
   const elapsed = now - d20RollState.startedAt;
-  const remaining = Math.max(0, Math.ceil((d20RollDurationMs - elapsed) / 1000));
+  const durationMs = d20RollState.durationMs || d20RollDurationMaxMs;
+  const remaining = Math.max(0, Math.ceil((durationMs - elapsed) / 1000));
   const done = d20RollState.dies.every((die) => die.stopped);
 
   ctx.save();
@@ -2414,7 +2418,8 @@ function drawD20Frame(now) {
   ctx.clearRect(0, 0, d20CanvasWidth, d20CanvasHeight);
 
   const globalElapsed = now - state.startedAt;
-  const timeUp = globalElapsed >= d20RollDurationMs;
+  const durationMs = state.durationMs || d20RollDurationMaxMs;
+  const timeUp = globalElapsed >= durationMs;
 
   drawD20Timer(now);
 
@@ -2437,7 +2442,7 @@ function drawD20Frame(now) {
     }
 
     const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
-    const shouldFlickNumbers = globalElapsed < d20RollDurationMs - 1000;
+    const shouldFlickNumbers = globalElapsed < durationMs - 1000;
     if (spd > 0.2 && now - die.lastShadeShift > 70) {
       die.shadeOffset = (die.shadeOffset + 1 + Math.floor(Math.random() * 4)) % 6;
       die.lastShadeShift = now;
