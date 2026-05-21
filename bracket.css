@@ -1506,12 +1506,12 @@ button.player-button .loser-source-text {
 }
 
 .dice-roller.is-maximized {
-  position: fixed;
+  position: fixed !important;
   inset: 0;
   z-index: 2000;
-  width: 100vw;
-  height: 100vh;
-  max-width: none;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
   justify-self: stretch;
   margin: 0;
   box-sizing: border-box;
@@ -1535,6 +1535,15 @@ button.player-button .loser-source-text {
 .dice-roller.is-maximized .d20-canvas {
   width: 100%;
   max-width: none;
+  height: calc(100vh - 120px);
+}
+
+body.dice-roller-maximized .app > *:not(.setup-stack) {
+  display: none;
+}
+
+body.dice-roller-maximized .setup-stack > *:not(.dice-roller) {
+  display: none;
 }
 
 .dice-roller-heading {

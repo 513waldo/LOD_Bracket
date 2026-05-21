@@ -390,6 +390,7 @@ document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && diceRollerPanel?.classList.contains("is-maximized")) {
     diceRollerPanel.classList.remove("is-maximized");
+    document.body.classList.remove("dice-roller-maximized");
     syncDiceRollerFullscreenState();
   }
 });
@@ -2158,11 +2159,13 @@ function toggleDiceRollerSize() {
   const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
   if (isMaximized) {
     diceRollerPanel.classList.remove("is-maximized");
+    document.body.classList.remove("dice-roller-maximized");
     syncDiceRollerFullscreenState();
     return;
   }
 
   diceRollerPanel.classList.add("is-maximized");
+  document.body.classList.add("dice-roller-maximized");
   syncDiceRollerFullscreenState();
 }
 
@@ -2173,6 +2176,7 @@ function syncDiceRollerFullscreenState() {
 
   const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
   diceRollerPanel.classList.toggle("is-maximized", isMaximized);
+  document.body.classList.toggle("dice-roller-maximized", isMaximized);
   toggleDiceRollerSizeButton.textContent = isMaximized ? "−" : "+";
   toggleDiceRollerSizeButton.title = isMaximized ? "Restore D20 roller" : "Maximize D20 roller";
   toggleDiceRollerSizeButton.setAttribute("aria-label", toggleDiceRollerSizeButton.title);
