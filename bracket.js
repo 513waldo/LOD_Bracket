@@ -1523,7 +1523,7 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
     winner
       ? `Bullshoot winner - ${winner.name} - ${winner.ticketLabel}`
       : `Bullseye Shoot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
-    ...(winner ? [`Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
+    ...(winner ? [`Winning ticket: ${winner.ticketLabel}`, `Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
   ].join("\n");
   return setBullshootPortalNotice(message);
