@@ -1489,6 +1489,12 @@ button.player-button .loser-source-text {
   justify-self: start;
 }
 
+.dice-roller,
+.dice-roller .tool-body,
+.dice-roller .tool-body .dice-stage {
+  background: #b8b8b8;
+}
+
 .dice-roller .tool-body {
   padding: 12px;
 }
