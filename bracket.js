@@ -2409,13 +2409,14 @@ function drawD20Frame(now) {
     }
 
     const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
+    const shouldFlickNumbers = globalElapsed < d20RollDurationMs - 1000;
     if (spd > 0.2 && now - die.lastShadeShift > 70) {
       die.shadeOffset = (die.shadeOffset + 1 + Math.floor(Math.random() * 4)) % 6;
       die.lastShadeShift = now;
     }
-    if (spd > 1.2) {
+    if (shouldFlickNumbers) {
       die.locked = false;
-      const flickSpeed = Math.max(35, Math.floor(spd * 18));
+      const flickSpeed = Math.max(30, Math.floor(spd * 14));
       if (now - die.lastFlick > flickSpeed) {
         die.displayNum = randomD20();
         die.lastFlick = now;
