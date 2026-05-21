@@ -190,11 +190,12 @@ textarea:focus {
 
 .qr-code {
   display: block;
-  width: 220px;
-  height: 220px;
-  border-radius: 8px;
-  background: var(--blue-panel);
-  padding: 6px;
+  width: min(300px, 100%);
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
   justify-self: start;
   min-width: 0;
 }
@@ -205,7 +206,7 @@ textarea:focus {
   align-content: start;
   gap: 8px;
   width: 100%;
-  max-width: 220px;
+  max-width: 300px;
   min-width: 0;
   justify-self: stretch;
 }
@@ -2358,13 +2359,13 @@ body.dice-roller-maximized .setup-stack > * {
   }
 
   .landing-qr {
-    width: 272px;
-    height: 272px;
+    width: min(300px, 100%);
+    height: auto;
   }
 
   .qr-code {
-    width: 280px;
-    height: 280px;
+    width: min(320px, 100%);
+    height: auto;
   }
 
   .top-workspace,

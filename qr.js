@@ -1,7 +1,7 @@
 function createPortalQrDataUrl(text, size = 360) {
   const encoded = encodeURIComponent(String(text || ""));
   const safeSize = Math.max(256, Math.round(size));
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${safeSize}x${safeSize}&margin=12&data=${encoded}&cb=${Date.now()}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${safeSize}x${safeSize}&margin=24&data=${encoded}&cb=${Date.now()}`;
 }
 
 function createQrMatrix(text) {
