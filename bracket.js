@@ -2096,9 +2096,8 @@ function createD20RollState() {
   const BLACK = { body: "#ff8c1a", dark: "#8a5200", mid: "#ffae4d", light: "#ffd89a", text: "#111111", label: "#111111" };
   const PURPLE = { body: "#ffffff", dark: "#c1121f", mid: "#f3f3f3", light: "#e0e0e0", text: "#111111", label: "#111111" };
 
-  const makeDie = (color, label, spinDir, startX, startY, vx, vy, restX, restY) => ({
+  const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
     color,
-    label,
     spinDir,
     restX,
     restY,
@@ -2123,8 +2122,8 @@ function createD20RollState() {
     active: false,
     startedAt: 0,
     dies: [
-      makeDie(BLACK, "Triple", 1, 140, 170, 3.1, 2.1, 170, 200),
-      makeDie(PURPLE, "double", -1, 495, 290, -3.3, -1.7, 490, 320),
+      makeDie(BLACK, 1, 140, 170, 3.1, 2.1, 170, 200),
+      makeDie(PURPLE, -1, 495, 290, -3.3, -1.7, 490, 320),
     ],
   };
 }
@@ -2230,7 +2229,7 @@ function resolveD20Collision(a, b) {
   b.shadeOffset = Math.floor(Math.random() * 6);
 }
 
-function drawD20Hex(cx, cy, r, angle, color, numStr, label, flash) {
+function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   if (!d20Context) {
     return;
   }
@@ -2341,7 +2340,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, label, flash) {
     ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
     ctx.fillStyle = faceLabel;
     ctx.globalAlpha = 0.9;
-    ctx.fillText(label || "", 0, -r * 0.48);
+    ctx.fillText("d20", 0, -r * 0.48);
     ctx.globalAlpha = 1;
   }
 
@@ -2466,10 +2465,10 @@ function drawD20Frame(now) {
     die.color.shadeOffset = die.shadeOffset;
     if (die.stopped) {
       drawD20Shadow(die.x, die.y);
-      drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), die.label, false);
+      drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
     } else {
       drawD20Shadow(die.x, die.y);
-      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.label, die.colliding);
+      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.colliding);
     }
   });
 
