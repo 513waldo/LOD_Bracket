@@ -2096,8 +2096,9 @@ function createD20RollState() {
   const BLACK = { body: "#ff8c1a", dark: "#8a5200", mid: "#ffae4d", light: "#ffd89a", text: "#111111", label: "#111111" };
   const PURPLE = { body: "#ffffff", dark: "#c1121f", mid: "#f3f3f3", light: "#e0e0e0", text: "#111111", label: "#111111" };
 
-  const makeDie = (color, spinDir, startX, startY, vx, vy, restX, restY) => ({
+  const makeDie = (color, label, spinDir, startX, startY, vx, vy, restX, restY) => ({
     color,
+    label,
     spinDir,
     restX,
     restY,
@@ -2122,8 +2123,8 @@ function createD20RollState() {
     active: false,
     startedAt: 0,
     dies: [
-      makeDie(BLACK, 1, 140, 170, 3.1, 2.1, 170, 200),
-      makeDie(PURPLE, -1, 495, 290, -3.3, -1.7, 490, 320),
+      makeDie(BLACK, "Triple", 1, 140, 170, 3.1, 2.1, 170, 200),
+      makeDie(PURPLE, "double", -1, 495, 290, -3.3, -1.7, 490, 320),
     ],
   };
 }
@@ -2340,7 +2341,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
     ctx.fillStyle = faceLabel;
     ctx.globalAlpha = 0.9;
-    ctx.fillText(color.body === "#ffffff" ? "double" : "Triple", 0, -r * 0.48);
+    ctx.fillText(label || "", 0, -r * 0.48);
     ctx.globalAlpha = 1;
   }
 
