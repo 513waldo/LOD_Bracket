@@ -2340,7 +2340,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
     ctx.fillStyle = faceLabel;
     ctx.globalAlpha = 0.9;
-    ctx.fillText("d20", 0, -r * 0.48);
+    ctx.fillText(color.body === "#ffffff" ? "double" : "Triple", 0, -r * 0.48);
     ctx.globalAlpha = 1;
   }
 
