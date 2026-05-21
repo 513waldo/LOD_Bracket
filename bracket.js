@@ -1171,14 +1171,19 @@ function addSplitPotEntry() {
   splitPotEntries.push(entry);
   splitPotWinner = null;
   let didSendNotice = false;
+  let renderSucceeded = false;
   try {
     saveSplitPot();
     renderSplitPot();
+    renderSucceeded = true;
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
     didSendNotice = sendSplitPotPortalNotice();
   } catch (error) {
     console.error(error);
-    showMessage("Split The Pot entry could not be added.");
-    return;
   }
 
   if (splitPotNameInput) {
@@ -1189,6 +1194,9 @@ function addSplitPotEntry() {
     splitPotTicketsInput.value = "0";
   }
 
+  if (!renderSucceeded) {
+    showMessage("Split The Pot entry saved, but the on-page list could not refresh.");
+  }
   showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
 
@@ -1254,14 +1262,19 @@ function addBullseyeShootEntry() {
   });
   bullseyeShootWinner = null;
   let didSendNotice = false;
+  let renderSucceeded = false;
   try {
     saveBullseyeShoot();
     renderBullseyeShoot();
+    renderSucceeded = true;
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
     didSendNotice = sendBullseyeShootPortalNotice();
   } catch (error) {
     console.error(error);
-    showMessage("Bullseye Shoot entry could not be added.");
-    return;
   }
 
   if (bullseyeShootNameInput) {
@@ -1272,6 +1285,9 @@ function addBullseyeShootEntry() {
     bullseyeShootTicketsInput.value = "0";
   }
 
+  if (!renderSucceeded) {
+    showMessage("Bullseye Shoot entry saved, but the on-page list could not refresh.");
+  }
   showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
 
