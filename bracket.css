@@ -1481,32 +1481,33 @@ button.player-button .loser-source-text {
   margin-top: 12px;
 }
 
-.dice-roller {
-  display: grid;
-  gap: 8px;
-  position: relative;
-}
-
 .dice-roller-heading {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
+  justify-content: space-between;
 }
 
-.dice-roller-heading h3 {
+.dice-roller-heading h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
+}
+
+.dice-runway {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0 4px;
 }
 
 .dice-stage {
   display: grid;
   place-items: center;
-  min-height: 220px;
-  padding-top: 0;
+  min-height: 420px;
+  padding: 12px 0 8px;
 }
 
 .dice-tray {
-  width: min(100%, 340px);
+  width: min(100%, 980px);
   margin: 0 auto;
   align-self: center;
 }
@@ -1523,9 +1524,8 @@ button.player-button .loser-source-text {
 }
 
 .dice-total {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  position: static;
+  margin-left: auto;
   border-radius: 999px;
   background: var(--soft);
   color: var(--primary-dark);
@@ -1536,7 +1536,7 @@ button.player-button .loser-source-text {
 .dice-tray {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 28px;
   align-items: center;
 }
 
@@ -1547,12 +1547,12 @@ button.player-button .loser-source-text {
   align-content: center;
   justify-self: center;
   width: 100%;
-  min-height: 208px;
+  min-height: 280px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--blue-panel);
   color: var(--ink);
-  padding: 14px;
+  padding: 22px 18px 18px;
   transition: transform 160ms ease, filter 160ms ease;
 }
 
@@ -1585,7 +1585,7 @@ button.player-button .loser-source-text {
 
 .die-visual {
   display: block;
-  width: min(100%, 190px);
+  width: min(100%, 250px);
   aspect-ratio: 1 / 1;
 }
 
@@ -1617,7 +1617,7 @@ button.player-button .loser-source-text {
 
 .d20-face text {
   fill: var(--die-number-color);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -2486,7 +2486,15 @@ button.player-button .loser-source-text {
   }
 
   .die-button {
-    min-height: 96px;
+    min-height: 220px;
+  }
+
+  .dice-runway {
+    margin-top: 12px;
+  }
+
+  .dice-stage {
+    min-height: 300px;
   }
 
   .mystery-out-value {
