@@ -4,15 +4,32 @@ function createPortalQrDataUrl(text, size = 360) {
   const moduleCount = matrix.length;
   const marginModules = 4;
   const totalModules = moduleCount + (marginModules * 2);
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize}" height="${safeSize}" viewBox="0 0 ${totalModules} ${totalModules}" shape-rendering="crispEdges">`,
-    `<rect width="${totalModules}" height="${totalModules}" fill="#fff"/>`,
-    `<g fill="#000">`,
-    ...matrix.flatMap((row, y) => row.map((cell, x) => (cell ? `<rect x="${x + marginModules}" y="${y + marginModules}" width="1" height="1"/>` : ""))).filter(Boolean),
-    `</g>`,
-    `</svg>`,
-  ].join("");
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  const canvas = document.createElement("canvas");
+  canvas.width = safeSize;
+  canvas.height = safeSize;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return "";
+  }
+
+  const scale = safeSize / totalModules;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, safeSize, safeSize);
+  ctx.fillStyle = "#000";
+  for (let y = 0; y < moduleCount; y += 1) {
+    for (let x = 0; x < moduleCount; x += 1) {
+      if (matrix[y][x]) {
+        ctx.fillRect(
+          Math.round((x + marginModules) * scale),
+          Math.round((y + marginModules) * scale),
+          Math.ceil(scale),
+          Math.ceil(scale),
+        );
+      }
+    }
+  }
+
+  return canvas.toDataURL("image/png");
 }
 
 function createQrMatrix(text) {
