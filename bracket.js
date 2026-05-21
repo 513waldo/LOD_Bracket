@@ -521,13 +521,6 @@ function generatePlayers() {
   const count = Number(totalPlayers.value);
   const groupSize = Number(playersPerGroup.value);
 
-  if (hasGeneratedTeams) {
-    blockedGenerateCount += 1;
-    showTeamDrawWarning(`SHAME...SHAME...SHAME!!! Teams were already generated. This is blocked to prevent a redraw. Attempt ${blockedGenerateCount + 1}.`);
-    showMessage("Teams were already generated. Use the existing draw.");
-    return;
-  }
-
   if (!Number.isInteger(count) || count < 2 || count > 200) {
     showMessage("Enter 2 to 200 players.");
     return;
@@ -574,30 +567,35 @@ function generatePlayers() {
 
 async function buildBracket() {
   const players = getPlayers();
+  const activePlayers = players.length >= 2
+    ? players
+    : currentTeams.length
+      ? currentTeams.map(formatTeam)
+      : [];
 
-  if (players.length < 2) {
+  if (activePlayers.length < 2) {
     showMessage("Add at least 2 players to build a bracket.");
     return;
   }
 
-  if (players.length > 100) {
+  if (activePlayers.length > 100) {
     showMessage("Bracket supports up to 100 teams.");
     return;
   }
 
   const pdfGraphs = await loadPdfBracketGraphs();
-  if (players.length >= 3 && players.length <= 24 && !pdfGraphs?.[players.length]) {
+  if (activePlayers.length >= 3 && activePlayers.length <= 24 && !pdfGraphs?.[activePlayers.length]) {
     showMessage("The learned PDF bracket graph could not be loaded. Try refreshing the page.");
     return;
   }
 
-  state = createBracketGraph(players);
+  state = createBracketGraph(activePlayers);
   renderBracket();
   queueActiveLodCodesRefresh();
-  syncPdfLayoutToTeamCount(players.length);
-  syncPayoutTeams(players.length);
+  syncPdfLayoutToTeamCount(activePlayers.length);
+  syncPayoutTeams(activePlayers.length);
   updatePayoutCalculator();
-  showMessage(`Bracket built for ${players.length} player${players.length === 1 ? "" : "s"}.`);
+  showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
 
 document.querySelector("#generatePlayers").addEventListener("click", generatePlayers);
