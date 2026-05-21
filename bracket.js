@@ -175,6 +175,7 @@ let bullseyeShootDrawAnimation = null;
 let d20RollState = null;
 let d20RollFrame = null;
 let d20RollInterval = null;
+let d20RollCompleteTimer = null;
 let d20RollStartTime = 0;
 let diceRollerOriginalParent = null;
 let diceRollerOriginalNextSibling = null;
@@ -2291,6 +2292,7 @@ function startD20Roll() {
   d20RollState.active = true;
   d20RollState.startedAt = performance.now();
   d20RollState.lastTime = d20RollState.startedAt;
+  d20RollState.resultPublished = false;
   d20RollState.durationMs = Math.floor(
     Math.random() * (d20RollDurationMaxMs - d20RollDurationMinMs + 1)
   ) + d20RollDurationMinMs;
@@ -2303,8 +2305,18 @@ function startD20Roll() {
   if (d20RollInterval) {
     clearInterval(d20RollInterval);
   }
+  if (d20RollCompleteTimer) {
+    clearTimeout(d20RollCompleteTimer);
+  }
 
   d20RollInterval = setInterval(() => drawD20Frame(performance.now()), 16);
+  d20RollCompleteTimer = setTimeout(() => {
+    if (!d20RollState || d20RollState.resultPublished) {
+      return;
+    }
+    d20RollState.resultPublished = true;
+    sendBullshootRollPortalNotice(d20RollState.dies.map((die) => die.finalVal || die.displayNum));
+  }, d20RollState.durationMs + 150);
   drawD20Frame(performance.now());
 }
 
@@ -2609,7 +2621,10 @@ function drawD20Frame(now) {
   diceValues[1] = state.dies[1].displayNum;
 
   if (timeUp && state.dies.every((die) => die.stopped)) {
-    sendBullshootRollPortalNotice(state.dies.map((die) => die.displayNum));
+    if (!state.resultPublished) {
+      state.resultPublished = true;
+      sendBullshootRollPortalNotice(state.dies.map((die) => die.displayNum));
+    }
     state.active = false;
     if (d20RollFrame) {
       cancelAnimationFrame(d20RollFrame);
@@ -2618,6 +2633,10 @@ function drawD20Frame(now) {
     if (d20RollInterval) {
       clearInterval(d20RollInterval);
       d20RollInterval = null;
+    }
+    if (d20RollCompleteTimer) {
+      clearTimeout(d20RollCompleteTimer);
+      d20RollCompleteTimer = null;
     }
     queueBracketDraftSave();
     return;
