@@ -86,6 +86,9 @@ const splitPotStorageKey = "dartsTournamentSplitPot";
 const bullseyeShootStorageKey = "dartsTournamentBullseyeShoot";
 const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
 const bracketDraftStorageKey = "dartsTournamentBracketDraft";
+const bracketDraftSessionStorageKey = "dartsTournamentBracketDraftSession";
+const bracketDraftWindowNamePrefix = "dartsTournamentBracketDraftWindow:";
+const bracketDraftHistoryStateKey = "bracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
 const lodCodeStorageKey = "dartsTournamentLodCode";
 const lodCodeClearedValue = "__CLEARED__";
@@ -187,10 +190,45 @@ let registryRefreshTimer = null;
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 let resetBracketClickLock = false;
+let lastSyncedPlayerCount = null;
+let totalPlayersSyncTimer = null;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
 window.resetTournament = resetTournament;
+window.handleBracketWinnerClick = handleBracketWinnerClick;
+window.handleBracketResetClick = handleBracketResetClick;
+window.clearBullShootEntries = clearBullShootEntries;
+window.addBullseyeShootEntry = addBullseyeShootEntry;
+window.drawBullseyeShootWinner = drawBullseyeShootWinner;
+window.restoreBracketBackup = restoreBracketBackup;
+
+function syncTotalPlayersSection(force = false) {
+  const rawCount = Number(totalPlayers?.value);
+  const normalizedCount = Number.isFinite(rawCount) ? Math.trunc(rawCount) : 0;
+
+  if (!force && normalizedCount === lastSyncedPlayerCount) {
+    return;
+  }
+
+  lastSyncedPlayerCount = normalizedCount;
+  renderNameInputs(normalizedCount);
+  syncPdfLayoutToTeamCount(normalizedCount);
+  syncPayoutTeamsFromPlayerCount();
+  updatePayoutCalculator();
+}
+
+function handleTotalPlayersUpdate() {
+  syncTotalPlayersSection(true);
+}
+
+window.syncTotalPlayersSection = syncTotalPlayersSection;
+window.handleTotalPlayersUpdate = handleTotalPlayersUpdate;
+
+totalPlayers?.addEventListener("input", handleTotalPlayersUpdate);
+totalPlayers?.addEventListener("change", handleTotalPlayersUpdate);
+totalPlayers?.addEventListener("keyup", handleTotalPlayersUpdate);
+totalPlayers?.addEventListener("paste", () => window.setTimeout(() => syncTotalPlayersSection(true), 0));
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
@@ -214,14 +252,11 @@ updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 restoreBracketDraft();
+syncTotalPlayersSection(true);
+if (!totalPlayersSyncTimer) {
+  totalPlayersSyncTimer = window.setInterval(() => syncTotalPlayersSection(false), 250);
+}
 loadActiveLodCodes();
-
-totalPlayers.addEventListener("change", () => {
-  renderNameInputs(Number(totalPlayers.value));
-  syncPdfLayoutToTeamCount(Number(totalPlayers.value));
-  syncPayoutTeamsFromPlayerCount();
-  updatePayoutCalculator();
-});
 
 playersPerGroup.addEventListener("change", () => {
   syncPayoutTeamsFromPlayerCount();
@@ -229,7 +264,7 @@ playersPerGroup.addEventListener("change", () => {
 });
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
-  renderNameInputs(Number(totalPlayers.value));
+  syncTotalPlayersSection(true);
   queueBracketDraftSave();
 });
 
@@ -400,9 +435,7 @@ rollDiceButton.addEventListener("click", rollDice);
 window.rollDice = rollDice;
 window.toggleDiceRollerSize = toggleDiceRollerSize;
 window.addSplitPotEntry = addSplitPotEntry;
-window.addBullseyeShootEntry = addBullseyeShootEntry;
 window.drawSplitPotWinner = drawSplitPotWinner;
-window.drawBullseyeShootWinner = drawBullseyeShootWinner;
 window.mergePlayerNameBackup = mergePlayerNameBackup;
 window.deletePlayerNameBackup = deletePlayerNameBackup;
 
@@ -467,14 +500,17 @@ clearSplitPotWinnerButton?.addEventListener("click", () => {
   renderSplitPot();
 });
 
-clearSplitPotEntriesButton?.addEventListener("click", () => {
+function clearSplitPotEntries() {
   stopSplitPotDrawAnimation();
   splitPotEntries = [];
   splitPotWinner = null;
   saveSplitPot();
   renderSplitPot();
   showMessage("Split The Pot entries cleared.");
-});
+}
+
+window.clearSplitPotEntries = clearSplitPotEntries;
+clearSplitPotEntriesButton?.addEventListener("click", clearSplitPotEntries);
 
 addBullseyeShootEntryButton?.addEventListener("click", addBullseyeShootEntry);
 
@@ -508,14 +544,16 @@ clearBullseyeShootWinnerButton?.addEventListener("click", () => {
   renderBullseyeShoot();
 });
 
-clearBullseyeShootEntriesButton?.addEventListener("click", () => {
+function clearBullShootEntries() {
   stopBullseyeShootDrawAnimation();
   bullseyeShootEntries = [];
   bullseyeShootWinner = null;
   saveBullseyeShoot();
   renderBullseyeShoot();
-  showMessage("Bullseye Shoot entries cleared.");
-});
+  showMessage("Bull Shoot entries cleared.");
+}
+
+clearBullseyeShootEntriesButton?.addEventListener("click", clearBullShootEntries);
 
 playerList.addEventListener("input", () => {
   syncPayoutTeams();
@@ -600,12 +638,6 @@ async function buildBracket() {
     return;
   }
 
-  const pdfGraphs = await loadPdfBracketGraphs();
-  if (activePlayers.length >= 3 && activePlayers.length <= 24 && !pdfGraphs?.[activePlayers.length]) {
-    showMessage("The learned PDF bracket graph could not be loaded. Try refreshing the page.");
-    return;
-  }
-
   state = createBracketGraph(activePlayers);
   renderBracket();
   queueActiveLodCodesRefresh();
@@ -659,6 +691,65 @@ bracketOutput.addEventListener("click", (event) => {
   queueActiveLodCodesRefresh();
 });
 
+function handleBracketWinnerClick(button) {
+  if (!button || !button.dataset) {
+    return;
+  }
+
+  const matchId = Number(button.dataset.matchId);
+  const player = button.dataset.player;
+  if (!Number.isFinite(matchId) || !player) {
+    return;
+  }
+
+  if (button.disabled) {
+    return;
+  }
+
+  saveBracketBackup({
+    matchId,
+    selectedWinner: player,
+  });
+
+  if (state?.matchesById) {
+    chooseWinner(matchId, player);
+  } else {
+    chooseWinnerLegacy(
+      button.dataset.matchType,
+      Number(button.dataset.roundIndex),
+      Number(button.dataset.matchIndex),
+      player,
+    );
+  }
+  queueActiveLodCodesRefresh();
+}
+
+function handleBracketResetClick(button) {
+  if (!button || !button.dataset) {
+    return;
+  }
+
+  const matchId = Number(button.dataset.matchId);
+  if (!Number.isFinite(matchId)) {
+    return;
+  }
+
+  saveBracketBackup({
+    resetMatch: button.dataset.resetMatch,
+    selectedWinner: "",
+  });
+
+  if (state?.matchesById) {
+    resetMatchResult(matchId);
+  } else {
+    resetMatchResultLegacy(
+      button.dataset.matchType,
+      Number(button.dataset.roundIndex),
+      Number(button.dataset.matchIndex),
+    );
+  }
+}
+
 bracketOutput.addEventListener("change", (event) => {
   const boardSelect = event.target.closest("[data-board-assignment]");
 
@@ -696,12 +787,16 @@ backupList.addEventListener("click", (event) => {
     return;
   }
 
-  const backup = readBackup(button.dataset.backupId);
+  restoreBracketBackup(button.dataset.backupId);
+});
+
+function restoreBracketBackup(id) {
+  const backup = readBackup(id);
 
   if (!backup) {
     showMessage("That backup could not be loaded.");
     renderBackups();
-    return;
+    return false;
   }
 
   state = backup.state;
@@ -714,7 +809,8 @@ backupList.addEventListener("click", (event) => {
   renderBracket();
   queueActiveLodCodesRefresh();
   showMessage(`Restored backup from ${formatBackupTime(backup.createdAt)}.`);
-});
+  return true;
+}
 
 nameBackupList.addEventListener("click", (event) => {
   const mergeButton = event.target.closest("[data-merge-name-backup-id]");
@@ -1259,13 +1355,13 @@ function addBullseyeShootEntry() {
   const ticketCount = getSplitPotTicketsForAmount(amountPaid);
 
   if (!name) {
-    showMessage("Enter a Bullseye Shoot name.");
+    showMessage("Enter a Bull Shoot name.");
     bullseyeShootNameInput?.focus();
     return;
   }
 
   if (!Number.isInteger(amountPaid) || amountPaid < 1) {
-    showMessage("Choose at least $1 for Bullseye Shoot.");
+    showMessage("Choose at least $1 for Bull Shoot.");
     bullseyeShootTicketsInput?.focus();
     return;
   }
@@ -1303,7 +1399,7 @@ function addBullseyeShootEntry() {
   }
 
   if (!renderSucceeded) {
-    showMessage("Bullseye Shoot entry saved, but the on-page list could not refresh.");
+    showMessage("Bull Shoot entry saved, but the on-page list could not refresh.");
   }
   showMessage(`${formatMoney(amountPaid)} added for ${name}: ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
 }
@@ -1312,7 +1408,7 @@ function drawBullseyeShootWinner() {
   const tickets = getBullseyeShootTickets();
 
   if (!tickets.length) {
-    showMessage("Add Bullseye Shoot tickets before drawing.");
+    showMessage("Add Bull Shoot tickets before drawing.");
     return;
   }
 
@@ -1339,7 +1435,7 @@ function drawBullseyeShootWinner() {
       saveBullseyeShoot();
       renderBullseyeShoot();
       const didSendNotice = sendBullseyeShootPortalNotice({ winner: winnerTicket });
-      showMessage(`Bullseye Shoot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
+      showMessage(`Bull Shoot winner: ${winnerTicket.name}, ticket ${winnerTicket.ticketLabel}.${didSendNotice ? " Player portal message sent." : " Set an LOD code to send player portal messages."}`);
     },
   });
 }
@@ -1421,7 +1517,7 @@ function renderBullseyeShoot() {
   `;
 
   if (!ticketRows.length) {
-    bullseyeShootEntriesOutput.innerHTML = `<p class="split-pot-empty">No Bullseye Shoot tickets entered yet.</p>`;
+    bullseyeShootEntriesOutput.innerHTML = `<p class="split-pot-empty">No Bull Shoot tickets entered yet.</p>`;
   } else {
     bullseyeShootEntriesOutput.innerHTML = ticketRows.map((row) => `
       <article class="split-pot-entry">
@@ -1605,7 +1701,7 @@ function sendBullseyeShootPortalNotice({ winner = null } = {}) {
   const message = [
     winner
       ? `Bullshoot winner - ${winner.name} - ${winner.ticketLabel}`
-      : `Bullseye Shoot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
+      : `Bull Shoot Tickets - Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`,
     ...(winner ? [`Winning ticket: ${winner.ticketLabel}`, `Pot ${formatMoney(pot)} - ${ticketTotal} ticket${ticketTotal === 1 ? "" : "s"}`] : []),
     ...ticketList,
   ].join("\n");
@@ -1804,7 +1900,7 @@ function saveBullseyeShoot() {
       winner: bullseyeShootWinner,
     }));
   } catch {
-    showMessage("Bullseye Shoot could not be saved in this browser.");
+    showMessage("Bull Shoot could not be saved in this browser.");
   }
 }
 
@@ -1868,7 +1964,7 @@ bullseyeShootEntriesOutput?.addEventListener("click", (event) => {
   bullseyeShootWinner = null;
   saveBullseyeShoot();
   renderBullseyeShoot();
-  showMessage("Bullseye Shoot entry deleted.");
+  showMessage("Bull Shoot entry deleted.");
 });
 
 function showTeamDrawWarning(text) {
@@ -2711,10 +2807,12 @@ function drawD20Frame(now) {
 function renderNameInputs(count) {
   if (!Number.isInteger(count) || count < 2 || count > 200) {
     nameList.innerHTML = `<p class="empty-names">Enter 2 to 200 players, then update the list.</p>`;
+    lastSyncedPlayerCount = Number.isInteger(count) ? count : 0;
     return;
   }
 
   const existingNames = getPlayerNameMap();
+  lastSyncedPlayerCount = count;
 
   nameList.innerHTML = Array.from({ length: count }, (_, index) => {
     const number = String(index + 1);
@@ -4643,14 +4741,27 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
 }
 
 function saveBracketDraft() {
-  if (!canUseLocalStorage()) {
-    return;
-  }
-
+  const payload = JSON.stringify(buildBracketDraft());
   try {
-    localStorage.setItem(bracketDraftStorageKey, JSON.stringify(buildBracketDraft()));
+    if (canUseLocalStorage()) {
+      localStorage.setItem(bracketDraftStorageKey, payload);
+    }
+    if (canUseSessionStorage()) {
+      sessionStorage.setItem(bracketDraftSessionStorageKey, payload);
+    }
   } catch {
     // Ignore storage failures.
+  }
+  try {
+    window.name = `${bracketDraftWindowNamePrefix}${payload}`;
+  } catch {
+    // Ignore window name failures.
+  }
+  try {
+    const currentState = (history.state && typeof history.state === "object") ? history.state : {};
+    history.replaceState({ ...currentState, [bracketDraftHistoryStateKey]: payload }, "", location.href);
+  } catch {
+    // Ignore history state failures.
   }
 }
 
@@ -4694,6 +4805,7 @@ function restoreBracketDraft() {
   }
 
   renderNameInputs(Number(totalPlayers.value));
+  lastSyncedPlayerCount = Number(totalPlayers.value) || 0;
 
   if (draft.nameMap && typeof draft.nameMap === "object") {
     applyPlayerNameMap(draft.nameMap, true);
@@ -4844,30 +4956,79 @@ function restoreBracketDraft() {
 }
 
 function readBracketDraft() {
-  if (!canUseLocalStorage()) {
-    return null;
+  const sources = [];
+
+  try {
+    if (canUseLocalStorage()) {
+      const raw = localStorage.getItem(bracketDraftStorageKey);
+      if (raw) {
+        sources.push(raw);
+      }
+    }
+  } catch {
+    // Ignore storage failures.
   }
 
   try {
-    const raw = localStorage.getItem(bracketDraftStorageKey);
-    if (!raw) {
-      return null;
+    if (canUseSessionStorage()) {
+      const raw = sessionStorage.getItem(bracketDraftSessionStorageKey);
+      if (raw) {
+        sources.push(raw);
+      }
     }
-
-    const draft = JSON.parse(raw);
-    return draft && typeof draft === "object" ? draft : null;
   } catch {
-    return null;
+    // Ignore storage failures.
   }
+
+  try {
+    if (typeof window.name === "string" && window.name.startsWith(bracketDraftWindowNamePrefix)) {
+      sources.push(window.name.slice(bracketDraftWindowNamePrefix.length));
+    }
+  } catch {
+    // Ignore window name failures.
+  }
+
+  try {
+    const historyDraft = history.state && typeof history.state === "object"
+      ? history.state[bracketDraftHistoryStateKey]
+      : null;
+    if (typeof historyDraft === "string" && historyDraft) {
+      sources.push(historyDraft);
+    }
+  } catch {
+    // Ignore history failures.
+  }
+
+  for (const source of sources) {
+    try {
+      const draft = JSON.parse(source);
+      if (draft && typeof draft === "object") {
+        return draft;
+      }
+    } catch {
+      // Try the next source.
+    }
+  }
+
+  return null;
 }
 
 function clearBracketDraftStorage() {
-  if (!canUseLocalStorage()) {
-    return;
-  }
-
   try {
-    localStorage.removeItem(bracketDraftStorageKey);
+    if (canUseLocalStorage()) {
+      localStorage.removeItem(bracketDraftStorageKey);
+    }
+    if (canUseSessionStorage()) {
+      sessionStorage.removeItem(bracketDraftSessionStorageKey);
+    }
+    if (typeof window.name === "string" && window.name.startsWith(bracketDraftWindowNamePrefix)) {
+      window.name = "";
+    }
+    const currentState = (history.state && typeof history.state === "object") ? history.state : {};
+    if (Object.prototype.hasOwnProperty.call(currentState, bracketDraftHistoryStateKey)) {
+      const { [bracketDraftHistoryStateKey]: _, ...rest } = currentState;
+      history.replaceState(rest, "", location.href);
+    }
   } catch {
     // Ignore storage failures.
   }
@@ -5237,7 +5398,7 @@ function renderBackups() {
           <small>${escapeHtml(action)}</small>
         </div>
         <div class="backup-item-actions">
-          <button class="secondary" type="button" data-backup-id="${escapeAttribute(backup.id)}">Restore</button>
+          <button class="secondary" type="button" data-backup-id="${escapeAttribute(backup.id)}" onclick="restoreBracketBackup('${escapeAttribute(backup.id)}')">Restore</button>
           <button class="danger" type="button" data-delete-backup-id="${escapeAttribute(backup.id)}">Delete</button>
         </div>
       </article>
@@ -5433,6 +5594,14 @@ function readBackup(id) {
 function canUseLocalStorage() {
   try {
     return typeof localStorage !== "undefined";
+  } catch {
+    return false;
+  }
+}
+
+function canUseSessionStorage() {
+  try {
+    return typeof sessionStorage !== "undefined";
   } catch {
     return false;
   }
@@ -5819,6 +5988,7 @@ function renderMatch(match) {
           <button
             class="reset-match"
             type="button"
+            onclick="window.handleBracketResetClick(this)"
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
@@ -5973,6 +6143,7 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
     <button
       class="${classNames}"
       type="button"
+      onclick="window.handleBracketWinnerClick(this)"
       ${disabled ? "disabled" : ""}
       data-match-type="${escapeAttribute(match.type)}"
       data-round-index="${match.roundIndex}"

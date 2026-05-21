@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-142">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-145">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -38,7 +38,7 @@
           <div class="setup-grid">
             <label>
               Total players
-              <input id="totalPlayers" type="number" inputmode="numeric" min="0" max="200" value="0">
+              <input id="totalPlayers" type="number" inputmode="numeric" min="0" max="200" value="0" oninput="handleTotalPlayersUpdate()" onchange="handleTotalPlayersUpdate()">
             </label>
 
             <label>
@@ -258,18 +258,18 @@
             <div class="split-pot-actions">
               <button id="drawSplitPotWinner" type="button" onclick="drawSplitPotWinner()">Draw winner</button>
               <button id="clearSplitPotWinner" class="secondary" type="button">Clear winner</button>
-              <button id="clearSplitPotEntries" class="danger" type="button">Clear entries</button>
+              <button id="clearSplitPotEntries" class="danger" type="button" onclick="clearSplitPotEntries()">Clear entries</button>
             </div>
 
             <div id="splitPotWinner" class="split-pot-winner" aria-live="polite"></div>
           </div>
         </details>
         <details class="panel tool-panel split-pot-panel" open>
-          <summary>Bullseye Shoot</summary>
+          <summary>Bull Shoot</summary>
           <div class="tool-body">
             <div class="panel-title">
               <div>
-                <h2 id="bullseyeShootTitle">Bullseye Shoot</h2>
+                <h2 id="bullseyeShootTitle">Bull Shoot</h2>
                 <p>Track virtual tickets and draw one winning ticket.</p>
               </div>
             </div>
@@ -296,7 +296,7 @@
             <div class="split-pot-actions">
               <button id="drawBullseyeShootWinner" type="button" onclick="drawBullseyeShootWinner()">Draw winner</button>
               <button id="clearBullseyeShootWinner" class="secondary" type="button">Clear winner</button>
-              <button id="clearBullseyeShootEntries" class="danger" type="button">Clear entries</button>
+              <button id="clearBullseyeShootEntries" class="danger" type="button" onclick="clearBullShootEntries()">Clear entries</button>
             </div>
 
             <div id="bullseyeShootWinner" class="split-pot-winner" aria-live="polite"></div>
@@ -417,6 +417,6 @@
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=11"></script>
-  <script src="bracket.js?v=interactive-tools-187"></script>
+  <script src="bracket.js?v=interactive-tools-204"></script>
 </body>
 </html>
