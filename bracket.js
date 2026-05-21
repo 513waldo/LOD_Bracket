@@ -2072,6 +2072,8 @@ function renderDice() {
   d20RollState.active = false;
   d20RollState.startedAt = performance.now();
   d20RollState.lastTime = d20RollState.startedAt;
+  diceValues[0] = 6;
+  diceValues[1] = 9;
   d20RollState.dies.forEach((die, index) => {
     die.stopped = true;
     die.vx = 0;
