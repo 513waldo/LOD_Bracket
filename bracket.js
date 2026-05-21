@@ -2079,6 +2079,7 @@ function renderDice() {
     die.displayNum = diceValues[index] || die.displayNum;
     die.finalVal = die.displayNum;
     die.stoppedAngle = die.angle;
+    die.shadeOffset = Math.floor(Math.random() * 6);
   });
 
   diceValues[0] = d20RollState.dies[0].displayNum;
@@ -2107,6 +2108,8 @@ function createD20RollState() {
     lastFlick: 0,
     stopped: false,
     stoppedAngle: 0,
+    shadeOffset: Math.floor(Math.random() * 6),
+    lastShadeShift: 0,
     trail: [],
     colliding: false,
   });
@@ -2218,6 +2221,8 @@ function resolveD20Collision(a, b) {
   a.vy += rand(-0.5, 0.5);
   b.vx += rand(-0.5, 0.5);
   b.vy += rand(-0.5, 0.5);
+  a.shadeOffset = Math.floor(Math.random() * 6);
+  b.shadeOffset = Math.floor(Math.random() * 6);
 }
 
 function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
@@ -2242,6 +2247,12 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     pts.push([Math.cos(a) * r, Math.sin(a) * r]);
   }
 
+  const shadeOffset = Number.isInteger(color.shadeOffset) ? color.shadeOffset : 0;
+  const highlightA = pts[shadeOffset % 6];
+  const highlightB = pts[(shadeOffset + 1) % 6];
+  const shadowA = pts[(shadeOffset + 3) % 6];
+  const shadowB = pts[(shadeOffset + 4) % 6];
+
   ctx.beginPath();
   pts.forEach(([x, y], i) => {
     if (i === 0) {
@@ -2260,16 +2271,16 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   if (!flash) {
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(pts[0][0], pts[0][1]);
-    ctx.lineTo(pts[1][0], pts[1][1]);
+    ctx.lineTo(highlightA[0], highlightA[1]);
+    ctx.lineTo(highlightB[0], highlightB[1]);
     ctx.closePath();
     ctx.fillStyle = faceMid;
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(pts[3][0], pts[3][1]);
-    ctx.lineTo(pts[4][0], pts[4][1]);
+    ctx.lineTo(shadowA[0], shadowA[1]);
+    ctx.lineTo(shadowB[0], shadowB[1]);
     ctx.closePath();
     ctx.fillStyle = faceDark;
     ctx.globalAlpha = 0.6;
@@ -2396,6 +2407,10 @@ function drawD20Frame(now) {
     }
 
     const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
+    if (spd > 0.6 && now - die.lastShadeShift > 140) {
+      die.shadeOffset = Math.floor(Math.random() * 6);
+      die.lastShadeShift = now;
+    }
     if (spd > 1.2) {
       die.locked = false;
       const flickSpeed = Math.max(35, Math.floor(spd * 18));
@@ -2417,6 +2432,7 @@ function drawD20Frame(now) {
   });
 
   state.dies.forEach((die) => {
+    die.color.shadeOffset = die.shadeOffset;
     if (die.stopped) {
       drawD20Shadow(die.restX, die.restY);
       drawD20Hex(die.restX, die.restY, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
