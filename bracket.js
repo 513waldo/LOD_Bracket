@@ -2165,6 +2165,8 @@ function toggleDiceRollerSize() {
   if (isMaximized) {
     diceRollerPanel.classList.remove("is-maximized");
     document.body.classList.remove("dice-roller-maximized");
+    document.body.style.overflow = "";
+    clearDiceRollerMaximizedStyles();
     restoreDiceRollerPanel();
     syncDiceRollerFullscreenState();
     return;
@@ -2173,6 +2175,8 @@ function toggleDiceRollerSize() {
   moveDiceRollerPanelToOverlay();
   diceRollerPanel.classList.add("is-maximized");
   document.body.classList.add("dice-roller-maximized");
+  document.body.style.overflow = "hidden";
+  applyDiceRollerMaximizedStyles();
   syncDiceRollerFullscreenState();
 }
 
@@ -2199,6 +2203,29 @@ function restoreDiceRollerPanel() {
   } else {
     diceRollerOriginalParent.appendChild(diceRollerPanel);
   }
+}
+
+function applyDiceRollerMaximizedStyles() {
+  if (!diceRollerPanel) {
+    return;
+  }
+
+  diceRollerPanel.style.setProperty("width", "100vw");
+  diceRollerPanel.style.setProperty("height", "100vh");
+  diceRollerPanel.style.setProperty("max-width", "none");
+  diceRollerPanel.style.setProperty("position", "fixed");
+  diceRollerPanel.style.setProperty("inset", "0");
+  diceRollerPanel.style.setProperty("z-index", "3001");
+  diceRollerPanel.style.setProperty("margin", "0");
+  diceRollerPanel.style.setProperty("box-sizing", "border-box");
+}
+
+function clearDiceRollerMaximizedStyles() {
+  if (!diceRollerPanel) {
+    return;
+  }
+
+  diceRollerPanel.removeAttribute("style");
 }
 
 function syncDiceRollerFullscreenState() {
