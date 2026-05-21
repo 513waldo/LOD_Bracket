@@ -1,38 +1,40 @@
 let qrRenderNonce = 0;
 
-function createPortalQrDataUrl(text, size = 360) {
+function createPortalQrMarkup(text, size = 360) {
   qrRenderNonce += 1;
   const safeSize = Math.max(256, Math.round(size));
   const matrix = createQrMatrix(String(text || ""));
   const moduleCount = matrix.length;
   const marginModules = 4;
   const totalModules = moduleCount + (marginModules * 2);
-  const canvas = document.createElement("canvas");
-  canvas.width = safeSize;
-  canvas.height = safeSize;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    return "";
-  }
+  const cells = [];
 
-  const scale = safeSize / totalModules;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, safeSize, safeSize);
-  ctx.fillStyle = "#000";
   for (let y = 0; y < moduleCount; y += 1) {
     for (let x = 0; x < moduleCount; x += 1) {
       if (matrix[y][x]) {
-        ctx.fillRect(
-          Math.round((x + marginModules) * scale),
-          Math.round((y + marginModules) * scale),
-          Math.ceil(scale),
-          Math.ceil(scale),
-        );
+        cells.push(`<rect x="${x + marginModules}" y="${y + marginModules}" width="1" height="1"/>`);
       }
     }
   }
 
-  return `${canvas.toDataURL("image/png")}#${qrRenderNonce}`;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize}" height="${safeSize}" viewBox="0 0 ${totalModules} ${totalModules}" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" aria-hidden="true" focusable="false" data-qr-nonce="${qrRenderNonce}">`,
+    `<rect width="${totalModules}" height="${totalModules}" fill="#fff"/>`,
+    `<g fill="#000">${cells.join("")}</g>`,
+    `</svg>`,
+  ].join("");
+}
+
+function createPortalQrDataUrl(text, size = 360) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(createPortalQrMarkup(text, size))}`;
+}
+
+function renderPortalQrCode(container, text, size = 360) {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = createPortalQrMarkup(text, size);
 }
 
 function createQrMatrix(text) {
