@@ -970,6 +970,14 @@ function formatPayoutAmount(value) {
   }).format(rounded);
 }
 
+function parsePurchaseAmount(value) {
+  const normalized = String(value || "")
+    .replace(/[$,\s]/g, "")
+    .trim();
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+}
+
 function startTicketDrawAnimation({ tickets, durationMs, onFrame, onComplete }) {
   if (!tickets.length) {
     return null;
@@ -1138,7 +1146,7 @@ function stopMysteryOutDrawAnimation() {
 
 function addSplitPotEntry() {
   const name = String(splitPotNameInput?.value || "").trim();
-  const amountPaid = Math.floor(Number(splitPotTicketsInput?.value) || 0);
+  const amountPaid = parsePurchaseAmount(splitPotTicketsInput?.value);
   const ticketCount = getSplitPotTicketsForAmount(amountPaid);
 
   if (!name) {
@@ -1162,9 +1170,16 @@ function addSplitPotEntry() {
   };
   splitPotEntries.push(entry);
   splitPotWinner = null;
-  saveSplitPot();
-  renderSplitPot();
-  const didSendNotice = sendSplitPotPortalNotice();
+  let didSendNotice = false;
+  try {
+    saveSplitPot();
+    renderSplitPot();
+    didSendNotice = sendSplitPotPortalNotice();
+  } catch (error) {
+    console.error(error);
+    showMessage("Split The Pot entry could not be added.");
+    return;
+  }
 
   if (splitPotNameInput) {
     splitPotNameInput.value = "";
@@ -1215,7 +1230,7 @@ function drawSplitPotWinner() {
 
 function addBullseyeShootEntry() {
   const name = String(bullseyeShootNameInput?.value || "").trim();
-  const amountPaid = Math.floor(Number(bullseyeShootTicketsInput?.value) || 0);
+  const amountPaid = parsePurchaseAmount(bullseyeShootTicketsInput?.value);
   const ticketCount = getSplitPotTicketsForAmount(amountPaid);
 
   if (!name) {
@@ -1238,9 +1253,16 @@ function addBullseyeShootEntry() {
     createdAt: new Date().toISOString(),
   });
   bullseyeShootWinner = null;
-  saveBullseyeShoot();
-  renderBullseyeShoot();
-  const didSendNotice = sendBullseyeShootPortalNotice();
+  let didSendNotice = false;
+  try {
+    saveBullseyeShoot();
+    renderBullseyeShoot();
+    didSendNotice = sendBullseyeShootPortalNotice();
+  } catch (error) {
+    console.error(error);
+    showMessage("Bullseye Shoot entry could not be added.");
+    return;
+  }
 
   if (bullseyeShootNameInput) {
     bullseyeShootNameInput.value = "";
