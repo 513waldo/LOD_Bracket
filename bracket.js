@@ -189,6 +189,7 @@ let bracketCleanupTimer = null;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
+window.resetTournament = resetTournament;
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
@@ -612,10 +613,6 @@ async function buildBracket() {
   updatePayoutCalculator();
   showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
-
-document.querySelector("#resetBracket").addEventListener("click", () => {
-  resetTournament();
-});
 
 bracketOutput.addEventListener("click", (event) => {
   const resetButton = event.target.closest("[data-reset-match]");
