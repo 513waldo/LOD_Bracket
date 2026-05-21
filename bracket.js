@@ -2226,6 +2226,12 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   }
 
   const ctx = d20Context;
+  const faceBody = color.body === "#f4f4f4" ? "#f8f8f8" : color.body;
+  const faceDark = color.body === "#f4f4f4" ? "#111111" : color.dark;
+  const faceMid = color.body === "#f4f4f4" ? "#e8e8e8" : color.mid;
+  const faceLight = color.body === "#f4f4f4" ? "#d2d2d2" : color.light;
+  const faceText = color.body === "#f4f4f4" ? "#111111" : color.text;
+  const faceLabel = color.body === "#f4f4f4" ? "#111111" : color.label;
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(angle);
@@ -2245,9 +2251,9 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     }
   });
   ctx.closePath();
-  ctx.fillStyle = flash ? "#ffffff" : color.body;
+  ctx.fillStyle = flash ? "#ffffff" : faceBody;
   ctx.fill();
-  ctx.strokeStyle = flash ? "#ffffff" : color.dark;
+  ctx.strokeStyle = flash ? "#ffffff" : faceDark;
   ctx.lineWidth = flash ? 3 : 2;
   ctx.stroke();
 
@@ -2257,7 +2263,7 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.lineTo(pts[0][0], pts[0][1]);
     ctx.lineTo(pts[1][0], pts[1][1]);
     ctx.closePath();
-    ctx.fillStyle = color.mid;
+    ctx.fillStyle = faceMid;
     ctx.fill();
 
     ctx.beginPath();
@@ -2265,12 +2271,12 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
     ctx.lineTo(pts[3][0], pts[3][1]);
     ctx.lineTo(pts[4][0], pts[4][1]);
     ctx.closePath();
-    ctx.fillStyle = color.dark;
+    ctx.fillStyle = faceDark;
     ctx.globalAlpha = 0.6;
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = color.light;
+    ctx.strokeStyle = faceLight;
     ctx.lineWidth = 0.7;
     ctx.globalAlpha = 0.35;
     for (let i = 0; i < 6; i++) {
@@ -2283,14 +2289,14 @@ function drawD20Hex(cx, cy, r, angle, color, numStr, flash) {
   }
 
   ctx.font = `700 ${Math.round(r * 0.52)}px sans-serif`;
-  ctx.fillStyle = flash ? color.body : color.text;
+  ctx.fillStyle = flash ? faceBody : faceText;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(numStr, 0, r * 0.1);
 
   if (!flash) {
     ctx.font = `400 ${Math.round(r * 0.17)}px sans-serif`;
-    ctx.fillStyle = color.label;
+    ctx.fillStyle = faceLabel;
     ctx.globalAlpha = 0.9;
     ctx.fillText("d20", 0, -r * 0.48);
     ctx.globalAlpha = 1;
