@@ -1884,6 +1884,7 @@ function resetTournament() {
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
   clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
+  deleteAllPlayerNameBackups();
 
   if (totalPlayers) {
     totalPlayers.value = "";
@@ -5340,6 +5341,19 @@ function deletePlayerNameBackup(id) {
   const index = readNameBackupIndex().filter((backup) => backup.id !== id);
   localStorage.removeItem(`${nameBackupKeyPrefix}${id}`);
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
+  renderNameBackups();
+}
+
+function deleteAllPlayerNameBackups() {
+  if (!canUseLocalStorage()) {
+    renderNameBackups();
+    return;
+  }
+
+  readNameBackupIndex().forEach((backup) => {
+    localStorage.removeItem(`${nameBackupKeyPrefix}${backup.id}`);
+  });
+  localStorage.removeItem(nameBackupIndexKey);
   renderNameBackups();
 }
 
