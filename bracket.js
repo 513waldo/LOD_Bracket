@@ -107,10 +107,6 @@ const doubleOutFinishes = [
   ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
   50,
 ];
-const masterOutFinishes = [
-  ...doubleOutFinishes,
-  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 3),
-];
 const mysteryOutExclusions = {
   open: [179],
   double: [159, 162, 163, 165, 166, 168, 169],
@@ -2227,9 +2223,28 @@ function getMysteryOutValues(mode = mysteryOut?.mode || "double") {
     return [...dartScores];
   }
   if (normalizedMode === "master") {
-    return [...masterOutFinishes];
+    return buildMysteryOutRangeValues(normalizedMode);
   }
   return [...doubleOutFinishes];
+}
+
+function buildMysteryOutRangeValues(mode) {
+  const range = mysteryOutRanges[mode] || mysteryOutRanges.double;
+  const exclusions = new Set((mysteryOutExclusions[mode] || []).map(Number));
+  const values = [];
+
+  for (let score = range.min; score <= range.max; score += 1) {
+    if (exclusions.has(score)) {
+      continue;
+    }
+    values.push(score);
+  }
+
+  if (mode === "double") {
+    return values.filter((score) => score % 2 === 0 || score === 50);
+  }
+
+  return values;
 }
 
 function setMysteryOutMode(mode) {
