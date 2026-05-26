@@ -3132,13 +3132,11 @@ function renderNameInputs(count) {
 
   const existingNames = getPlayerNameMap();
   lastSyncedPlayerCount = count;
-  const fallbackNames = existingNames && Object.keys(existingNames).length
-    ? null
-    : defaultRosterNames.slice(0, count);
+  const fallbackNames = isLocalHost() ? defaultRosterNames.slice(0, count) : [];
 
   nameList.innerHTML = Array.from({ length: count }, (_, index) => {
     const number = String(index + 1);
-    const value = existingNames[number] || fallbackNames?.[index] || "";
+    const value = existingNames[number] || fallbackNames[index] || "";
 
     return `
       <label class="name-row">
@@ -3152,6 +3150,15 @@ function renderNameInputs(count) {
       </label>
     `;
   }).join("");
+}
+
+function isLocalHost() {
+  try {
+    const host = String(window.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
 }
 
 function getPlayerNameMap() {
