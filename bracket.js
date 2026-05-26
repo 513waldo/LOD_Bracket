@@ -281,6 +281,7 @@ function syncTotalPlayersSection(force = false) {
   syncPdfLayoutToTeamCount(normalizedCount);
   syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
+  savePortalSnapshotToLocalStorage();
 }
 
 function handleTotalPlayersUpdate() {
@@ -714,6 +715,7 @@ function generatePlayers() {
   renderTeams(currentTeams);
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
+  savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
 }
@@ -762,6 +764,7 @@ async function buildBracket() {
   syncPdfLayoutToTeamCount(activePlayers.length);
   syncPayoutTeams(activePlayers.length);
   updatePayoutCalculator();
+  savePortalSnapshotToLocalStorage();
   showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
 
@@ -6315,6 +6318,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap()) {
 if (nameList) {
   const persistStepOneDraft = () => {
     saveBracketDraft();
+    savePortalSnapshotToLocalStorage();
   };
   nameList.addEventListener("input", persistStepOneDraft);
   nameList.addEventListener("change", persistStepOneDraft);
