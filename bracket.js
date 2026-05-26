@@ -247,6 +247,7 @@ let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
 let registryRefreshTimer = null;
 let remoteMirrorTimer = null;
+let lastRemoteMirrorSnapshotSerialized = "";
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 let resetBracketClickLock = false;
@@ -5822,6 +5823,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   renderPortalLink(true);
   queueActiveLodCodesRefresh();
   stopRemoteMirrorRefresh();
+  lastRemoteMirrorSnapshotSerialized = "";
 
   for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
     if (!baseUrl) {
@@ -5839,7 +5841,16 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
         continue;
       }
 
+      const snapshotSerialized = JSON.stringify(snapshot);
+      if (snapshotSerialized === lastRemoteMirrorSnapshotSerialized) {
+        saveAssistantAdminSessionCode(normalizedCode);
+        startRemoteMirrorRefresh();
+        updateAssistantAdminControls();
+        return true;
+      }
+
       applyRemoteAdminSnapshot(snapshot, baseUrl);
+      lastRemoteMirrorSnapshotSerialized = snapshotSerialized;
       saveAssistantAdminSessionCode(normalizedCode);
       startRemoteMirrorRefresh();
       updateAssistantAdminControls();
@@ -6079,12 +6090,18 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   saveBracketDraft();
   queueActiveLodCodesRefresh();
   updateAssistantAdminControls();
+  try {
+    lastRemoteMirrorSnapshotSerialized = JSON.stringify(snapshot);
+  } catch {
+    lastRemoteMirrorSnapshotSerialized = "";
+  }
 }
 
 function logoutAssistantAdmin() {
   const backup = readAssistantAdminBackupDraft();
   clearAssistantAdminSessionCode();
   stopRemoteMirrorRefresh();
+  lastRemoteMirrorSnapshotSerialized = "";
   updateAssistantAdminControls();
 
   if (backup) {
