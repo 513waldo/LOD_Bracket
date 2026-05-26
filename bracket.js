@@ -456,36 +456,51 @@ portalSupportNoticeInput?.addEventListener("input", () => {
   queueBracketDraftSave();
 });
 
+function formatAdminPortalMessage(label, message, stamp = new Date()) {
+  const text = String(message || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const timeLabel = stamp instanceof Date && !Number.isNaN(stamp.getTime())
+    ? stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : "";
+
+  return timeLabel ? `${label} - ${timeLabel}: ${text}` : `${label}: ${text}`;
+}
+
 sendPortalNoticeButton?.addEventListener("click", () => {
-  portalNotice = portalNoticeDraft || "";
+  const stamp = new Date();
+  portalNotice = formatAdminPortalMessage("Admin", portalNoticeDraft, stamp);
   portalNoticeAt = portalNotice ? new Date().toISOString() : "";
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
-  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalNoticeStatus) {
     portalNoticeStatus.textContent = portalNotice
-      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
-      : `Cleared at ${stamp}.`;
+      ? (didPublish ? `Sent at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
+      : `Cleared at ${stampLabel}.`;
   }
   showMessage(portalNotice
-    ? (didPublish ? `Board call sent to players portal at ${stamp}.` : `Board call saved at ${stamp}; set an LOD code to publish.`)
-    : `Board call cleared at ${stamp}.`);
+    ? (didPublish ? `Board call sent to players portal at ${stampLabel}.` : `Board call saved at ${stampLabel}; set an LOD code to publish.`)
+    : `Board call cleared at ${stampLabel}.`);
 });
 
 sendPortalSupportNoticeButton?.addEventListener("click", () => {
-  portalSupportNotice = portalSupportNoticeDraft || "";
+  const stamp = new Date();
+  portalSupportNotice = formatAdminPortalMessage("Admin Assist", portalSupportNoticeDraft, stamp);
   portalSupportNoticeAt = portalSupportNotice ? new Date().toISOString() : "";
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
-  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = portalSupportNotice
-      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
-      : `Cleared at ${stamp}.`;
+      ? (didPublish ? `Sent at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
+      : `Cleared at ${stampLabel}.`;
   }
   showMessage(portalSupportNotice
-    ? (didPublish ? `Admin support message sent at ${stamp}.` : `Admin support message saved at ${stamp}; set an LOD code to publish.`)
-    : `Admin support message cleared at ${stamp}.`);
+    ? (didPublish ? `Admin support message sent at ${stampLabel}.` : `Admin support message saved at ${stampLabel}; set an LOD code to publish.`)
+    : `Admin support message cleared at ${stampLabel}.`);
 });
 
 clearPortalNoticeButton?.addEventListener("click", () => {

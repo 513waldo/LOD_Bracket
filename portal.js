@@ -778,6 +778,10 @@ function formatPortalCall(message, stamp) {
     return "";
   }
 
+  if (/^(Admin|Admin Assist)\s*-\s*/i.test(text)) {
+    return text;
+  }
+
   const time = formatBoardCallTime(stamp);
   return time ? `${text} • ${time}` : text;
 }
