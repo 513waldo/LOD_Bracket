@@ -5676,7 +5676,7 @@ function renderActiveLodCodes(registry, sourceBaseUrl) {
       <span>${escapeHtml(updatedLabel)}</span>
     </div>
     <div class="lod-registry-codes">
-      ${codes.map((code) => `<button class="lod-code-chip secondary" type="button" data-load-lod-code="${escapeAttribute(code)}">${escapeHtml(code)}</button>`).join("")}
+      ${codes.map((code) => `<button class="lod-code-chip secondary" type="button" data-load-lod-code="${escapeAttribute(code)}" onclick="window.loadAssistantAdminSnapshot('${escapeAttribute(code)}')">${escapeHtml(code)}</button>`).join("")}
     </div>
   `;
 }
@@ -5852,6 +5852,10 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   }
   return false;
 }
+
+window.loadAssistantAdminSnapshot = function loadAssistantAdminSnapshot(code) {
+  return loadRemoteAdminSnapshot(code, true);
+};
 
 function normalizeAdminMirrorSnapshot(data) {
   if (!data || typeof data !== "object") {
