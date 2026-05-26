@@ -125,6 +125,8 @@ function normalizeSnapshot(data) {
     return null;
   }
 
+  const portalSupportMessages = normalizePortalSupportMessages(data.portalSupportMessages);
+
   if (Object.prototype.hasOwnProperty.call(data, "state")) {
     return {
       version: Number(data.version || 1),
@@ -137,6 +139,7 @@ function normalizeSnapshot(data) {
       portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
       portalBullshootNotice: String(data.portalBullshootNotice || ""),
       portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
+      portalSupportMessages,
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -154,10 +157,38 @@ function normalizeSnapshot(data) {
     portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
     portalBullshootNotice: String(data.portalBullshootNotice || ""),
     portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
+    portalSupportMessages,
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
   };
+}
+
+function normalizePortalSupportMessages(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") {
+      return null;
+    }
+
+    const sender = /assistant/i.test(String(entry.sender || entry.author || ""))
+      ? "Admin Assist"
+      : "Admin";
+    const message = String(entry.message || entry.text || "").trim();
+    if (!message) {
+      return null;
+    }
+
+    const stampValue = String(entry.stamp || entry.timestamp || entry.createdAt || entry.sentAt || entry.at || "");
+    const stamp = stampValue && !Number.isNaN(new Date(stampValue).getTime())
+      ? new Date(stampValue).toISOString()
+      : "";
+
+    return { sender, message, stamp };
+  }).filter(Boolean);
 }
 
 function isExpiredSnapshot(snapshot) {

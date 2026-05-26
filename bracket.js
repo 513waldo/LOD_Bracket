@@ -67,6 +67,7 @@ const clearLodCodeButton = document.querySelector("#clearLodCode");
 const portalNoticeInput = document.querySelector("#portalNoticeInput");
 const portalSupportNoticeInput = document.querySelector("#portalSupportNoticeInput");
 const portalSupportNoticeStatus = document.querySelector("#portalSupportNoticeStatus");
+const portalSupportTranscript = document.querySelector("#portalSupportTranscript");
 const portalAutoNoticeInput = document.querySelector("#portalAutoNoticeInput");
 const portalAutoNoticeStatus = document.querySelector("#portalAutoNoticeStatus");
 const portalBullshootNoticeInput = document.querySelector("#portalBullshootNoticeInput");
@@ -223,6 +224,7 @@ let portalNoticeDraft = "";
 let portalSupportNotice = "";
 let portalSupportNoticeAt = "";
 let portalSupportNoticeDraft = "";
+let portalSupportMessages = [];
 let portalAutoNotice = "";
 let portalAutoNoticeAt = "";
 let portalBullshootNotice = "";
@@ -469,6 +471,109 @@ function formatAdminPortalMessage(label, message, stamp = new Date()) {
   return timeLabel ? `${label} - ${timeLabel}: ${text}` : `${label}: ${text}`;
 }
 
+function getAdminSupportSenderLabel() {
+  return isAssistantAdminSessionActive() ? "Admin Assist" : "Admin";
+}
+
+function parseAdminPortalMessage(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return null;
+  }
+
+  const match = value.match(/^(Admin Assist|Admin)\s*-\s*([^:]+):\s*(.*)$/i);
+  if (match) {
+    const sender = /assistant/i.test(match[1]) ? "Admin Assist" : "Admin";
+    const message = String(match[3] || "").trim();
+    if (!message) {
+      return null;
+    }
+    return {
+      sender,
+      message,
+      stamp: "",
+    };
+  }
+
+  return {
+    sender: "Admin Assist",
+    message: value,
+    stamp: "",
+  };
+}
+
+function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoticeAt = "") {
+  const entries = [];
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return;
+      }
+
+      const sender = /assistant/i.test(String(entry.sender || entry.author || "")) ? "Admin Assist" : "Admin";
+      const message = String(entry.message || entry.text || "").trim();
+      if (!message) {
+        return;
+      }
+
+      const stampValue = String(entry.stamp || entry.timestamp || entry.createdAt || entry.sentAt || entry.at || "");
+      const stamp = stampValue && !Number.isNaN(new Date(stampValue).getTime()) ? new Date(stampValue).toISOString() : "";
+      entries.push({ sender, message, stamp });
+    });
+  }
+
+  if (!entries.length) {
+    const parsed = parseAdminPortalMessage(fallbackNotice);
+    if (parsed) {
+      entries.push({
+        sender: parsed.sender || "Admin Assist",
+        message: parsed.message || String(fallbackNotice || "").trim(),
+        stamp: parsed.stamp || fallbackNoticeAt || "",
+      });
+    } else if (String(fallbackNotice || "").trim()) {
+      entries.push({
+        sender: "Admin Assist",
+        message: String(fallbackNotice || "").trim(),
+        stamp: fallbackNoticeAt || "",
+      });
+    }
+  }
+
+  return entries;
+}
+
+function renderPortalSupportTranscript() {
+  if (!portalSupportTranscript) {
+    return;
+  }
+
+  const entries = Array.isArray(portalSupportMessages) ? portalSupportMessages : [];
+  if (!entries.length) {
+    portalSupportTranscript.className = "portal-message-log empty";
+    portalSupportTranscript.textContent = "No support messages yet.";
+    return;
+  }
+
+  portalSupportTranscript.className = "portal-message-log";
+  portalSupportTranscript.innerHTML = entries.map((entry) => {
+    const sender = entry.sender === "Admin" ? "Admin" : "Admin Assist";
+    const stamp = entry.stamp && !Number.isNaN(new Date(entry.stamp).getTime())
+      ? new Date(entry.stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      : "";
+    const body = escapeHtml(entry.message || "").replace(/\n/g, "<br>");
+    return `
+      <div class="portal-message-entry ${sender === "Admin Assist" ? "assistant" : "admin"}">
+        <div class="portal-message-meta">
+          <strong>${escapeHtml(sender)}</strong>
+          <span>${escapeHtml(stamp || "unknown time")}</span>
+        </div>
+        <div class="portal-message-body">${body}</div>
+      </div>
+    `;
+  }).join("");
+}
+
 sendPortalNoticeButton?.addEventListener("click", () => {
   const stamp = new Date();
   portalNotice = formatAdminPortalMessage("Admin", portalNoticeDraft, stamp);
@@ -487,19 +592,17 @@ sendPortalNoticeButton?.addEventListener("click", () => {
 });
 
 sendPortalSupportNoticeButton?.addEventListener("click", () => {
+  const sender = getAdminSupportSenderLabel();
   const stamp = new Date();
-  portalSupportNotice = formatAdminPortalMessage("Admin Assist", portalSupportNoticeDraft, stamp);
-  portalSupportNoticeAt = portalSupportNotice ? new Date().toISOString() : "";
-  const didPublish = savePortalSnapshotToLocalStorage();
-  queueBracketDraftSave();
+  const didPublish = setAdminSupportPortalNotice(portalSupportNoticeDraft, sender);
   const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = portalSupportNotice
-      ? (didPublish ? `Sent at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
+      ? (didPublish ? `Sent as ${sender} at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
       : `Cleared at ${stampLabel}.`;
   }
   showMessage(portalSupportNotice
-    ? (didPublish ? `Admin support message sent at ${stampLabel}.` : `Admin support message saved at ${stampLabel}; set an LOD code to publish.`)
+    ? (didPublish ? `Admin support message sent as ${sender} at ${stampLabel}.` : `Admin support message saved at ${stampLabel}; set an LOD code to publish.`)
     : `Admin support message cleared at ${stampLabel}.`);
 });
 
@@ -1921,19 +2024,28 @@ function setAutomatedPortalNotice(message) {
   return didPublish;
 }
 
-function setAdminSupportPortalNotice(message) {
+function setAdminSupportPortalNotice(message, sender = getAdminSupportSenderLabel()) {
   const text = String(message || "").trim();
-  portalSupportNotice = text;
-  portalSupportNoticeAt = text ? new Date().toISOString() : "";
+  const stamp = new Date();
+  portalSupportNotice = text ? formatAdminPortalMessage(sender, text, stamp) : "";
+  portalSupportNoticeAt = portalSupportNotice ? new Date().toISOString() : "";
   if (portalSupportNoticeInput) {
     portalSupportNoticeInput.value = text;
   }
+  if (portalSupportNotice) {
+    portalSupportMessages = [...portalSupportMessages, {
+      sender,
+      message: text,
+      stamp: portalSupportNoticeAt,
+    }];
+  }
+  renderPortalSupportTranscript();
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
-  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = text
-      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
+      ? (didPublish ? `Sent as ${sender} at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
       : "";
   }
   return didPublish;
@@ -5067,6 +5179,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     portalNoticeAt,
     portalSupportNotice,
     portalSupportNoticeAt,
+    portalSupportMessages,
     portalAutoNotice,
     portalAutoNoticeAt,
     portalBullshootNotice,
@@ -5182,6 +5295,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   portalSupportNotice = "";
   portalSupportNoticeAt = "";
   portalSupportNoticeDraft = "";
+  portalSupportMessages = [];
   portalAutoNotice = "";
   portalAutoNoticeAt = "";
   portalBullshootNotice = "";
@@ -5198,6 +5312,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = "";
   }
+  renderPortalSupportTranscript();
   if (portalAutoNoticeInput) {
     portalAutoNoticeInput.innerHTML = "";
   }
@@ -5384,6 +5499,12 @@ function restoreBracketDraft() {
   if (portalSupportNoticeInput) {
     portalSupportNoticeInput.value = portalSupportNoticeDraft;
   }
+  portalSupportMessages = normalizePortalSupportMessages(
+    draft.portalSupportMessages,
+    portalSupportNotice,
+    portalSupportNoticeAt,
+  );
+  renderPortalSupportTranscript();
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = portalSupportNotice
       ? `Sent at ${portalSupportNoticeAt ? new Date(portalSupportNoticeAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "unknown time"}.`
@@ -5638,6 +5759,7 @@ function buildBracketDraft() {
     portalSupportNoticeAt,
     portalSupportNotice,
     portalSupportNoticeDraft,
+    portalSupportMessages,
     portalAutoNotice,
     portalAutoNoticeAt,
     portalBullshootNotice,
@@ -6072,6 +6194,7 @@ function normalizeAdminMirrorSnapshot(data) {
     portalNoticeAt: String(data.portalNoticeAt || ""),
     portalSupportNotice: String(data.portalSupportNotice || ""),
     portalSupportNoticeAt: String(data.portalSupportNoticeAt || ""),
+    portalSupportMessages: Array.isArray(data.portalSupportMessages) ? data.portalSupportMessages : [],
     portalAutoNotice: String(data.portalAutoNotice || ""),
     portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
     portalBullshootNotice: String(data.portalBullshootNotice || ""),
@@ -6251,6 +6374,12 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   if (portalSupportNoticeInput) {
     portalSupportNoticeInput.value = portalSupportNoticeDraft;
   }
+  portalSupportMessages = normalizePortalSupportMessages(
+    snapshot.portalSupportMessages,
+    portalSupportNotice,
+    portalSupportNoticeAt,
+  );
+  renderPortalSupportTranscript();
   if (portalSupportNoticeStatus) {
     portalSupportNoticeStatus.textContent = portalSupportNotice
       ? `Sent at ${portalSupportNoticeAt ? new Date(portalSupportNoticeAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "unknown time"}.`

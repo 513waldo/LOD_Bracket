@@ -339,6 +339,61 @@ textarea:focus {
   overflow: auto;
 }
 
+.portal-message-log {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.portal-message-log.empty {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.portal-message-entry {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(224, 231, 221, 0.5);
+  border: 1px solid rgba(71, 79, 69, 0.12);
+}
+
+.portal-message-entry.admin {
+  background: rgba(222, 231, 219, 0.7);
+}
+
+.portal-message-entry.assistant {
+  background: rgba(214, 226, 240, 0.7);
+}
+
+.portal-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.portal-message-meta span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.portal-message-body {
+  color: var(--ink);
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
 .portal-notice-display .winner-line {
   color: #0b7a43;
   font-weight: 900;
