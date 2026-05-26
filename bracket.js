@@ -683,46 +683,57 @@ playerList.addEventListener("input", () => {
   updatePayoutCalculator();
 });
 
-function generatePlayers() {
-  const enteredCount = Number(totalPlayers.value);
-  const fallbackCount = Number(nameList?.querySelectorAll("[data-player-number]").length || 0);
-  const count = Number.isInteger(enteredCount) && enteredCount >= 2
-    ? enteredCount
-    : fallbackCount;
-  const groupSize = Number(playersPerGroup.value);
-
-  if (!Number.isInteger(count) || count < 2 || count > 200) {
-    showMessage("Enter 2 to 200 players.");
-    return;
+async function generatePlayers() {
+  const assistantMode = isAssistantAdminSessionActive();
+  if (assistantMode) {
+    stopRemoteMirrorRefresh();
   }
 
-  if (String(totalPlayers.value || "") !== String(count)) {
-    totalPlayers.value = String(count);
-    renderNameInputs(count);
-  }
+  try {
+    const enteredCount = Number(totalPlayers.value);
+    const fallbackCount = Number(nameList?.querySelectorAll("[data-player-number]").length || 0);
+    const count = Number.isInteger(enteredCount) && enteredCount >= 2
+      ? enteredCount
+      : fallbackCount;
+    const groupSize = Number(playersPerGroup.value);
 
-  if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > count) {
-    showMessage("Players per team must be at least 1 and no more than the player count.");
-    return;
-  }
+    if (!Number.isInteger(count) || count < 2 || count > 200) {
+      showMessage("Enter 2 to 200 players.");
+      return;
+    }
 
-  const nameMap = getPlayerNameMap();
-  savePlayerNameBackup(count, nameMap);
-  const players = Array.from({ length: count }, (_, index) => String(index + 1));
-  const teams = chunk(shuffle(players), groupSize);
-  currentTeams = teams;
-  hasGeneratedTeams = true;
-  blockedGenerateCount = 0;
-  hideTeamDrawWarning();
-  renderTeams(currentTeams);
-  syncPayoutTeams(teams.length);
-  updatePayoutCalculator();
-  savePortalSnapshotToLocalStorage();
-  if (isAssistantAdminSessionActive()) {
-    flushPortalSnapshotPublish();
+    if (String(totalPlayers.value || "") !== String(count)) {
+      totalPlayers.value = String(count);
+      renderNameInputs(count);
+    }
+
+    if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > count) {
+      showMessage("Players per team must be at least 1 and no more than the player count.");
+      return;
+    }
+
+    const nameMap = getPlayerNameMap();
+    savePlayerNameBackup(count, nameMap);
+    const players = Array.from({ length: count }, (_, index) => String(index + 1));
+    const teams = chunk(shuffle(players), groupSize);
+    currentTeams = teams;
+    hasGeneratedTeams = true;
+    blockedGenerateCount = 0;
+    hideTeamDrawWarning();
+    renderTeams(currentTeams);
+    syncPayoutTeams(teams.length);
+    updatePayoutCalculator();
+    savePortalSnapshotToLocalStorage();
+    if (assistantMode) {
+      await flushPortalSnapshotPublish();
+    }
+    queueBracketDraftSave();
+    showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
+  } finally {
+    if (assistantMode) {
+      startRemoteMirrorRefresh();
+    }
   }
-  queueBracketDraftSave();
-  showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
 }
 
 // document.querySelector("#drawGroups").addEventListener("click", () => {
@@ -747,33 +758,44 @@ function generatePlayers() {
 // });
 
 async function buildBracket() {
-  const rawPlayers = getPlayers();
-  const activePlayers = currentTeams.length
-    ? currentTeams.map(formatTeam)
-    : rawPlayers;
-
-  if (activePlayers.length < 2) {
-    showMessage("Add at least 2 players to build a bracket.");
-    return;
+  const assistantMode = isAssistantAdminSessionActive();
+  if (assistantMode) {
+    stopRemoteMirrorRefresh();
   }
 
-  if (activePlayers.length > 100) {
-    showMessage("Bracket supports up to 100 teams.");
-    return;
-  }
+  try {
+    const rawPlayers = getPlayers();
+    const activePlayers = currentTeams.length
+      ? currentTeams.map(formatTeam)
+      : rawPlayers;
 
-  await loadPdfBracketGraphs();
-  state = createBracketGraph(activePlayers);
-  renderBracket();
-  queueActiveLodCodesRefresh();
-  syncPdfLayoutToTeamCount(activePlayers.length);
-  syncPayoutTeams(activePlayers.length);
-  updatePayoutCalculator();
-  savePortalSnapshotToLocalStorage();
-  if (isAssistantAdminSessionActive()) {
-    flushPortalSnapshotPublish();
+    if (activePlayers.length < 2) {
+      showMessage("Add at least 2 players to build a bracket.");
+      return;
+    }
+
+    if (activePlayers.length > 100) {
+      showMessage("Bracket supports up to 100 teams.");
+      return;
+    }
+
+    await loadPdfBracketGraphs();
+    state = createBracketGraph(activePlayers);
+    renderBracket();
+    queueActiveLodCodesRefresh();
+    syncPdfLayoutToTeamCount(activePlayers.length);
+    syncPayoutTeams(activePlayers.length);
+    updatePayoutCalculator();
+    savePortalSnapshotToLocalStorage();
+    if (assistantMode) {
+      await flushPortalSnapshotPublish();
+    }
+    showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
+  } finally {
+    if (assistantMode) {
+      startRemoteMirrorRefresh();
+    }
   }
-  showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
 
 bracketOutput.addEventListener("click", (event) => {
