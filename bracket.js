@@ -245,9 +245,10 @@ const storedLodCode = getStoredLodCode();
 let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
+let lastPublishedPortalSnapshotSignature = "";
 let registryRefreshTimer = null;
 let remoteMirrorTimer = null;
-let lastRemoteMirrorSnapshotSerialized = "";
+let lastRemoteMirrorSnapshotSignature = "";
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 let resetBracketClickLock = false;
@@ -5007,8 +5008,44 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
   };
 }
 
+const PORTAL_SNAPSHOT_SIGNATURE_IGNORED_KEYS = new Set([
+  "exportedAt",
+  "portalNoticeAt",
+  "portalSupportNoticeAt",
+  "portalAutoNoticeAt",
+  "portalBullshootNoticeAt",
+]);
+
+function clonePortalSnapshotForSignature(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => clonePortalSnapshotForSignature(item));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const clone = {};
+  Object.keys(value)
+    .filter((key) => !PORTAL_SNAPSHOT_SIGNATURE_IGNORED_KEYS.has(key))
+    .sort()
+    .forEach((key) => {
+      clone[key] = clonePortalSnapshotForSignature(value[key]);
+    });
+  return clone;
+}
+
+function getPortalSnapshotSignature(snapshot) {
+  try {
+    return JSON.stringify(clonePortalSnapshotForSignature(snapshot));
+  } catch {
+    return "";
+  }
+}
+
 function savePortalSnapshotToLocalStorage() {
   const snapshot = buildPortalSnapshot();
+  const signature = getPortalSnapshotSignature(snapshot);
   if (canUseLocalStorage()) {
     try {
       localStorage.setItem(getPortalSnapshotStorageKey(), JSON.stringify(snapshot));
@@ -5017,6 +5054,10 @@ function savePortalSnapshotToLocalStorage() {
     }
   }
   if (suppressPortalSnapshotPublish) {
+    return false;
+  }
+
+  if (signature && signature === lastPublishedPortalSnapshotSignature) {
     return false;
   }
 
@@ -5035,6 +5076,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
     bracketDraftSaveTimer = null;
   }
   lastPublishedPortalSnapshot = "";
+  lastPublishedPortalSnapshotSignature = "";
   clearBracketCleanupTimer();
   if (cleanupCode) {
     clearBracketCleanupStorage(cleanupCode);
@@ -5830,13 +5872,16 @@ async function pollRemoteAdminSnapshot(code) {
         continue;
       }
 
-      const snapshotSerialized = JSON.stringify(snapshot);
-      if (snapshotSerialized === lastRemoteMirrorSnapshotSerialized) {
+      const snapshotSignature = getPortalSnapshotSignature(snapshot);
+      if (snapshotSignature && snapshotSignature === lastRemoteMirrorSnapshotSignature) {
         return true;
       }
 
       applyRemoteAdminSnapshot(snapshot, baseUrl);
-      lastRemoteMirrorSnapshotSerialized = snapshotSerialized;
+      lastRemoteMirrorSnapshotSignature = snapshotSignature;
+      if (snapshotSignature) {
+        lastPublishedPortalSnapshotSignature = snapshotSignature;
+      }
       updateAssistantAdminControls();
       return true;
     } catch {
@@ -5867,7 +5912,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   renderPortalLink(true);
   queueActiveLodCodesRefresh();
   stopRemoteMirrorRefresh();
-  lastRemoteMirrorSnapshotSerialized = "";
+  lastRemoteMirrorSnapshotSignature = "";
 
   for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
     if (!baseUrl) {
@@ -5885,8 +5930,8 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
         continue;
       }
 
-      const snapshotSerialized = JSON.stringify(snapshot);
-      if (snapshotSerialized === lastRemoteMirrorSnapshotSerialized) {
+      const snapshotSignature = getPortalSnapshotSignature(snapshot);
+      if (snapshotSignature && snapshotSignature === lastRemoteMirrorSnapshotSignature) {
         saveAssistantAdminSessionCode(normalizedCode);
         startRemoteMirrorRefresh();
         updateAssistantAdminControls();
@@ -5894,7 +5939,10 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
       }
 
       applyRemoteAdminSnapshot(snapshot, baseUrl);
-      lastRemoteMirrorSnapshotSerialized = snapshotSerialized;
+      lastRemoteMirrorSnapshotSignature = snapshotSignature;
+      if (snapshotSignature) {
+        lastPublishedPortalSnapshotSignature = snapshotSignature;
+      }
       saveAssistantAdminSessionCode(normalizedCode);
       startRemoteMirrorRefresh();
       updateAssistantAdminControls();
@@ -6135,9 +6183,13 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   queueActiveLodCodesRefresh();
   updateAssistantAdminControls();
   try {
-    lastRemoteMirrorSnapshotSerialized = JSON.stringify(snapshot);
+    lastRemoteMirrorSnapshotSignature = getPortalSnapshotSignature(snapshot);
+    if (lastRemoteMirrorSnapshotSignature) {
+      lastPublishedPortalSnapshotSignature = lastRemoteMirrorSnapshotSignature;
+    }
   } catch {
-    lastRemoteMirrorSnapshotSerialized = "";
+    lastRemoteMirrorSnapshotSignature = "";
+    lastPublishedPortalSnapshotSignature = "";
   }
 }
 
@@ -6145,7 +6197,8 @@ function logoutAssistantAdmin() {
   const backup = readAssistantAdminBackupDraft();
   clearAssistantAdminSessionCode();
   stopRemoteMirrorRefresh();
-  lastRemoteMirrorSnapshotSerialized = "";
+  lastPublishedPortalSnapshotSignature = "";
+  lastRemoteMirrorSnapshotSignature = "";
   updateAssistantAdminControls();
 
   if (backup) {
@@ -6196,6 +6249,11 @@ function queuePortalSnapshotPublish(snapshot) {
     return false;
   }
 
+  const signature = getPortalSnapshotSignature(snapshot);
+  if (signature && signature === lastPublishedPortalSnapshotSignature) {
+    return false;
+  }
+
   if (portalPublishTimer) {
     clearTimeout(portalPublishTimer);
   }
@@ -6213,7 +6271,8 @@ async function publishPortalSnapshotToApi(snapshot) {
   }
 
   const serialized = JSON.stringify(snapshot);
-  if (serialized === lastPublishedPortalSnapshot) {
+  const signature = getPortalSnapshotSignature(snapshot);
+  if (signature && signature === lastPublishedPortalSnapshotSignature) {
     return;
   }
 
@@ -6229,6 +6288,7 @@ async function publishPortalSnapshotToApi(snapshot) {
 
       if (response.ok) {
         lastPublishedPortalSnapshot = serialized;
+        lastPublishedPortalSnapshotSignature = signature;
       }
     } catch {
       // Ignore publish failures; the local snapshot remains available.
