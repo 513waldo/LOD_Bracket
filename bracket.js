@@ -248,6 +248,7 @@ let lastPublishedPortalSnapshot = "";
 let lastPublishedPortalSnapshotSignature = "";
 let registryRefreshTimer = null;
 let remoteMirrorTimer = null;
+let remoteMirrorRequestEpoch = 0;
 let lastRemoteMirrorSnapshotSignature = "";
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
@@ -5872,6 +5873,7 @@ function requireAssistantAdminPassword(code) {
 }
 
 function stopRemoteMirrorRefresh() {
+  remoteMirrorRequestEpoch += 1;
   if (remoteMirrorTimer) {
     clearInterval(remoteMirrorTimer);
     remoteMirrorTimer = null;
@@ -5898,6 +5900,8 @@ async function pollRemoteAdminSnapshot(code) {
     return false;
   }
 
+  const requestEpoch = remoteMirrorRequestEpoch;
+
   const sessionCode = getAssistantAdminSessionCode();
   if (sessionCode !== normalizedCode) {
     return false;
@@ -5917,6 +5921,10 @@ async function pollRemoteAdminSnapshot(code) {
       const snapshot = normalizeAdminMirrorSnapshot(await response.json());
       if (!snapshot) {
         continue;
+      }
+
+      if (requestEpoch !== remoteMirrorRequestEpoch) {
+        return false;
       }
 
       const snapshotSignature = getPortalSnapshotSignature(snapshot);
