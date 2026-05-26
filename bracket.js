@@ -718,6 +718,9 @@ function generatePlayers() {
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
   savePortalSnapshotToLocalStorage();
+  if (isAssistantAdminSessionActive()) {
+    flushPortalSnapshotPublish();
+  }
   queueBracketDraftSave();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
 }
@@ -767,6 +770,9 @@ async function buildBracket() {
   syncPayoutTeams(activePlayers.length);
   updatePayoutCalculator();
   savePortalSnapshotToLocalStorage();
+  if (isAssistantAdminSessionActive()) {
+    flushPortalSnapshotPublish();
+  }
   showMessage(`Bracket built for ${activePlayers.length} player${activePlayers.length === 1 ? "" : "s"}.`);
 }
 
@@ -5062,6 +5068,25 @@ function savePortalSnapshotToLocalStorage() {
   }
 
   return queuePortalSnapshotPublish(snapshot);
+}
+
+function isAssistantAdminSessionActive() {
+  const sessionCode = getAssistantAdminSessionCode();
+  return Boolean(sessionCode && sessionCode === normalizeLodCode(lodCode));
+}
+
+function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
+  if (!API_BASE_URLS.length || suppressPortalSnapshotPublish || !snapshot || !snapshot.lodCode) {
+    return false;
+  }
+
+  if (portalPublishTimer) {
+    clearTimeout(portalPublishTimer);
+    portalPublishTimer = null;
+  }
+
+  publishPortalSnapshotToApi(snapshot);
+  return true;
 }
 
 function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
