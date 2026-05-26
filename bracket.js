@@ -706,6 +706,15 @@ async function generatePlayers() {
   }
 
   try {
+    if (state || hasGeneratedTeams) {
+      blockedGenerateCount += 1;
+      const shameCount = blockedGenerateCount > 1 ? `${blockedGenerateCount} times` : "once";
+      const shameMessage = `Shame. Reset the bracket before generating teams again (${shameCount}).`;
+      showTeamDrawWarning(shameMessage);
+      showMessage(shameMessage);
+      return;
+    }
+
     const enteredCount = Number(totalPlayers.value);
     const fallbackCount = Number(nameList?.querySelectorAll("[data-player-number]").length || 0);
     const count = Number.isInteger(enteredCount) && enteredCount >= 2
@@ -745,6 +754,7 @@ async function generatePlayers() {
     }
     queueBracketDraftSave();
     showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
+    hideTeamDrawWarning();
   } finally {
     if (assistantMode) {
       startRemoteMirrorRefresh();
@@ -780,6 +790,11 @@ async function buildBracket() {
   }
 
   try {
+    if (state) {
+      showMessage("Bracket already exists. Reset the bracket before building again.");
+      return;
+    }
+
     const rawPlayers = getPlayers();
     const activePlayers = currentTeams.length
       ? currentTeams.map(formatTeam)
