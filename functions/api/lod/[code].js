@@ -174,8 +174,8 @@ function normalizePortalSupportMessages(value) {
       return null;
     }
 
-    const sender = /assistant/i.test(String(entry.sender || entry.author || ""))
-      ? "Admin Assist"
+    const sender = /assistant|support/i.test(String(entry.sender || entry.author || ""))
+      ? "Admin Support"
       : "Admin";
     const message = String(entry.message || entry.text || "").trim();
     if (!message) {

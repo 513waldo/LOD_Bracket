@@ -472,7 +472,7 @@ function formatAdminPortalMessage(label, message, stamp = new Date()) {
 }
 
 function getAdminSupportSenderLabel() {
-  return isAssistantAdminSessionActive() ? "Admin Assist" : "Admin";
+  return isAssistantAdminSessionActive() ? "Admin Support" : "Admin";
 }
 
 function parseAdminPortalMessage(text) {
@@ -481,9 +481,9 @@ function parseAdminPortalMessage(text) {
     return null;
   }
 
-  const match = value.match(/^(Admin Assist|Admin)\s*-\s*([^:]+):\s*(.*)$/i);
+  const match = value.match(/^(Admin Support|Admin Assist|Admin)\s*-\s*([^:]+):\s*(.*)$/i);
   if (match) {
-    const sender = /assistant/i.test(match[1]) ? "Admin Assist" : "Admin";
+    const sender = /admin$/i.test(match[1]) ? "Admin" : "Admin Support";
     const message = String(match[3] || "").trim();
     if (!message) {
       return null;
@@ -496,7 +496,7 @@ function parseAdminPortalMessage(text) {
   }
 
   return {
-    sender: "Admin Assist",
+    sender: "Admin Support",
     message: value,
     stamp: "",
   };
@@ -511,7 +511,9 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
         return;
       }
 
-      const sender = /assistant/i.test(String(entry.sender || entry.author || "")) ? "Admin Assist" : "Admin";
+      const sender = /assistant|support/i.test(String(entry.sender || entry.author || ""))
+        ? "Admin Support"
+        : "Admin";
       const message = String(entry.message || entry.text || "").trim();
       if (!message) {
         return;
@@ -527,13 +529,13 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
     const parsed = parseAdminPortalMessage(fallbackNotice);
     if (parsed) {
       entries.push({
-        sender: parsed.sender || "Admin Assist",
+        sender: parsed.sender || "Admin Support",
         message: parsed.message || String(fallbackNotice || "").trim(),
         stamp: parsed.stamp || fallbackNoticeAt || "",
       });
     } else if (String(fallbackNotice || "").trim()) {
       entries.push({
-        sender: "Admin Assist",
+        sender: "Admin Support",
         message: String(fallbackNotice || "").trim(),
         stamp: fallbackNoticeAt || "",
       });
@@ -557,13 +559,13 @@ function renderPortalSupportTranscript() {
 
   portalSupportTranscript.className = "portal-message-log";
   portalSupportTranscript.innerHTML = entries.map((entry) => {
-    const sender = entry.sender === "Admin" ? "Admin" : "Admin Assist";
+    const sender = entry.sender === "Admin" ? "Admin" : "Admin Support";
     const stamp = entry.stamp && !Number.isNaN(new Date(entry.stamp).getTime())
       ? new Date(entry.stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
       : "";
     const body = escapeHtml(entry.message || "").replace(/\n/g, "<br>");
     return `
-      <div class="portal-message-entry ${sender === "Admin Assist" ? "assistant" : "admin"}">
+      <div class="portal-message-entry ${sender === "Admin Support" ? "assistant" : "admin"}">
         <div class="portal-message-meta">
           <strong>${escapeHtml(sender)}</strong>
           <span>${escapeHtml(stamp || "unknown time")}</span>

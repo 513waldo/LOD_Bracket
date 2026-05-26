@@ -778,7 +778,7 @@ function formatPortalCall(message, stamp) {
     return "";
   }
 
-  if (/^(Admin|Admin Assist)\s*-\s*/i.test(text)) {
+  if (/^(Admin|Admin Support|Admin Assist)\s*-\s*/i.test(text)) {
     return text;
   }
 
