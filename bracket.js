@@ -5798,9 +5798,53 @@ function startRemoteMirrorRefresh() {
   stopRemoteMirrorRefresh();
   remoteMirrorTimer = window.setInterval(() => {
     if (normalizeLodCode(lodCode)) {
-      loadRemoteAdminSnapshot(lodCode, false);
+      pollRemoteAdminSnapshot(lodCode);
     }
   }, Math.max(1000, Number(window.BRACKET_API_POLL_MS || 5000)));
+}
+
+async function pollRemoteAdminSnapshot(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const sessionCode = getAssistantAdminSessionCode();
+  if (sessionCode !== normalizedCode) {
+    return false;
+  }
+
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const snapshot = normalizeAdminMirrorSnapshot(await response.json());
+      if (!snapshot) {
+        continue;
+      }
+
+      const snapshotSerialized = JSON.stringify(snapshot);
+      if (snapshotSerialized === lastRemoteMirrorSnapshotSerialized) {
+        return true;
+      }
+
+      applyRemoteAdminSnapshot(snapshot, baseUrl);
+      lastRemoteMirrorSnapshotSerialized = snapshotSerialized;
+      updateAssistantAdminControls();
+      return true;
+    } catch {
+      // Try the next configured host.
+    }
+  }
+
+  return false;
 }
 
 async function loadRemoteAdminSnapshot(code, announceFailure = false) {
