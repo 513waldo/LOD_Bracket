@@ -5097,7 +5097,7 @@ function isAssistantAdminSessionActive() {
   return Boolean(sessionCode && sessionCode === normalizeLodCode(lodCode));
 }
 
-function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
+async function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
   if (!API_BASE_URLS.length || suppressPortalSnapshotPublish || !snapshot || !snapshot.lodCode) {
     return false;
   }
@@ -5107,7 +5107,7 @@ function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
     portalPublishTimer = null;
   }
 
-  publishPortalSnapshotToApi(snapshot);
+  await publishPortalSnapshotToApi(snapshot);
   return true;
 }
 
