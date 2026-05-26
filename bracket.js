@@ -57,6 +57,7 @@ const bullseyeShootWinnerOutput = document.querySelector("#bullseyeShootWinner")
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
+const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
@@ -64,10 +65,14 @@ const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
 const clearLodCodeButton = document.querySelector("#clearLodCode");
 const portalNoticeInput = document.querySelector("#portalNoticeInput");
+const portalSupportNoticeInput = document.querySelector("#portalSupportNoticeInput");
+const portalSupportNoticeStatus = document.querySelector("#portalSupportNoticeStatus");
 const portalAutoNoticeInput = document.querySelector("#portalAutoNoticeInput");
 const portalAutoNoticeStatus = document.querySelector("#portalAutoNoticeStatus");
 const portalBullshootNoticeInput = document.querySelector("#portalBullshootNoticeInput");
 const portalBullshootNoticeStatus = document.querySelector("#portalBullshootNoticeStatus");
+const sendPortalSupportNoticeButton = document.querySelector("#sendPortalSupportNotice");
+const clearPortalSupportNoticeButton = document.querySelector("#clearPortalSupportNotice");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
@@ -92,6 +97,9 @@ const bracketDraftHistoryStateKey = "bracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
 const lodCodeStorageKey = "dartsTournamentLodCode";
 const lodCodeClearedValue = "__CLEARED__";
+const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
+const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
+const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
 const bracketCleanupDurationMs = 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const splitPotFirstTicketNumber = 100;
@@ -117,6 +125,58 @@ const mysteryOutRanges = {
   double: { min: 2, max: 170 },
   master: { min: 2, max: 180 },
 };
+const defaultRosterNames = [
+  "AJ Riley",
+  "Bob Lucas",
+  "Chip Ingels",
+  "Cody Lawton",
+  "Dale Hofstetter",
+  "Danny Trischler",
+  "Darryl Christ",
+  "Dave Matlock",
+  "Dave Milby",
+  "Geoff Schwein",
+  "Geoffrey Ziemak",
+  "Greg Kenny",
+  "Jason Howard",
+  "Jay Moretti",
+  "Jesse Plessinger",
+  "Joe Roman",
+  "Joel Zang",
+  "Julie Buffington Wendt",
+  "Justin Ball",
+  "Keith Atkinson",
+  "Kevin Leonhardt",
+  "Len Bauer",
+  "Marc Bennett",
+  "Mike Knight",
+  "Mike Madsen",
+  "Mike Walterman (Waldo)",
+  "Mike Zerhusen",
+  "Shawn Baker",
+  "Steve Brown",
+  "Terry Sims",
+  "Tim Sims",
+  "Tracy Thorner",
+  "Trevor Barton",
+  "William Hoover",
+  "Zach Rice",
+  "Adam Travis",
+  "Alice Elberfeld",
+  "Anthony Mele",
+  "Ben Schulcz",
+  "Christie Randall",
+  "Dalton Rarrick",
+  "Dan Ward",
+  "Daniel Mathey",
+  "David Genis",
+  "Deanna DeRosier",
+  "Dom Ranieri",
+  "Doree Garner",
+  "Ed Boothe",
+  "Greg Cribbet",
+  "Howard Morris",
+];
 const diceValues = [1, 1];
 const d20CanvasWidth = 680;
 const d20CanvasHeight = 480;
@@ -160,6 +220,9 @@ let mysteryOutDrawAnimation = null;
 let portalNotice = "";
 let portalNoticeAt = "";
 let portalNoticeDraft = "";
+let portalSupportNotice = "";
+let portalSupportNoticeAt = "";
+let portalSupportNoticeDraft = "";
 let portalAutoNotice = "";
 let portalAutoNoticeAt = "";
 let portalBullshootNotice = "";
@@ -183,11 +246,13 @@ let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
 let registryRefreshTimer = null;
+let remoteMirrorTimer = null;
 let bracketDraftSaveTimer = null;
 let bracketCleanupTimer = null;
 let resetBracketClickLock = false;
 let lastSyncedPlayerCount = null;
 let totalPlayersSyncTimer = null;
+let suppressPortalSnapshotPublish = false;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -252,6 +317,9 @@ updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 restoreBracketDraft();
+if (getAssistantAdminSessionCode() && normalizeLodCode(lodCode) === getAssistantAdminSessionCode()) {
+  loadRemoteAdminSnapshot(lodCode, false);
+}
 syncTotalPlayersSection(true);
 if (!totalPlayersSyncTimer) {
   totalPlayersSyncTimer = window.setInterval(() => syncTotalPlayersSection(false), 250);
@@ -277,6 +345,20 @@ if (pdfLayoutSelect) {
 
 refreshRegistryButton?.addEventListener("click", () => {
   loadActiveLodCodes(true);
+});
+
+lodRegistryList?.addEventListener("click", (event) => {
+  const codeButton = event.target.closest?.("[data-load-lod-code]");
+  if (!codeButton) {
+    return;
+  }
+
+  const code = normalizeLodCode(codeButton.dataset.loadLodCode || "");
+  if (!code) {
+    return;
+  }
+
+  loadRemoteAdminSnapshot(code, true);
 });
 
 document.addEventListener("input", (event) => {
@@ -314,6 +396,8 @@ document.querySelector("#downloadPortalSnapshot").addEventListener("click", () =
 function generateNewPortalCode() {
   lodCode = generateLodCode();
   saveStoredLodCode(lodCode);
+  clearAssistantAdminSessionCode();
+  stopRemoteMirrorRefresh();
   renderPortalLink(true);
   savePortalSnapshotToLocalStorage();
   queueActiveLodCodesRefresh();
@@ -331,22 +415,24 @@ loadLodCodeButton?.addEventListener("click", () => {
     saveStoredLodCode("");
     renderPortalLink();
     queueActiveLodCodesRefresh();
+    clearAssistantAdminSessionCode();
+    stopRemoteMirrorRefresh();
     showMessage("LOD code cleared.");
     return;
   }
 
-  lodCode = code;
-  saveStoredLodCode(lodCode);
-  renderPortalLink();
-  queueActiveLodCodesRefresh();
-  showMessage(`Loaded LOD code: ${lodCode}.`);
+  loadRemoteAdminSnapshot(code, true);
 });
+
+assistantAdminLogoutButton?.addEventListener("click", logoutAssistantAdmin);
 
 clearLodCodeButton?.addEventListener("click", () => {
   const previousCode = lodCode;
   lodCode = "";
   saveStoredLodCode("");
   renderPortalLink();
+  clearAssistantAdminSessionCode();
+  stopRemoteMirrorRefresh();
 
   if (canUseLocalStorage() && previousCode) {
     localStorage.removeItem(`${portalSnapshotStorageKey}:${previousCode}`);
@@ -358,6 +444,11 @@ clearLodCodeButton?.addEventListener("click", () => {
 
 portalNoticeInput?.addEventListener("input", () => {
   portalNoticeDraft = portalNoticeInput.value || "";
+  queueBracketDraftSave();
+});
+
+portalSupportNoticeInput?.addEventListener("input", () => {
+  portalSupportNoticeDraft = portalSupportNoticeInput.value || "";
   queueBracketDraftSave();
 });
 
@@ -377,6 +468,22 @@ sendPortalNoticeButton?.addEventListener("click", () => {
     : `Board call cleared at ${stamp}.`);
 });
 
+sendPortalSupportNoticeButton?.addEventListener("click", () => {
+  portalSupportNotice = portalSupportNoticeDraft || "";
+  portalSupportNoticeAt = portalSupportNotice ? new Date().toISOString() : "";
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = portalSupportNotice
+      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
+      : `Cleared at ${stamp}.`;
+  }
+  showMessage(portalSupportNotice
+    ? (didPublish ? `Admin support message sent at ${stamp}.` : `Admin support message saved at ${stamp}; set an LOD code to publish.`)
+    : `Admin support message cleared at ${stamp}.`);
+});
+
 clearPortalNoticeButton?.addEventListener("click", () => {
   portalNotice = "";
   portalNoticeAt = "";
@@ -390,6 +497,21 @@ clearPortalNoticeButton?.addEventListener("click", () => {
   savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
   showMessage("Portal message cleared.");
+});
+
+clearPortalSupportNoticeButton?.addEventListener("click", () => {
+  portalSupportNotice = "";
+  portalSupportNoticeAt = "";
+  portalSupportNoticeDraft = "";
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = "";
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = "";
+  }
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  showMessage("Admin support message cleared.");
 });
 
 copyPortalLinkButton?.addEventListener("click", async () => {
@@ -581,14 +703,10 @@ function generatePlayers() {
     return;
   }
 
+  const nameMap = getPlayerNameMap();
+  savePlayerNameBackup(count, nameMap);
   const players = Array.from({ length: count }, (_, index) => String(index + 1));
   const teams = chunk(shuffle(players), groupSize);
-  try {
-    savePlayerNameBackup(count);
-  } catch (error) {
-    console.error(error);
-    showMessage("Teams generated, but the saved-name backup could not be written.");
-  }
   currentTeams = teams;
   hasGeneratedTeams = true;
   blockedGenerateCount = 0;
@@ -596,6 +714,7 @@ function generatePlayers() {
   renderTeams(currentTeams);
   syncPayoutTeams(teams.length);
   updatePayoutCalculator();
+  queueBracketDraftSave();
   showMessage(`Generated ${teams.length} random team${teams.length === 1 ? "" : "s"}.`);
 }
 
@@ -636,6 +755,7 @@ async function buildBracket() {
     return;
   }
 
+  await loadPdfBracketGraphs();
   state = createBracketGraph(activePlayers);
   renderBracket();
   queueActiveLodCodesRefresh();
@@ -1737,6 +1857,24 @@ function setAutomatedPortalNotice(message) {
   return didPublish;
 }
 
+function setAdminSupportPortalNotice(message) {
+  const text = String(message || "").trim();
+  portalSupportNotice = text;
+  portalSupportNoticeAt = text ? new Date().toISOString() : "";
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = text;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = text
+      ? (didPublish ? `Sent at ${stamp}.` : `Message ready at ${stamp}; set an LOD code to publish.`)
+      : "";
+  }
+  return didPublish;
+}
+
 function setBullshootPortalNotice(message) {
   const text = String(message || "").trim();
   portalBullshootNotice = text;
@@ -1987,7 +2125,6 @@ function resetTournament() {
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
   clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
-  deleteAllPlayerNameBackups();
 
   if (totalPlayers) {
     totalPlayers.value = "0";
@@ -2931,10 +3068,13 @@ function renderNameInputs(count) {
 
   const existingNames = getPlayerNameMap();
   lastSyncedPlayerCount = count;
+  const fallbackNames = existingNames && Object.keys(existingNames).length
+    ? null
+    : defaultRosterNames.slice(0, count);
 
   nameList.innerHTML = Array.from({ length: count }, (_, index) => {
     const number = String(index + 1);
-    const value = existingNames[number] || "";
+    const value = existingNames[number] || fallbackNames?.[index] || "";
 
     return `
       <label class="name-row">
@@ -3256,6 +3396,8 @@ function createPdfLearnedBracketGraph(players, learnedGraph) {
   const rounds = { winner: [], loser: [] };
   const matchesById = {};
   const templateSources = {};
+  const playInGameIds = getPdfLayoutColumnGameIds(layout.winner, 0);
+  const byeFedGameIds = getPdfLayoutColumnGameIds(layout.winner, 1);
   let seedIndex = 0;
 
   learnedGraph.matches
@@ -3286,6 +3428,8 @@ function createPdfLearnedBracketGraph(players, learnedGraph) {
       match.loserTo = definition.loserTo
         ? { matchId: definition.loserTo.game, slot: definition.loserTo.slot }
         : null;
+      match.isPlayIn = match.type === "winner" && playInGameIds.has(match.id);
+      match.isByeFed = match.type === "winner" && byeFedGameIds.has(match.id);
 
       if (match.type === "final") {
         match.title = `Game ${match.id} - Grand Final`;
@@ -3333,6 +3477,35 @@ function createPdfLearnedBracketGraph(players, learnedGraph) {
   return bracketState;
 }
 
+function assignGraphDisplayGameNumbers(bracketState) {
+  if (!bracketState || bracketState.mode !== "graph") {
+    return;
+  }
+
+  const orderedMatches = [
+    ...(bracketState.rounds?.winner || []).flat(),
+    ...(bracketState.rounds?.loser || []).flat(),
+    bracketState.final,
+    bracketState.resetFinal,
+    bracketState.doubleDipFinal,
+  ].filter(Boolean);
+
+  let displayGameNumber = 1;
+  orderedMatches.forEach((match) => {
+    match.gameNumber = displayGameNumber;
+    if (match.type === "final") {
+      match.title = `Game ${displayGameNumber} - Grand Final`;
+    } else if (match.type === "resetFinal") {
+      match.title = `Game ${displayGameNumber} - Reset Final`;
+    } else if (match.type === "doubleDipFinal") {
+      match.title = `Game ${displayGameNumber} - Double Dip Final`;
+    } else {
+      match.title = `Game ${displayGameNumber}`;
+    }
+    displayGameNumber += 1;
+  });
+}
+
 function mapPdfColumnPositions(columnsText, excludedGameId) {
   const positions = new Map();
   columnsText.split(" / ").forEach((column, roundIndex) => {
@@ -3346,6 +3519,16 @@ function mapPdfColumnPositions(columnsText, excludedGameId) {
   return positions;
 }
 
+function getPdfLayoutColumnGameIds(columnsText, columnIndex) {
+  const column = columnsText.split(" / ")[columnIndex] || "";
+  return new Set(
+    column
+      .split(",")
+      .map((game) => Number(game.trim().replace(/^G/, "")))
+      .filter((gameId) => Number.isInteger(gameId) && gameId > 0),
+  );
+}
+
 function formatPdfInputSource(input) {
   if (input.kind === "winner") {
     return `Winner of Game ${input.game}`;
@@ -3356,6 +3539,30 @@ function formatPdfInputSource(input) {
       : `L${input.game} - Loser of Game ${input.game}`;
   }
   return "";
+}
+
+function getGraphDisplayGameNumber(match) {
+  const value = Number(match?.gameNumber || 0);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function normalizeGraphSourceLabel(label, bracketState) {
+  const value = String(label || "");
+  const winnerMatch = /^Winner of Game (\d+)\b/i.exec(value);
+  if (winnerMatch) {
+    const source = bracketState?.matchesById?.[Number(winnerMatch[1])];
+    const displayNumber = getGraphDisplayGameNumber(source) || Number(winnerMatch[1]);
+    return `Winner of Game ${displayNumber}`;
+  }
+
+  const loserMatch = /^Loser of Game (\d+)\b/i.exec(value);
+  if (loserMatch) {
+    const source = bracketState?.matchesById?.[Number(loserMatch[1])];
+    const displayNumber = getGraphDisplayGameNumber(source) || Number(loserMatch[1]);
+    return `Loser of Game ${displayNumber}`;
+  }
+
+  return value;
 }
 
 function createThreeTeamBracketGraph(players) {
@@ -3765,6 +3972,7 @@ function createGraphMatch(id, type, roundIndex, matchIndex) {
     loserTo: null,
     autoAdvanced: false,
     isPlayIn: false,
+    isByeFed: false,
     gameNumber: id,
   };
 }
@@ -4029,6 +4237,7 @@ function placeGraphPlayer(bracketState, destination, player) {
 }
 
 function settleGraphByesAndSources(bracketState) {
+  assignGraphDisplayGameNumbers(bracketState);
   let changed = true;
 
   while (changed) {
@@ -4041,7 +4250,13 @@ function settleGraphByesAndSources(bracketState) {
 }
 
 function markGraphPlayInMatches(bracketState) {
+  if (bracketState.templateSources) {
+    return;
+  }
+
   bracketState.matches.forEach((match) => {
+    match.isPlayIn = false;
+    match.isByeFed = false;
     if (isGraphPlayInMatch(match, bracketState)) {
       match.isPlayIn = true;
     }
@@ -4053,13 +4268,13 @@ function isGraphPlayInMatch(match, bracketState) {
     return false;
   }
 
-  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
-  if (realPlayerCount < 2) {
+  if (match.roundIndex !== 0 || match.autoAdvanced) {
     return false;
   }
 
-  if (!bracketState.templateSources && match.roundIndex === 0 && bracketState.originalPlayers.length !== bracketState.size) {
-    return true;
+  const realPlayerCount = match.players.filter((player) => player && player !== "BYE").length;
+  if (realPlayerCount < 2) {
+    return false;
   }
 
   const destination = match.winnerTo;
@@ -4068,12 +4283,8 @@ function isGraphPlayInMatch(match, bracketState) {
     return false;
   }
 
-  const otherSlot = destination.slot === 0 ? 1 : 0;
-  const targetSources = bracketState.templateSources?.[target.id] || target.slotSources;
-  return targetSources[destination.slot] === `Winner of Game ${match.id}` &&
-    Boolean(target.players[otherSlot]) &&
-    target.players[otherSlot] !== "BYE" &&
-    !targetSources[otherSlot];
+  const targetRealPlayers = target.players.filter((player) => player && player !== "BYE").length;
+  return targetRealPlayers === 1;
 }
 
 function autoAdvanceGraphByes(bracketState) {
@@ -4162,7 +4373,7 @@ function refreshGraphSources(bracketState) {
   if (bracketState.templateSources) {
     bracketState.matches.forEach((match) => {
       const source = bracketState.templateSources[match.id] || ["", ""];
-      match.slotSources = match.players.map((player, index) => player ? "" : source[index]);
+      match.slotSources = match.players.map((player, index) => player ? "" : normalizeGraphSourceLabel(source[index], bracketState));
     });
     return;
   }
@@ -4176,9 +4387,9 @@ function refreshGraphSources(bracketState) {
       return;
     }
 
-    addGraphSource(bracketState, match.winnerTo, `Winner of Game ${match.id}`);
+    addGraphSource(bracketState, match.winnerTo, `Winner of Game ${getGraphDisplayGameNumber(match)}`);
     if (match.type === "winner") {
-      addGraphSource(bracketState, match.loserTo, `Loser of Game ${match.id}`);
+      addGraphSource(bracketState, match.loserTo, `Loser of Game ${getGraphDisplayGameNumber(match)}`);
     }
   });
 }
@@ -4228,6 +4439,7 @@ function rebuildGraphMatchIndex(bracketState) {
   bracketState.matches.forEach((match) => {
     bracketState.matchesById[match.id] = match;
   });
+  assignGraphDisplayGameNumbers(bracketState);
 }
 
 function addGraphSource(bracketState, destination, label) {
@@ -4281,18 +4493,10 @@ function createBracket(players) {
 
 function seedPlayersWithByes(players, size) {
   const seeds = Array(size).fill("BYE");
-  const matchCount = size / 2;
-  const byeCount = size - players.length;
-  const playInCount = matchCount - byeCount;
+  const limit = Math.min(players.length, size);
 
-  for (let matchIndex = 0; matchIndex < matchCount; matchIndex += 1) {
-    seeds[matchIndex * 2] = players[matchIndex] || "BYE";
-  }
-
-  for (let index = 0; index < playInCount; index += 1) {
-    const matchIndex = matchCount - 1 - index;
-    const playerIndex = matchCount + index;
-    seeds[matchIndex * 2 + 1] = players[playerIndex];
+  for (let index = 0; index < limit; index += 1) {
+    seeds[index] = players[index];
   }
 
   return seeds;
@@ -4760,11 +4964,38 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     exportedAt,
     lodCode,
     expiresAt: getBracketCleanupAt(lodCode) || "",
+    totalPlayers: Number(totalPlayers?.value || 0) || 0,
+    playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
+    playerList: playerList?.value || "",
+    nameMap: getPlayerNameMap(),
+    currentTeams,
+    hasGeneratedTeams,
+    blockedGenerateCount,
     state: state ? JSON.parse(JSON.stringify(state)) : null,
     outShots: getOutShots(),
     mysteryOut,
+    diceValues: [...diceValues],
+    payout: {
+      teams: payoutTeams?.value || "",
+      entry: payoutEntry?.value || "",
+      added: payoutAdded?.value || "",
+      places: payoutPlaces?.value || "",
+      percentValues: Array.from(document.querySelectorAll("[data-payout-percent]")).map((input) => input.value),
+    },
+    pdfLayoutValue: pdfLayoutSelect?.value || "",
+    splitPot: {
+      entries: splitPotEntries,
+      winner: splitPotWinner,
+    },
+    bullseyeShoot: {
+      currentPot: getBullseyeShootCurrentPot(),
+      entries: bullseyeShootEntries,
+      winner: bullseyeShootWinner,
+    },
     portalNotice,
     portalNoticeAt,
+    portalSupportNotice,
+    portalSupportNoticeAt,
     portalAutoNotice,
     portalAutoNoticeAt,
     portalBullshootNotice,
@@ -4781,6 +5012,10 @@ function savePortalSnapshotToLocalStorage() {
       // Local portal caching is optional; bracket clicks must keep working.
     }
   }
+  if (suppressPortalSnapshotPublish) {
+    return false;
+  }
+
   return queuePortalSnapshotPublish(snapshot);
 }
 
@@ -4813,6 +5048,9 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   portalNotice = "";
   portalNoticeAt = "";
   portalNoticeDraft = "";
+  portalSupportNotice = "";
+  portalSupportNoticeAt = "";
+  portalSupportNoticeDraft = "";
   portalAutoNotice = "";
   portalAutoNoticeAt = "";
   portalBullshootNotice = "";
@@ -4822,6 +5060,12 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   }
   if (portalNoticeStatus) {
     portalNoticeStatus.textContent = "";
+  }
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = "";
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = "";
   }
   if (portalAutoNoticeInput) {
     portalAutoNoticeInput.innerHTML = "";
@@ -4859,7 +5103,11 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
 }
 
 function saveBracketDraft() {
-  const payload = JSON.stringify(buildBracketDraft());
+  persistBracketDraft(buildBracketDraft());
+}
+
+function persistBracketDraft(draft) {
+  const payload = JSON.stringify(draft);
   try {
     if (canUseLocalStorage()) {
       localStorage.setItem(bracketDraftStorageKey, payload);
@@ -4905,7 +5153,7 @@ function flushBracketDraftSave() {
 function restoreBracketDraft() {
   const draft = readBracketDraft();
   if (!draft) {
-    return;
+    return false;
   }
 
   if (typeof draft.lodCode === "string" && draft.lodCode.trim()) {
@@ -4988,6 +5236,29 @@ function restoreBracketDraft() {
     portalNoticeInput.value = portalNoticeDraft;
   }
 
+  if (typeof draft.portalSupportNotice === "string") {
+    portalSupportNotice = draft.portalSupportNotice;
+  }
+
+  if (typeof draft.portalSupportNoticeAt === "string") {
+    portalSupportNoticeAt = draft.portalSupportNoticeAt;
+  }
+
+  if (typeof draft.portalSupportNoticeDraft === "string") {
+    portalSupportNoticeDraft = draft.portalSupportNoticeDraft;
+  } else {
+    portalSupportNoticeDraft = portalSupportNotice || "";
+  }
+
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = portalSupportNoticeDraft;
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = portalSupportNotice
+      ? `Sent at ${portalSupportNoticeAt ? new Date(portalSupportNoticeAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "unknown time"}.`
+      : "";
+  }
+
   if (typeof draft.portalAutoNotice === "string") {
     portalAutoNotice = draft.portalAutoNotice;
   }
@@ -5047,7 +5318,7 @@ function restoreBracketDraft() {
   }
 
   if (draft.payout && typeof draft.payout === "object") {
-    if (payoutTeams && draft.payout.teams !== undefined) {
+  if (payoutTeams && draft.payout.teams !== undefined) {
       payoutTeams.value = String(draft.payout.teams);
     }
     if (payoutEntry && draft.payout.entry !== undefined) {
@@ -5071,6 +5342,7 @@ function restoreBracketDraft() {
   }
 
   queueBracketDraftSave();
+  return true;
 }
 
 function readBracketDraft() {
@@ -5152,6 +5424,60 @@ function clearBracketDraftStorage() {
   }
 }
 
+function saveAssistantAdminBackupDraft(draft = buildBracketDraft()) {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    if (!sessionStorage.getItem(assistantAdminBackupStorageKey)) {
+      sessionStorage.setItem(assistantAdminBackupStorageKey, JSON.stringify(draft));
+    }
+  } catch {
+    // Ignore backup failures.
+  }
+}
+
+function readAssistantAdminBackupDraft() {
+  if (!canUseSessionStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = sessionStorage.getItem(assistantAdminBackupStorageKey);
+    if (!raw) {
+      return null;
+    }
+    const draft = JSON.parse(raw);
+    return draft && typeof draft === "object" ? draft : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearAssistantAdminBackupDraft() {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    sessionStorage.removeItem(assistantAdminBackupStorageKey);
+  } catch {
+    // Ignore backup cleanup failures.
+  }
+}
+
+function restoreBracketDraftObject(draft) {
+  if (!draft || typeof draft !== "object") {
+    return;
+  }
+
+  persistBracketDraft(draft);
+  if (typeof draft.lodCode === "string") {
+    saveStoredLodCode(normalizeLodCode(draft.lodCode));
+  }
+}
+
 function buildBracketDraft() {
   return {
     version: 1,
@@ -5178,6 +5504,9 @@ function buildBracketDraft() {
     expiresAt: getBracketCleanupAt(lodCode) || "",
     portalNotice,
     portalNoticeDraft,
+    portalSupportNoticeAt,
+    portalSupportNotice,
+    portalSupportNoticeDraft,
     portalAutoNotice,
     portalAutoNoticeAt,
     portalBullshootNotice,
@@ -5330,13 +5659,12 @@ function renderActiveLodCodes(registry, sourceBaseUrl) {
 
   const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
   const updatedLabel = registry?.updatedAt ? `Updated ${formatBackupTime(registry.updatedAt)}` : "No registry timestamp";
-  const sourceLabel = sourceBaseUrl ? `Source: ${sourceBaseUrl}` : "Source unavailable";
 
   if (!codes.length) {
     lodRegistryList.innerHTML = `
       <div class="lod-registry-empty">
         <strong>No active LODs published yet.</strong>
-        <span>${escapeHtml(sourceLabel)}</span>
+        <span>${escapeHtml(updatedLabel)}</span>
       </div>
     `;
     return;
@@ -5345,12 +5673,419 @@ function renderActiveLodCodes(registry, sourceBaseUrl) {
   lodRegistryList.innerHTML = `
     <div class="lod-registry-meta">
       <strong>${escapeHtml(`${codes.length} active LOD${codes.length === 1 ? "" : "s"}`)}</strong>
-      <span>${escapeHtml(updatedLabel)} • ${escapeHtml(sourceLabel)}</span>
+      <span>${escapeHtml(updatedLabel)}</span>
     </div>
     <div class="lod-registry-codes">
-      ${codes.map((code) => `<code>${escapeHtml(code)}</code>`).join("")}
+      ${codes.map((code) => `<button class="lod-code-chip secondary" type="button" data-load-lod-code="${escapeAttribute(code)}">${escapeHtml(code)}</button>`).join("")}
     </div>
   `;
+}
+
+function getAssistantAdminPassword() {
+  if (!canUseLocalStorage()) {
+    return "";
+  }
+
+  try {
+    return localStorage.getItem(assistantAdminPasswordStorageKey) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveAssistantAdminPassword(password) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(assistantAdminPasswordStorageKey, String(password || ""));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getAssistantAdminSessionCode() {
+  if (!canUseSessionStorage()) {
+    return "";
+  }
+
+  try {
+    return normalizeLodCode(sessionStorage.getItem(assistantAdminSessionStorageKey) || "");
+  } catch {
+    return "";
+  }
+}
+
+function saveAssistantAdminSessionCode(code) {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(assistantAdminSessionStorageKey, normalizeLodCode(code));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function clearAssistantAdminSessionCode() {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    sessionStorage.removeItem(assistantAdminSessionStorageKey);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function requireAssistantAdminPassword(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const currentSession = getAssistantAdminSessionCode();
+  if (currentSession && currentSession === normalizedCode) {
+    return true;
+  }
+
+  const storedPassword = getAssistantAdminPassword();
+  const promptLabel = storedPassword
+    ? `Enter the assistant admin password to load LOD ${normalizedCode}.`
+    : `Set an assistant admin password before loading LOD ${normalizedCode}.`;
+  const entered = window.prompt(promptLabel, "");
+
+  if (!entered) {
+    showMessage("Assistant admin access was cancelled.");
+    return false;
+  }
+
+  if (!storedPassword) {
+    saveAssistantAdminPassword(entered);
+    saveAssistantAdminSessionCode(normalizedCode);
+    return true;
+  }
+
+  if (entered !== storedPassword) {
+    showMessage("Incorrect assistant admin password.");
+    return false;
+  }
+
+  saveAssistantAdminSessionCode(normalizedCode);
+  return true;
+}
+
+function stopRemoteMirrorRefresh() {
+  if (remoteMirrorTimer) {
+    clearInterval(remoteMirrorTimer);
+    remoteMirrorTimer = null;
+  }
+}
+
+function startRemoteMirrorRefresh() {
+  const normalizedCode = normalizeLodCode(lodCode);
+  if (!normalizedCode || !API_BASE_URLS.length) {
+    return;
+  }
+
+  stopRemoteMirrorRefresh();
+  remoteMirrorTimer = window.setInterval(() => {
+    if (normalizeLodCode(lodCode)) {
+      loadRemoteAdminSnapshot(lodCode, false);
+    }
+  }, Math.max(1000, Number(window.BRACKET_API_POLL_MS || 5000)));
+}
+
+async function loadRemoteAdminSnapshot(code, announceFailure = false) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    if (announceFailure) {
+      showMessage("Enter a LOD code to load a live admin snapshot.");
+    }
+    return false;
+  }
+
+  const sessionCode = getAssistantAdminSessionCode();
+  if (sessionCode !== normalizedCode && !requireAssistantAdminPassword(normalizedCode)) {
+    return false;
+  }
+
+  saveAssistantAdminBackupDraft(buildBracketDraft());
+  lodCode = normalizedCode;
+  saveStoredLodCode(lodCode);
+  renderPortalLink(true);
+  queueActiveLodCodesRefresh();
+  stopRemoteMirrorRefresh();
+
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const snapshot = normalizeAdminMirrorSnapshot(await response.json());
+      if (!snapshot) {
+        continue;
+      }
+
+      applyRemoteAdminSnapshot(snapshot, baseUrl);
+      saveAssistantAdminSessionCode(normalizedCode);
+      startRemoteMirrorRefresh();
+      updateAssistantAdminControls();
+      showMessage(`Live admin snapshot loaded for LOD ${normalizedCode}.`);
+      return true;
+    } catch {
+      // Try the next configured host.
+    }
+  }
+
+  if (announceFailure) {
+    showMessage(`Unable to load the live admin snapshot for LOD ${normalizedCode}.`);
+  }
+  return false;
+}
+
+function normalizeAdminMirrorSnapshot(data) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const snapshot = {
+    version: Number(data.version || 1),
+    exportedAt: String(data.exportedAt || ""),
+    lodCode: normalizeLodCode(data.lodCode),
+    expiresAt: Number(data.expiresAt || 0) || 0,
+    state: data.state && typeof data.state === "object" ? data.state : null,
+    outShots: Array.isArray(data.outShots) ? data.outShots : [],
+    mysteryOut: data.mysteryOut || "",
+    portalNotice: String(data.portalNotice || ""),
+    portalNoticeAt: String(data.portalNoticeAt || ""),
+    portalSupportNotice: String(data.portalSupportNotice || ""),
+    portalSupportNoticeAt: String(data.portalSupportNoticeAt || ""),
+    portalAutoNotice: String(data.portalAutoNotice || ""),
+    portalAutoNoticeAt: String(data.portalAutoNoticeAt || ""),
+    portalBullshootNotice: String(data.portalBullshootNotice || ""),
+    portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
+    totalPlayers: Math.max(0, Math.floor(Number(data.totalPlayers) || 0)),
+    playersPerGroup: Math.max(0, Math.floor(Number(data.playersPerGroup) || 0)),
+    playerList: String(data.playerList || ""),
+    nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
+    currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
+    hasGeneratedTeams: Boolean(data.hasGeneratedTeams),
+    blockedGenerateCount: Math.max(0, Math.floor(Number(data.blockedGenerateCount) || 0)),
+    diceValues: Array.isArray(data.diceValues) ? data.diceValues : [],
+    pdfLayoutValue: data.pdfLayoutValue !== undefined ? String(data.pdfLayoutValue) : "",
+    payout: data.payout && typeof data.payout === "object" ? data.payout : null,
+    splitPot: data.splitPot && typeof data.splitPot === "object" ? data.splitPot : null,
+    bullseyeShoot: data.bullseyeShoot && typeof data.bullseyeShoot === "object" ? data.bullseyeShoot : null,
+  };
+
+  return snapshot;
+}
+
+function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
+  if (!snapshot || typeof snapshot !== "object") {
+    return;
+  }
+
+  stopSplitPotDrawAnimation();
+  stopBullseyeShootDrawAnimation();
+  stopMysteryOutDrawAnimation();
+  if (d20RollFrame) {
+    cancelAnimationFrame(d20RollFrame);
+    d20RollFrame = null;
+  }
+  if (d20RollInterval) {
+    clearInterval(d20RollInterval);
+    d20RollInterval = null;
+  }
+  if (d20RollCompleteTimer) {
+    clearTimeout(d20RollCompleteTimer);
+    d20RollCompleteTimer = null;
+  }
+  d20RollState = null;
+
+  suppressPortalSnapshotPublish = true;
+
+  if (snapshot.lodCode) {
+    lodCode = normalizeLodCode(snapshot.lodCode) || lodCode;
+    saveStoredLodCode(lodCode);
+    renderPortalLink();
+  }
+
+  if (snapshot.totalPlayers !== undefined) {
+    totalPlayers.value = String(snapshot.totalPlayers || 0);
+  }
+  if (snapshot.playersPerGroup !== undefined) {
+    playersPerGroup.value = String(snapshot.playersPerGroup || 0);
+  }
+  renderNameInputs(Number(totalPlayers.value));
+  lastSyncedPlayerCount = Number(totalPlayers.value) || 0;
+
+  if (snapshot.nameMap && typeof snapshot.nameMap === "object") {
+    applyPlayerNameMap(snapshot.nameMap, true);
+  }
+
+  if (typeof snapshot.playerList === "string") {
+    playerList.value = snapshot.playerList;
+  }
+
+  if (Array.isArray(snapshot.currentTeams)) {
+    currentTeams = snapshot.currentTeams;
+    hasGeneratedTeams = Boolean(snapshot.hasGeneratedTeams);
+    blockedGenerateCount = Number(snapshot.blockedGenerateCount || 0);
+    if (currentTeams.length) {
+      renderGroups(currentTeams);
+    }
+  }
+
+  if (snapshot.state && typeof snapshot.state === "object") {
+    state = snapshot.state;
+    mysteryOut = snapshot.mysteryOut || "";
+    if (state.mode === "graph") {
+      rebuildGraphMatchIndex(state);
+      refreshGraphSources(state);
+    } else {
+      refreshGameNumbersAndSources(state);
+    }
+    renderBracket();
+    syncPdfLayoutToTeamCount(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
+    syncPayoutTeams(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
+  } else {
+    state = null;
+    bracketOutput.className = "bracket empty";
+    bracketOutput.textContent = "Build a bracket to start.";
+    championOutput.textContent = "Champion: pending";
+  }
+
+  if (snapshot.payout && typeof snapshot.payout === "object") {
+    if (payoutTeams && snapshot.payout.teams !== undefined) {
+      payoutTeams.value = String(snapshot.payout.teams);
+    }
+    if (payoutEntry && snapshot.payout.entry !== undefined) {
+      payoutEntry.value = String(snapshot.payout.entry);
+    }
+    if (payoutAdded && snapshot.payout.added !== undefined) {
+      payoutAdded.value = String(snapshot.payout.added);
+    }
+    if (payoutPlaces && snapshot.payout.places !== undefined) {
+      payoutPlaces.value = String(snapshot.payout.places);
+    }
+    if (Array.isArray(snapshot.payout.percentValues)) {
+      renderPayoutPercentInputs(Number(payoutPlaces?.value || 0));
+      Array.from(document.querySelectorAll("[data-payout-percent]")).forEach((input, index) => {
+        if (snapshot.payout.percentValues[index] !== undefined) {
+          input.value = String(snapshot.payout.percentValues[index]);
+        }
+      });
+    }
+    updatePayoutCalculator();
+  }
+
+  if (snapshot.pdfLayoutValue !== undefined && pdfLayoutSelect) {
+    pdfLayoutSelect.value = String(snapshot.pdfLayoutValue || "");
+    renderPdfColumnMirror(Number(pdfLayoutSelect.value || 8));
+  }
+
+  if (Array.isArray(snapshot.diceValues) && snapshot.diceValues.length >= 2) {
+    snapshot.diceValues.slice(0, 2).forEach((value, index) => {
+      const numeric = Number(value) || 1;
+      diceValues[index] = numeric < 1 ? 1 : numeric;
+    });
+    renderDice();
+  }
+
+  if (snapshot.splitPot && typeof snapshot.splitPot === "object") {
+    splitPotEntries = Array.isArray(snapshot.splitPot.entries) ? snapshot.splitPot.entries : [];
+    splitPotWinner = snapshot.splitPot.winner && typeof snapshot.splitPot.winner === "object" ? snapshot.splitPot.winner : null;
+    renderSplitPot();
+  }
+
+  if (snapshot.bullseyeShoot && typeof snapshot.bullseyeShoot === "object") {
+    bullseyeShootEntries = Array.isArray(snapshot.bullseyeShoot.entries) ? snapshot.bullseyeShoot.entries : [];
+    bullseyeShootWinner = snapshot.bullseyeShoot.winner && typeof snapshot.bullseyeShoot.winner === "object" ? snapshot.bullseyeShoot.winner : null;
+    bullseyeShootCurrentPot = Math.max(0, Math.floor(Number(snapshot.bullseyeShoot.currentPot || 0) || 0));
+    if (bullseyeShootCurrentPotInput) {
+      bullseyeShootCurrentPotInput.value = String(bullseyeShootCurrentPot);
+    }
+    renderBullseyeShoot();
+  }
+
+  if (snapshot.outShots && Array.isArray(snapshot.outShots)) {
+    try {
+      localStorage.setItem(outShotStorageKey, JSON.stringify(snapshot.outShots));
+    } catch {
+      // Ignore storage failures.
+    }
+    renderOutShotSheet();
+  }
+
+  if (typeof snapshot.mysteryOut === "string") {
+    mysteryOut = snapshot.mysteryOut;
+    renderMysteryOut();
+  } else if (snapshot.mysteryOut && typeof snapshot.mysteryOut === "object") {
+    mysteryOut = snapshot.mysteryOut;
+    renderMysteryOut();
+  }
+
+  portalNotice = snapshot.portalNotice || "";
+  portalNoticeAt = snapshot.portalNoticeAt || "";
+  portalNoticeDraft = portalNotice;
+  if (portalNoticeInput) {
+    portalNoticeInput.value = portalNoticeDraft;
+  }
+
+  portalSupportNotice = snapshot.portalSupportNotice || "";
+  portalSupportNoticeAt = snapshot.portalSupportNoticeAt || "";
+  portalSupportNoticeDraft = portalSupportNotice;
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = portalSupportNoticeDraft;
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = portalSupportNotice
+      ? `Sent at ${portalSupportNoticeAt ? new Date(portalSupportNoticeAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "unknown time"}.`
+      : "";
+  }
+
+  portalAutoNotice = snapshot.portalAutoNotice || "";
+  portalAutoNoticeAt = snapshot.portalAutoNoticeAt || "";
+  if (portalAutoNoticeInput) {
+    portalAutoNoticeInput.innerHTML = renderAdminNoticeMarkup(portalAutoNotice, /^Split The Pot winner\b/i);
+  }
+
+  portalBullshootNotice = snapshot.portalBullshootNotice || "";
+  portalBullshootNoticeAt = snapshot.portalBullshootNoticeAt || "";
+  if (portalBullshootNoticeInput) {
+    portalBullshootNoticeInput.innerHTML = renderAdminNoticeMarkup(portalBullshootNotice, /^Bullshoot winner\b/i);
+  }
+
+  savePortalSnapshotToLocalStorage();
+  suppressPortalSnapshotPublish = false;
+  saveBracketDraft();
+  queueActiveLodCodesRefresh();
+  updateAssistantAdminControls();
+}
+
+function logoutAssistantAdmin() {
+  const backup = readAssistantAdminBackupDraft();
+  clearAssistantAdminSessionCode();
+  stopRemoteMirrorRefresh();
+  updateAssistantAdminControls();
+
+  if (backup) {
+    restoreBracketDraftObject(backup);
+  }
+
+  clearAssistantAdminBackupDraft();
+  window.location.reload();
 }
 
 function clearPortalSnapshotStorage(code = lodCode) {
@@ -5547,12 +6282,11 @@ function deleteAllBackups() {
   renderBackups();
 }
 
-function savePlayerNameBackup(playerCount) {
+function savePlayerNameBackup(playerCount, names = getPlayerNameMap()) {
   if (!canUseLocalStorage()) {
     return;
   }
 
-  const names = getPlayerNameMap();
   const createdAt = new Date().toISOString();
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const backup = {
@@ -5572,6 +6306,14 @@ function savePlayerNameBackup(playerCount) {
   });
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
+}
+
+if (nameList) {
+  const persistStepOneDraft = () => {
+    saveBracketDraft();
+  };
+  nameList.addEventListener("input", persistStepOneDraft);
+  nameList.addEventListener("change", persistStepOneDraft);
 }
 
 function renderNameBackups() {
@@ -5829,6 +6571,20 @@ function renderPortalLink(forceRefresh = false) {
   if (lodCodeInput) {
     lodCodeInput.value = normalizeLodCode(lodCode);
   }
+
+  updateAssistantAdminControls();
+}
+
+function updateAssistantAdminControls() {
+  if (!assistantAdminLogoutButton) {
+    return;
+  }
+
+  const activeSessionCode = getAssistantAdminSessionCode();
+  assistantAdminLogoutButton.hidden = !activeSessionCode;
+  assistantAdminLogoutButton.textContent = activeSessionCode
+    ? `Return to admin`
+    : "Return to admin";
 }
 
 function formatBackupTime(value) {
@@ -6128,13 +6884,26 @@ function renderMatch(match) {
 
 function formatMatchTitle(match) {
   const playInLabel = isPlayInMatch(match) ? "PLAY IN - " : "";
+  const byeFedLabel = state?.mode === "graph" && match?.isByeFed ? "BYE FED - " : "";
   const byeLabel = match.autoAdvanced ? " - BYE" : "";
-  return `${playInLabel}${match.title}${byeLabel}`;
+  if (state?.mode === "graph") {
+    const gameNumber = getGraphDisplayGameNumber(match);
+    const graphTitle = match.type === "final"
+      ? `Game ${gameNumber} - Grand Final`
+      : match.type === "resetFinal"
+        ? `Game ${gameNumber} - Reset Final`
+        : match.type === "doubleDipFinal"
+          ? `Game ${gameNumber} - Double Dip Final`
+          : `Game ${gameNumber}`;
+    return `${playInLabel}${byeFedLabel}${graphTitle}${byeLabel}`;
+  }
+
+  return `${playInLabel}${byeFedLabel}${match.title}${byeLabel}`;
 }
 
 function isPlayInMatch(match) {
   if (state?.mode === "graph") {
-    return Boolean(match?.isPlayIn) || isGraphPlayInMatch(match, state);
+    return Boolean(match?.isPlayIn);
   }
 
   if (!match || match.type !== "winner") {
@@ -6162,12 +6931,12 @@ function buildMatchMeta(match) {
     const winnerMatch = match.winnerTo ? state.matchesById[match.winnerTo.matchId] : null;
     const loserMatch = match.loserTo ? state.matchesById[match.loserTo.matchId] : null;
     const winnerTarget = winnerMatch
-      ? `Winner to Game ${winnerMatch.id} ${formatGraphSlot(match.winnerTo.slot)}`
+      ? `Winner to Game ${getGraphDisplayGameNumber(winnerMatch)} ${formatGraphSlot(match.winnerTo.slot)}`
       : match.type === "final" ? "Winner is champion or forces reset"
         : match.type === "resetFinal" ? "Winner is champion or forces double dip"
           : match.type === "doubleDipFinal" ? "Winner is champion" : "";
     const loserTarget = loserMatch && match.type === "winner"
-      ? `Loser to L${match.id} in Game ${loserMatch.id} ${formatGraphSlot(match.loserTo.slot)}`
+      ? `Loser to L${getGraphDisplayGameNumber(match)} in Game ${getGraphDisplayGameNumber(loserMatch)} ${formatGraphSlot(match.loserTo.slot)}`
       : "";
     const labels = [winnerTarget, loserTarget].filter(Boolean);
 
@@ -6176,7 +6945,7 @@ function buildMatchMeta(match) {
 
   const destination = state ? getWinnerAdvanceDestination(match, state) : null;
   const winnerTarget = destination?.match?.gameNumber
-    ? `Winner to Game ${destination.match.gameNumber}`
+    ? `Winner to Game ${getGraphDisplayGameNumber(destination.match)}`
     : match.type === "final" ? "Winner is champion"
       : match.type === "resetFinal" ? "Winner is champion or forces double dip"
         : match.type === "doubleDipFinal" ? "Winner is champion" : "";
@@ -6225,7 +6994,7 @@ function getLoserDestinationLabel(match) {
     return "";
   }
 
-  return `Loser to Game ${destination.match.gameNumber}`;
+  return `Loser to Game ${getGraphDisplayGameNumber(destination.match)}`;
 }
 
 function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
