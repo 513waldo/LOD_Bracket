@@ -234,6 +234,7 @@ let splitPotWinner = null;
 let bullseyeShootEntries = [];
 let bullseyeShootWinner = null;
 let bullseyeShootCurrentPot = 0;
+let restoredBackupId = "";
 let splitPotDrawAnimation = null;
 let bullseyeShootDrawAnimation = null;
 let d20RollState = null;
@@ -1095,6 +1096,8 @@ function restoreBracketBackup(id) {
   }
   renderBracket();
   queueActiveLodCodesRefresh();
+  restoredBackupId = id;
+  renderBackups();
   showMessage(`Restored backup from ${formatBackupTime(backup.createdAt)}.`);
   return true;
 }
@@ -6590,6 +6593,7 @@ function renderBackups() {
   backupList.className = "backup-list";
   backupList.innerHTML = index.slice().reverse().map((backup, reverseIndex) => {
     const number = index.length - reverseIndex;
+    const isRestored = backup.id === restoredBackupId;
     const action = backup.action?.selectedWinner
       ? `Before selecting ${backup.action.selectedWinner}`
       : "Before bracket click";
@@ -6600,9 +6604,10 @@ function renderBackups() {
           <strong>Backup ${number}</strong>
           <span>${escapeHtml(formatBackupTime(backup.createdAt))}</span>
           <small>${escapeHtml(action)}</small>
+          ${isRestored ? '<small class="backup-status restored">Restored</small>' : ""}
         </div>
         <div class="backup-item-actions">
-          <button class="secondary" type="button" data-backup-id="${escapeAttribute(backup.id)}" onclick="restoreBracketBackup('${escapeAttribute(backup.id)}')">Restore</button>
+          <button class="secondary" type="button" data-backup-id="${escapeAttribute(backup.id)}" onclick="restoreBracketBackup('${escapeAttribute(backup.id)}')">${isRestored ? "Restored" : "Restore"}</button>
           <button class="danger" type="button" data-delete-backup-id="${escapeAttribute(backup.id)}">Delete</button>
         </div>
       </article>
@@ -6617,6 +6622,9 @@ function deleteBackup(id) {
 
   const index = readBackupIndex().filter((backup) => backup.id !== id);
   localStorage.removeItem(`${backupKeyPrefix}${id}`);
+  if (restoredBackupId === id) {
+    restoredBackupId = "";
+  }
   localStorage.setItem(backupIndexKey, JSON.stringify(index));
   renderBackups();
 }
