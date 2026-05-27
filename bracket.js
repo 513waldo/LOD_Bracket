@@ -259,6 +259,8 @@ let resetBracketClickLock = false;
 let lastSyncedPlayerCount = null;
 let totalPlayersSyncTimer = null;
 let suppressPortalSnapshotPublish = false;
+let diceRollerFullscreenRequested = false;
+let diceRollerMaximizeMode = "";
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -690,8 +692,18 @@ toggleDiceRollerSizeButton?.addEventListener("click", toggleDiceRollerSize);
 document.addEventListener("fullscreenchange", syncDiceRollerFullscreenState);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && diceRollerPanel?.classList.contains("is-maximized")) {
+    if (document.fullscreenElement === diceRollerPanel) {
+      diceRollerMaximizeMode = "";
+      document.exitFullscreen().catch(() => {});
+      return;
+    }
+
+    diceRollerMaximizeMode = "";
     diceRollerPanel.classList.remove("is-maximized");
     document.body.classList.remove("dice-roller-maximized");
+    document.body.style.overflow = "";
+    clearDiceRollerMaximizedStyles();
+    restoreDiceRollerPanel();
     syncDiceRollerFullscreenState();
   }
 });
@@ -1057,6 +1069,8 @@ bracketOutput.addEventListener("change", (event) => {
     boardAssignment: match.boardAssignment,
   });
   renderBracket();
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
   queueActiveLodCodesRefresh();
 });
 
@@ -2696,6 +2710,10 @@ function randomD20() {
   return Math.floor(Math.random() * 20) + 1;
 }
 
+function rand(min, max) {
+  return (Math.random() * (max - min)) + min;
+}
+
 function renderDice() {
   if (!d20Context || !d20Canvas) {
     return;
@@ -2744,7 +2762,7 @@ function createD20RollState() {
     y: startY,
     vx,
     vy,
-    angle: 0,
+    angle: rand(0, Math.PI * 2),
     displayNum: randomD20(),
     finalVal: randomD20(),
     locked: false,
@@ -2754,7 +2772,6 @@ function createD20RollState() {
     shadeOffset: Math.floor(Math.random() * 6),
     lastShadeShift: 0,
     trail: [],
-    colliding: false,
   });
 
   return {
@@ -2762,8 +2779,8 @@ function createD20RollState() {
     startedAt: 0,
     durationMs: d20RollDurationMaxMs,
     dies: [
-      makeDie(BLACK, 1, 140, 170, 3.1, 2.1, 170, 200),
-      makeDie(PURPLE, -1, 495, 290, -3.3, -1.7, 490, 320),
+      makeDie(BLACK, 1, rand(90, 180), rand(100, 220), rand(4.5, 6.4), rand(2.9, 5.8), 170, 200),
+      makeDie(PURPLE, -1, rand(450, 560), rand(220, 360), rand(-6.3, -4.4), rand(-4.9, -2.7), 490, 320),
     ],
   };
 }
@@ -2776,13 +2793,26 @@ function rollDice() {
   startD20Roll();
 }
 
-function toggleDiceRollerSize() {
+async function toggleDiceRollerSize() {
   if (!diceRollerPanel) {
     return;
   }
 
-  const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
-  if (isMaximized) {
+  const isFullscreen = document.fullscreenElement === diceRollerPanel;
+  const isFallbackMaximized = diceRollerMaximizeMode === "fallback";
+
+  if (isFullscreen) {
+    try {
+      diceRollerMaximizeMode = "";
+      await document.exitFullscreen();
+    } catch {
+      // Fall back to the existing panel restore path.
+    }
+    return;
+  }
+
+  if (isFallbackMaximized) {
+    diceRollerMaximizeMode = "";
     diceRollerPanel.classList.remove("is-maximized");
     document.body.classList.remove("dice-roller-maximized");
     document.body.style.overflow = "";
@@ -2792,6 +2822,24 @@ function toggleDiceRollerSize() {
     return;
   }
 
+  if (typeof diceRollerPanel.requestFullscreen === "function") {
+    try {
+      diceRollerMaximizeMode = "fullscreen";
+      moveDiceRollerPanelToOverlay();
+      await diceRollerPanel.requestFullscreen({ navigationUI: "hide" });
+      diceRollerPanel.classList.add("is-maximized");
+      document.body.classList.add("dice-roller-maximized");
+      document.body.style.overflow = "hidden";
+      resizeDiceRollerCanvasForViewport();
+      syncDiceRollerFullscreenState();
+      return;
+    } catch {
+      diceRollerMaximizeMode = "";
+      // If fullscreen is blocked, use the overlay fallback below.
+    }
+  }
+
+  diceRollerMaximizeMode = "fallback";
   moveDiceRollerPanelToOverlay();
   diceRollerPanel.classList.add("is-maximized");
   document.body.classList.add("dice-roller-maximized");
@@ -2876,9 +2924,24 @@ function syncDiceRollerFullscreenState() {
     return;
   }
 
-  const isMaximized = document.fullscreenElement === diceRollerPanel || diceRollerPanel.classList.contains("is-maximized");
+  const isFullscreen = document.fullscreenElement === diceRollerPanel;
+  const isFallbackMaximized = diceRollerMaximizeMode === "fallback";
+  const isMaximized = isFullscreen || isFallbackMaximized;
+
+  if (!isMaximized) {
+    diceRollerMaximizeMode = "";
+    diceRollerPanel.classList.remove("is-maximized");
+    document.body.classList.remove("dice-roller-maximized");
+    document.body.style.overflow = "";
+    clearDiceRollerMaximizedStyles();
+    restoreDiceRollerPanel();
+  }
+
   diceRollerPanel.classList.toggle("is-maximized", isMaximized);
   document.body.classList.toggle("dice-roller-maximized", isMaximized);
+  if (isMaximized) {
+    resizeDiceRollerCanvasForViewport();
+  }
   toggleDiceRollerSizeButton.textContent = isMaximized ? "−" : "+";
   toggleDiceRollerSizeButton.title = isMaximized ? "Restore D20 roller" : "Maximize D20 roller";
   toggleDiceRollerSizeButton.setAttribute("aria-label", toggleDiceRollerSizeButton.title);
@@ -2925,13 +2988,31 @@ function updateD20Die(die, dt) {
   die.x += die.vx * dt * 60;
   die.y += die.vy * dt * 60;
 
-  if (die.x - d20Radius < 0) { die.x = d20Radius; die.vx = Math.abs(die.vx) * 0.92; }
-  if (die.x + d20Radius > d20CanvasWidth) { die.x = d20CanvasWidth - d20Radius; die.vx = -Math.abs(die.vx) * 0.92; }
-  if (die.y - d20Radius < 0) { die.y = d20Radius; die.vy = Math.abs(die.vy) * 0.92; }
-  if (die.y + d20Radius > d20CanvasHeight) { die.y = d20CanvasHeight - d20Radius; die.vy = -Math.abs(die.vy) * 0.92; }
+  if (die.x - d20Radius < 0) {
+    die.x = d20Radius;
+    die.vx = Math.abs(die.vx) * 0.985;
+    die.vy += rand(-1.2, 1.2);
+  }
+  if (die.x + d20Radius > d20CanvasWidth) {
+    die.x = d20CanvasWidth - d20Radius;
+    die.vx = -Math.abs(die.vx) * 0.985;
+    die.vy += rand(-1.2, 1.2);
+  }
+  if (die.y - d20Radius < 0) {
+    die.y = d20Radius;
+    die.vy = Math.abs(die.vy) * 0.985;
+    die.vx += rand(-1.5, 1.5);
+  }
+  if (die.y + d20Radius > d20CanvasHeight) {
+    die.y = d20CanvasHeight - d20Radius;
+    die.vy = -Math.abs(die.vy) * 0.985;
+    die.vx += rand(-1.5, 1.5);
+  }
 
-  die.vx *= 0.995;
-  die.vy *= 0.995;
+  die.vx *= 0.992;
+  die.vy *= 0.992;
+  die.vx += rand(-0.035, 0.035);
+  die.vy += rand(-0.045, 0.045);
 
   const spd = Math.sqrt((die.vx * die.vx) + (die.vy * die.vy));
   die.angle += spd * 0.03 * die.spinDir;
@@ -2955,13 +3036,6 @@ function resolveD20Collision(a, b) {
     return;
   }
 
-  a.colliding = true;
-  b.colliding = true;
-  setTimeout(() => {
-    a.colliding = false;
-    b.colliding = false;
-  }, 120);
-
   const overlap = minDist - dist;
   const nx = dx / dist;
   const ny = dy / dist;
@@ -2977,16 +3051,16 @@ function resolveD20Collision(a, b) {
     return;
   }
 
-  const impulse = dot * 1.05;
+  const impulse = dot * 1.12;
   a.vx -= impulse * nx;
   a.vy -= impulse * ny;
   b.vx += impulse * nx;
   b.vy += impulse * ny;
 
-  a.vx += rand(-0.5, 0.5);
-  a.vy += rand(-0.5, 0.5);
-  b.vx += rand(-0.5, 0.5);
-  b.vy += rand(-0.5, 0.5);
+  a.vx += rand(-1.0, 1.0);
+  a.vy += rand(-1.0, 1.0);
+  b.vx += rand(-1.0, 1.0);
+  b.vy += rand(-1.0, 1.0);
   a.shadeOffset = Math.floor(Math.random() * 6);
   b.shadeOffset = Math.floor(Math.random() * 6);
 }
@@ -3210,7 +3284,7 @@ function drawD20Frame(now) {
       drawD20Hex(die.x, die.y, d20Radius, die.stoppedAngle, die.color, String(die.displayNum), false);
     } else {
       drawD20Shadow(die.x, die.y);
-      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), die.colliding);
+      drawD20Hex(die.x, die.y, d20Radius, die.angle, die.color, String(die.displayNum), false);
     }
   });
 
@@ -7323,6 +7397,7 @@ function buildMatchMeta(match) {
 
 function renderBoardAssignmentControl(match) {
   const currentValue = Number(match.boardAssignment) || 0;
+  const boardCount = 64;
 
   return `
     <label class="board-assignment-field">
@@ -7334,13 +7409,31 @@ function renderBoardAssignmentControl(match) {
         aria-label="Board assignment for ${escapeAttribute(formatMatchTitle(match))}"
       >
         <option value=""${currentValue ? "" : " selected"}>Unassigned</option>
-        ${Array.from({ length: 10 }, (_, index) => {
+        ${Array.from({ length: boardCount }, (_, index) => {
           const value = index + 1;
           return `<option value="${value}"${currentValue === value ? " selected" : ""}>${value}</option>`;
         }).join("")}
       </select>
     </label>
   `;
+}
+
+function getAssignableBoardMatches(bracketState = state) {
+  if (!bracketState) {
+    return [];
+  }
+
+  return getAllMatches(bracketState).filter((match) => {
+    if (!match) {
+      return false;
+    }
+
+    return match.type === "winner" ||
+      match.type === "loser" ||
+      match.type === "final" ||
+      match.type === "resetFinal" ||
+      match.type === "doubleDipFinal";
+  });
 }
 
 function formatGraphSlot(slot) {
