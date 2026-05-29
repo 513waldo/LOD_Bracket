@@ -1,0 +1,466 @@
+:root {
+  --paper: #f4efe4;
+  --paper-deep: #ebe2d1;
+  --ink: #172429;
+  --muted: #5d686f;
+  --teal: #0d7a72;
+  --teal-deep: #0a5a55;
+  --gold: #cb9b40;
+  --line: rgba(23, 36, 41, 0.12);
+  --shadow: 0 22px 54px rgba(10, 16, 18, 0.16);
+  --radius: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 20% 4%, rgba(203, 155, 64, 0.18), transparent 22%),
+    radial-gradient(circle at 78% 8%, rgba(13, 122, 114, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(12, 18, 22, 0.94) 0%, rgba(12, 18, 22, 0.9) 280px, rgba(244, 239, 228, 0.98) 280px, rgba(244, 239, 228, 1) 100%);
+  font-family: "Trebuchet MS", "Gill Sans", "Avenir Next", sans-serif;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.36) 0%, rgba(0, 0, 0, 0.12) 240px, rgba(0, 0, 0, 0) 380px),
+    url("assets/dartboard-split-background.png") center top / cover no-repeat;
+  filter: saturate(0.82) contrast(0.92) brightness(0.66);
+  opacity: 0.48;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(9, 14, 18, 0.18) 0%, rgba(9, 14, 18, 0.08) 260px, rgba(244, 239, 228, 0) 400px, rgba(244, 239, 228, 0.28) 100%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 10px);
+  pointer-events: none;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--teal), var(--teal-deep));
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button.secondary {
+  color: var(--teal-deep);
+  border: 1px solid rgba(23, 36, 41, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 3px solid rgba(13, 122, 114, 0.24);
+  outline-offset: 2px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  font-family: Rockwell, "Roboto Slab", Georgia, serif;
+  letter-spacing: -0.03em;
+}
+
+.page-shell {
+  width: min(1320px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 22px 0 40px;
+}
+
+.hero,
+.match-strip,
+.team-grid,
+.footer-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+  align-items: end;
+  padding: 28px;
+  border-radius: calc(var(--radius) + 8px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 42%),
+    linear-gradient(120deg, rgba(203, 155, 64, 0.18), rgba(255, 255, 255, 0.04)),
+    rgba(16, 32, 39, 0.94);
+  color: #f8f4eb;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.hero h1 {
+  margin-bottom: 12px;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: 0.96;
+}
+
+.lead,
+.panel-note,
+.match-chip span {
+  color: rgba(248, 244, 235, 0.82);
+  line-height: 1.55;
+}
+
+.hero-meta {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+.hero-meta label {
+  color: #f8f4eb;
+}
+
+.inline-label {
+  color: var(--ink);
+}
+
+.match-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0;
+}
+
+.match-chip {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.91);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(4px);
+}
+
+.match-chip span {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.match-chip strong {
+  font-size: 1.05rem;
+}
+
+.team-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.team-panel,
+.ledger-panel,
+.footer-grid > * {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(4px);
+}
+
+.numbered-box {
+  position: relative;
+}
+
+.box-number {
+  display: none;
+}
+
+.hero-meta,
+.match-chip,
+.team-panel,
+.ledger-panel,
+.footer-grid > * {
+  padding-top: 18px;
+}
+
+.team-panel,
+.ledger-panel {
+  padding: 22px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.panel-heading h2 {
+  margin-bottom: 0;
+  font-size: 1.7rem;
+}
+
+.panel-note {
+  max-width: 46ch;
+  color: var(--muted);
+}
+
+.inline-label {
+  min-width: 260px;
+  color: var(--ink);
+}
+
+.roster-editor {
+  margin-top: 18px;
+}
+
+.roster-editor summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--teal-deep);
+}
+
+.roster-bank {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.roster-bank label {
+  gap: 6px;
+}
+
+.roster-bank select {
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.ledger-table-wrap {
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1040px;
+  background: #fff;
+}
+
+.ledger-table th,
+.ledger-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.ledger-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f4efe4;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ledger-table tfoot td {
+  background: #f4efe4;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ledger-table tbody tr:nth-child(odd) {
+  background: rgba(244, 239, 228, 0.56);
+}
+
+.ledger-table tbody tr.section-break {
+  background: #102027;
+  color: #f8f4eb;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ledger-table tbody tr.section-break td {
+  padding: 10px 12px;
+  border-bottom: 0;
+}
+
+.ledger-field {
+  min-width: 108px;
+  background: rgba(13, 122, 114, 0.06);
+}
+
+.ledger-input,
+.ledger-select {
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.ledger-score-select {
+  cursor: pointer;
+}
+
+.total-score-cell {
+  background: rgba(13, 122, 114, 0.12);
+}
+
+.total-score-cell .ledger-input {
+  background: #fff;
+}
+
+.player-name {
+  display: inline;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.line-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.line-inline .player-name {
+  margin-top: 0;
+}
+
+.slot-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #17313a;
+  color: #f8f4eb;
+  font-weight: 900;
+}
+
+.footer-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  margin-top: 18px;
+}
+
+.footer-grid > * {
+  padding: 18px;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .team-grid,
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-label {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100% - 20px, 1320px);
+    padding-top: 18px;
+  }
+
+  .team-panel,
+  .ledger-panel,
+  .footer-grid > * {
+    padding: 16px;
+  }
+
+  .hero {
+    padding: 18px;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+  }
+}

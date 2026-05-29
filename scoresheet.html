@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOC Tablet Scoresheet</title>
+  <link rel="stylesheet" href="scoresheet.css?v=15">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><a href="index.html">Home</a> / League night scoresheet</p>
+        <h1>Tablet scoresheet</h1>
+        <p class="lead">
+          Home team stays on the left, away team stays on the right. Set the roster bank order at the top, and the match rows below will stay in the fixed order you listed.
+        </p>
+      </div>
+
+      <div class="hero-meta numbered-box" data-box-number="1">
+        <span class="box-number">1</span>
+        <label>
+          Date
+          <input id="matchDate" type="date">
+        </label>
+        <label>
+          Division
+          <input id="division" type="text" placeholder="Open Division">
+        </label>
+        <label>
+          Format
+          <select id="matchFormat">
+            <option value="team">Team night</option>
+            <option value="league">League night</option>
+            <option value="matchplay">Match play</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <section class="match-strip">
+      <div class="match-chip numbered-box" data-box-number="2">
+        <span class="box-number">2</span>
+        <span>Home</span>
+        <select id="homeTeamSelect"></select>
+      </div>
+      <div class="match-chip numbered-box" data-box-number="3">
+        <span class="box-number">3</span>
+        <span>Players</span>
+        <strong>1, 2, 3</strong>
+      </div>
+      <div class="match-chip numbered-box" data-box-number="4">
+        <span class="box-number">4</span>
+        <span>Away</span>
+        <select id="awayTeamSelect"></select>
+      </div>
+    </section>
+
+    <section class="team-grid" aria-label="Team rosters">
+      <article class="team-panel numbered-box" data-side="home" data-box-number="5">
+        <span class="box-number">5</span>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Home team</p>
+            <h2></h2>
+          </div>
+        </div>
+
+        <details class="roster-editor" open>
+          <summary>Player Roster</summary>
+          <div class="roster-bank" id="homeRosterBank"></div>
+        </details>
+      </article>
+
+      <article class="team-panel numbered-box" data-side="away" data-box-number="6">
+        <span class="box-number">6</span>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Away team</p>
+            <h2></h2>
+          </div>
+        </div>
+
+        <details class="roster-editor" open>
+          <summary>Player Roster</summary>
+          <div class="roster-bank" id="awayRosterBank"></div>
+        </details>
+      </article>
+    </section>
+
+    <section class="ledger-panel numbered-box" data-box-number="7">
+      <span class="box-number">7</span>
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Score log</p>
+          <h2>Match rows</h2>
+        </div>
+        <p class="panel-note">
+          Choose slot numbers for each side, then enter scores as you score the night.
+        </p>
+      </div>
+
+      <div class="ledger-table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Game</th>
+              <th>Home line</th>
+              <th>Home player</th>
+              <th>Home score</th>
+              <th>Away score</th>
+              <th>Away player</th>
+              <th>Away line</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Totals</td>
+              <td class="ledger-field total-score-cell">
+                <input id="homeScoreTotal" class="ledger-input" type="text" value="0" readonly>
+              </td>
+              <td class="ledger-field total-score-cell">
+                <input id="awayScoreTotal" class="ledger-input" type="text" value="0" readonly>
+              </td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="footer-grid">
+      <label class="numbered-box" data-box-number="8">
+        <span class="box-number">8</span>
+        Captain sign
+        <input id="captainSign" type="text" placeholder="Captain initials">
+      </label>
+      <label class="numbered-box" data-box-number="9">
+        <span class="box-number">9</span>
+        Total
+        <input id="matchTotal" type="text" placeholder="Auto total" readonly>
+      </label>
+      <label class="numbered-box" data-box-number="10">
+        <span class="box-number">10</span>
+        Sheet notes
+        <input id="sheetNotes" type="text" placeholder="League notes, reschedules, or substitutions">
+      </label>
+      <div class="footer-actions numbered-box" data-box-number="11">
+        <span class="box-number">11</span>
+        <button id="resetSheet" type="button" class="secondary">Reset sheet</button>
+        <button id="saveSheet" type="button">Save sheet</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="scoresheet.runtime.js?v=13"></script>
+</body>
+</html>
