@@ -341,7 +341,7 @@ playersPerGroup.addEventListener("change", () => {
 });
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
-  syncTotalPlayersSection(true);
+  shrinkTotalPlayersToEnteredNames();
   queueBracketDraftSave();
 });
 
@@ -3363,6 +3363,30 @@ function getPlayerNameMap() {
   });
 
   return names;
+}
+
+function shrinkTotalPlayersToEnteredNames() {
+  const enteredNames = Array.from(nameList?.querySelectorAll("[data-player-number]") || [])
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+
+  if (enteredNames.length < 2) {
+    showMessage("Enter at least 2 player names before shrinking the list.");
+    return;
+  }
+
+  if (String(totalPlayers.value || "") !== String(enteredNames.length)) {
+    totalPlayers.value = String(enteredNames.length);
+  }
+
+  syncTotalPlayersSection(true);
+
+  Array.from(nameList?.querySelectorAll("[data-player-number]") || []).forEach((input, index) => {
+    input.value = enteredNames[index] || "";
+  });
+
+  savePortalSnapshotToLocalStorage();
+  showMessage(`Trimmed the list to ${enteredNames.length} player${enteredNames.length === 1 ? "" : "s"}.`);
 }
 
 function applyPlayerNameMap(names, overwriteExisting = false) {
