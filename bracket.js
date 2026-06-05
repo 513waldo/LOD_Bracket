@@ -208,6 +208,15 @@ const pdfBracketLayouts = {
   23: { pdf: "23teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7 / G9,G8,G10,G11,G12,G13,G14,G15 / G27,G28,G29,G30 / G35,G36 / G41 / G44", loser: "G16,G17,G18,G19,G20,G21,G22 / G23,G24,G25,G26 / G31,G32,G33,G34 / G37,G38 / G39,G40 / G42 / G43 / G45", final: "G44", reset: "G45 from L44" },
   24: { pdf: "24teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7,G8 / G9,G10,G11,G12,G13,G14,G15,G16 / G29,G30,G31,G32 / G37,G38 / G43 / G46", loser: "G17,G18,G19,G20,G21,G22,G23,G24 / G25,G26,G27,G28 / G33,G34,G35,G36 / G39,G40 / G41,G42 / G44 / G45 / G47", final: "G46", reset: "G47 from L46" },
   25: { pdf: "25teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7,G8,G9 / G11,G18,G12,G13,G14,G15,G16,G17 / G27,G28,G29,G30 / G39,G40 / G45 / G48", loser: "G10 / G19,G20,G21,G22,G23,G24,G25,G26 / G27,G28,G29,G30 / G31,G32,G33,G34 / G35,G36,G37,G38 / G41,G42 / G43,G44 / G46 / G47 / G49", final: "G48", reset: "G49 from L48" },
+  26: { pdf: "26teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  27: { pdf: "27teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  28: { pdf: "28teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  29: { pdf: "29teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  30: { pdf: "30teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  31: { pdf: "31teamDouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  32: { pdf: "32teamDouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  33: { pdf: "33teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
+  34: { pdf: "34teamdouble.pdf", winner: "PDF preview only", loser: "PDF preview only", final: "PDF preview only", reset: "PDF preview only" },
 };
 let learnedPdfGraphs = null;
 let learnedPdfGraphsPromise = null;
@@ -3495,7 +3504,7 @@ function renderPdfColumnMirror(teamCount) {
 
   const layout = pdfBracketLayouts[teamCount];
   if (!layout) {
-    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 25 teams.</p>`;
+    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 34 teams.</p>`;
     return;
   }
 
@@ -5207,8 +5216,10 @@ function renderBracket() {
     ${renderBracketSection("Winners bracket", state.winnerRounds)}
     ${renderBracketSection("Losers bracket", state.loserRounds)}
     ${renderFinal()}
+    ${renderPdfReferencePanel()}
   `;
   updatePaperBackup();
+  schedulePdfReferencePreview();
   savePortalSnapshotToLocalStorage();
   saveBracketDraft();
   queueActiveLodCodesRefresh();
