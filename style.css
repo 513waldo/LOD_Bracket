@@ -911,6 +911,10 @@ textarea {
   gap: 12px;
 }
 
+.pdf-reference-views.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .pdf-reference-card {
   min-width: 0;
   display: grid;

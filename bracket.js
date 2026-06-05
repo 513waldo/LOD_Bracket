@@ -7153,15 +7153,16 @@ function renderPdfReferencePanel() {
   const layout = pdfBracketLayouts[state.originalPlayers.length];
   const pdfName = layout?.pdf;
   const pdfSrc = pdfName ? `assets/pdf-brackets/${pdfName}` : null;
-  const winnersPdfSrc = pdfSrc ? `${pdfSrc}#page=1&view=FitH` : null;
-  const losersPdfSrc = pdfSrc ? `${pdfSrc}#page=2&view=FitH` : null;
+  const winnersPdfSrc = pdfName ? `assets/pdf-brackets/${pdfName.replace(/\.pdf$/i, "-winners.pdf")}` : null;
+  const losersPdfSrc = pdfName && state.originalPlayers.length >= 21 ? `assets/pdf-brackets/${pdfName.replace(/\.pdf$/i, "-losers.pdf")}` : null;
+  const hasLosersPage = Boolean(losersPdfSrc);
 
   return `
     <section class="pdf-reference-panel" aria-label="PDF bracket reference">
       <div class="pdf-reference-heading">
         <div>
           <h4>PDF reference</h4>
-          <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams, including winners and losers pages</p>
+          <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams${hasLosersPage ? ", showing winners and losers pages" : ", showing the winners page"}</p>
         </div>
         ${pdfSrc ? `
           <a class="pdf-reference-link" href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open PDF</a>
@@ -7170,7 +7171,7 @@ function renderPdfReferencePanel() {
         `}
       </div>
       ${pdfSrc ? `
-        <div class="pdf-reference-views">
+        <div class="pdf-reference-views${hasLosersPage ? "" : " single"}">
           <section class="pdf-reference-card">
             <div class="pdf-reference-card-heading">
               <h5>Winners page</h5>
@@ -7182,17 +7183,19 @@ function renderPdfReferencePanel() {
               </object>
             </div>
           </section>
-          <section class="pdf-reference-card">
-            <div class="pdf-reference-card-heading">
-              <h5>Losers page</h5>
-              <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open</a>
-            </div>
-            <div class="pdf-reference-frame">
-              <object class="pdf-reference-embed" data="${escapeAttribute(losersPdfSrc)}" type="application/pdf">
-                <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open page 2</a>.</p>
-              </object>
-            </div>
-          </section>
+          ${hasLosersPage ? `
+            <section class="pdf-reference-card">
+              <div class="pdf-reference-card-heading">
+                <h5>Losers page</h5>
+                <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open</a>
+              </div>
+              <div class="pdf-reference-frame">
+                <object class="pdf-reference-embed" data="${escapeAttribute(losersPdfSrc)}" type="application/pdf">
+                  <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open page 2</a>.</p>
+                </object>
+              </div>
+            </section>
+          ` : ""}
         </div>
       ` : `
         <div class="pdf-reference-empty">No PDF reference file is available for this team count.</div>
