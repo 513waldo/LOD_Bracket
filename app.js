@@ -3066,11 +3066,7 @@ function renderPdfReferencePanel() {
           <h4>PDF reference</h4>
           <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams, showing the combined winners and losers bracket PDF</p>
         </div>
-        ${pdfSrc ? `
-          <a class="pdf-reference-link" href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open PDF</a>
-        ` : `
-          <span>${escapeHtml("No PDF reference available")}</span>
-        `}
+        <span>${escapeHtml(pdfName || "No PDF reference available")}</span>
       </div>
       ${pdfSrc ? `
         <div class="pdf-reference-frame">
@@ -3111,13 +3107,10 @@ async function renderPdfReferencePreview(token = pdfReferencePreviewToken) {
   const pdfjsLib = window.pdfjsLib;
   if (!pdfjsLib) {
     previewRoots.forEach((previewRoot) => {
-      const pdfSrc = previewRoot.dataset.pdfSrc || "";
       const status = previewRoot.querySelector(".pdf-reference-preview-status");
       const pages = previewRoot.querySelector(".pdf-reference-preview-pages");
       if (status) {
-        status.innerHTML = pdfSrc
-          ? `PDF.js preview unavailable. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.`
-          : "PDF.js preview unavailable.";
+        status.textContent = "PDF preview unavailable on this device.";
       }
       if (pages) {
         pages.innerHTML = "";
@@ -3201,7 +3194,7 @@ async function renderPdfReferencePreview(token = pdfReferencePreviewToken) {
       }
     } catch (error) {
       console.error("PDF preview render failed:", error);
-      status.innerHTML = `PDF preview could not load. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.`;
+      status.textContent = "PDF preview could not load on this device.";
       pages.innerHTML = "";
     }
   }

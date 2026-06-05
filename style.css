@@ -966,19 +966,6 @@ textarea {
   text-align: center;
 }
 
-.pdf-reference-link {
-  align-self: center;
-  font-size: 0.85rem;
-  font-weight: 900;
-  color: var(--primary-dark);
-  text-decoration: none;
-}
-
-.pdf-reference-link:hover,
-.pdf-reference-link:focus-visible {
-  text-decoration: underline;
-}
-
 .pdf-reference-frame {
   border: 1px solid var(--line);
   border-radius: 10px;
