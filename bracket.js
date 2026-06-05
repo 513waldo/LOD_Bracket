@@ -5195,6 +5195,7 @@ function renderBracket() {
   bracketOutput.className = "bracket";
   if (state.mode === "graph") {
     bracketOutput.innerHTML = renderPdfVisualBracket();
+    schedulePdfReferencePreview();
     updatePaperBackup();
     savePortalSnapshotToLocalStorage();
     saveBracketDraft();
@@ -7169,15 +7170,137 @@ function renderPdfReferencePanel() {
       </div>
       ${pdfSrc ? `
         <div class="pdf-reference-frame">
-          <object class="pdf-reference-embed" data="${escapeAttribute(pdfSrc)}" type="application/pdf">
-            <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.</p>
-          </object>
+          <div class="pdf-reference-preview" data-pdf-preview data-pdf-src="${escapeAttribute(pdfSrc)}">
+            <div class="pdf-reference-preview-status">Loading PDF preview…</div>
+            <div class="pdf-reference-preview-pages"></div>
+          </div>
         </div>
       ` : `
         <div class="pdf-reference-empty">No PDF reference file is available for this team count.</div>
       `}
     </section>
   `;
+}
+
+const PDFJS_WORKER_SRC = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+let pdfReferencePreviewToken = 0;
+let pdfReferenceWorkerConfigured = false;
+
+function schedulePdfReferencePreview() {
+  pdfReferencePreviewToken += 1;
+  const token = pdfReferencePreviewToken;
+  const trigger = typeof window.requestAnimationFrame === "function"
+    ? window.requestAnimationFrame.bind(window)
+    : (callback) => setTimeout(callback, 0);
+
+  trigger(() => {
+    renderPdfReferencePreview(token);
+  });
+}
+
+async function renderPdfReferencePreview(token = pdfReferencePreviewToken) {
+  const previewRoots = document.querySelectorAll("[data-pdf-preview]");
+  if (!previewRoots.length) {
+    return;
+  }
+
+  const pdfjsLib = window.pdfjsLib;
+  if (!pdfjsLib) {
+    previewRoots.forEach((previewRoot) => {
+      const pdfSrc = previewRoot.dataset.pdfSrc || "";
+      const status = previewRoot.querySelector(".pdf-reference-preview-status");
+      const pages = previewRoot.querySelector(".pdf-reference-preview-pages");
+      if (status) {
+        status.innerHTML = pdfSrc
+          ? `PDF.js preview unavailable. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.`
+          : "PDF.js preview unavailable.";
+      }
+      if (pages) {
+        pages.innerHTML = "";
+      }
+    });
+    return;
+  }
+
+  if (!pdfReferenceWorkerConfigured) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+    pdfReferenceWorkerConfigured = true;
+  }
+
+  for (const previewRoot of previewRoots) {
+    if (token !== pdfReferencePreviewToken || !previewRoot.isConnected) {
+      return;
+    }
+
+    const pdfSrc = previewRoot.dataset.pdfSrc || "";
+    const status = previewRoot.querySelector(".pdf-reference-preview-status");
+    const pages = previewRoot.querySelector(".pdf-reference-preview-pages");
+    if (!pdfSrc || !status || !pages) {
+      continue;
+    }
+
+    status.textContent = "Loading PDF preview…";
+    pages.innerHTML = "";
+
+    try {
+      const pdf = await pdfjsLib.getDocument({ url: pdfSrc }).promise;
+      if (token !== pdfReferencePreviewToken || !previewRoot.isConnected) {
+        return;
+      }
+
+      status.textContent = `${pdf.numPages} page${pdf.numPages === 1 ? "" : "s"} rendered in-browser`;
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        if (token !== pdfReferencePreviewToken || !previewRoot.isConnected) {
+          return;
+        }
+
+        const page = await pdf.getPage(pageNumber);
+        if (token !== pdfReferencePreviewToken || !previewRoot.isConnected) {
+          return;
+        }
+
+        const baseViewport = page.getViewport({ scale: 1 });
+        const containerWidth = Math.max(
+          previewRoot.getBoundingClientRect().width || 0,
+          pages.getBoundingClientRect().width || 0,
+          320
+        );
+        const scale = Math.min(1.4, Math.max(0.65, (containerWidth - 4) / baseViewport.width));
+        const viewport = page.getViewport({ scale });
+        const figure = document.createElement("figure");
+        figure.className = "pdf-reference-preview-page";
+        const caption = document.createElement("figcaption");
+        caption.className = "pdf-reference-preview-page-label";
+        caption.textContent = `Page ${pageNumber}`;
+        const canvas = document.createElement("canvas");
+        canvas.className = "pdf-reference-preview-canvas";
+        canvas.setAttribute("aria-label", `PDF page ${pageNumber}`);
+        const context = canvas.getContext("2d");
+        if (!context) {
+          throw new Error("Unable to create a canvas context for the PDF preview.");
+        }
+
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        figure.append(caption, canvas);
+        pages.appendChild(figure);
+
+        await page.render({
+          canvasContext: context,
+          viewport,
+          transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0],
+        }).promise;
+      }
+    } catch (error) {
+      console.error("PDF preview render failed:", error);
+      status.innerHTML = `PDF preview could not load. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.`;
+      pages.innerHTML = "";
+    }
+  }
 }
 
 function renderGraphFinal() {

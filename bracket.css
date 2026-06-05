@@ -1443,6 +1443,51 @@ textarea {
   overflow: hidden;
 }
 
+.pdf-reference-preview {
+  display: grid;
+  gap: 12px;
+}
+
+.pdf-reference-preview-status {
+  color: #666;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.pdf-reference-preview-status a {
+  color: inherit;
+  font-weight: 900;
+}
+
+.pdf-reference-preview-pages {
+  display: grid;
+  gap: 16px;
+}
+
+.pdf-reference-preview-page {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pdf-reference-preview-page-label {
+  margin: 0;
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pdf-reference-preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(18, 18, 18, 0.08);
+}
+
 .pdf-reference-embed {
   display: block;
   width: 100%;
