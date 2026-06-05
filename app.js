@@ -3027,6 +3027,7 @@ function renderPdfVisualBracket() {
           </div>
         </div>
       </div>
+      ${renderPdfReferencePanel()}
     </section>
   `;
 }
@@ -3049,6 +3050,31 @@ function renderPdfVisualBand(title, rounds, type) {
         `).join("")}
       </div>
     </div>
+  `;
+}
+
+function renderPdfReferencePanel() {
+  const pdfName = pdfBracketLayouts[state.originalPlayers.length]?.pdf;
+  const imageName = pdfName ? pdfName.replace(/\.pdf$/i, ".png") : null;
+  const imageSrc = imageName ? `assets/pdf-brackets/${imageName}` : null;
+
+  return `
+    <section class="pdf-reference-panel" aria-label="PDF bracket reference">
+      <div class="pdf-reference-heading">
+        <div>
+          <h4>PDF reference</h4>
+          <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams</p>
+        </div>
+        <span>${escapeHtml(pdfName || "No PDF reference available")}</span>
+      </div>
+      ${imageSrc ? `
+        <div class="pdf-reference-frame">
+          <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(pdfName || "Bracket PDF reference")}" loading="lazy">
+        </div>
+      ` : `
+        <div class="pdf-reference-empty">No PDF reference image is available for this team count.</div>
+      `}
+    </section>
   `;
 }
 

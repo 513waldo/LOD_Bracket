@@ -1403,6 +1403,62 @@ textarea {
   gap: 14px;
 }
 
+.pdf-reference-panel {
+  margin-top: 18px;
+  border-top: 1px solid rgba(18, 18, 18, 0.14);
+  padding-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.pdf-reference-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.pdf-reference-heading h4 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.pdf-reference-heading p {
+  margin: 4px 0 0;
+  color: #555;
+  font-size: 0.86rem;
+}
+
+.pdf-reference-heading span {
+  color: #666;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pdf-reference-frame {
+  border: 1px solid rgba(18, 18, 18, 0.14);
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.pdf-reference-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pdf-reference-empty {
+  border: 1px dashed rgba(18, 18, 18, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #666;
+  padding: 18px;
+  text-align: center;
+}
+
 .pdf-column-group {
   min-width: 0;
   border-radius: 8px;
