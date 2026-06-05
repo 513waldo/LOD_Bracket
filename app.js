@@ -3057,6 +3057,8 @@ function renderPdfReferencePanel() {
   const layout = pdfBracketLayouts[state.originalPlayers.length];
   const pdfName = layout?.pdf;
   const pdfSrc = pdfName ? `assets/pdf-brackets/${pdfName}` : null;
+  const winnersPdfSrc = pdfSrc ? `${pdfSrc}#page=1&view=FitH` : null;
+  const losersPdfSrc = pdfSrc ? `${pdfSrc}#page=2&view=FitH` : null;
 
   return `
     <section class="pdf-reference-panel" aria-label="PDF bracket reference">
@@ -3072,10 +3074,29 @@ function renderPdfReferencePanel() {
         `}
       </div>
       ${pdfSrc ? `
-        <div class="pdf-reference-frame">
-          <object class="pdf-reference-embed" data="${escapeAttribute(pdfSrc)}" type="application/pdf">
-            <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.</p>
-          </object>
+        <div class="pdf-reference-views">
+          <section class="pdf-reference-card">
+            <div class="pdf-reference-card-heading">
+              <h5>Winners page</h5>
+              <a href="${escapeAttribute(pdfSrc)}#page=1" target="_blank" rel="noreferrer">Open</a>
+            </div>
+            <div class="pdf-reference-frame">
+              <object class="pdf-reference-embed" data="${escapeAttribute(winnersPdfSrc)}" type="application/pdf">
+                <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}#page=1" target="_blank" rel="noreferrer">Open page 1</a>.</p>
+              </object>
+            </div>
+          </section>
+          <section class="pdf-reference-card">
+            <div class="pdf-reference-card-heading">
+              <h5>Losers page</h5>
+              <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open</a>
+            </div>
+            <div class="pdf-reference-frame">
+              <object class="pdf-reference-embed" data="${escapeAttribute(losersPdfSrc)}" type="application/pdf">
+                <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}#page=2" target="_blank" rel="noreferrer">Open page 2</a>.</p>
+              </object>
+            </div>
+          </section>
         </div>
       ` : `
         <div class="pdf-reference-empty">No PDF reference file is available for this team count.</div>
