@@ -678,6 +678,14 @@ textarea {
   padding-top: calc(var(--column-index, 0) * 20px);
 }
 
+.playin-align .pdf-column-matches {
+  margin-top: 0;
+}
+
+.playin-align .match:first-child {
+  margin-top: 1080px;
+}
+
 .loser-column {
   padding-top: calc(var(--column-index, 0) * 10px);
 }

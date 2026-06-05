@@ -207,6 +207,7 @@ const pdfBracketLayouts = {
   22: { pdf: "22teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6 / G9,G7,G10,G11,G12,G8,G13,G14 / G25,G26,G27,G28 / G33,G34 / G39 / G42", loser: "G15,G16,G17,G18,G19,G20 / G21,G23,G22,G24 / G29,G30,G31,G32 / G35,G36 / G37,G38 / G40 / G41 / G43", final: "G42", reset: "G43 from L42" },
   23: { pdf: "23teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7 / G9,G8,G10,G11,G12,G13,G14,G15 / G27,G28,G29,G30 / G35,G36 / G41 / G44", loser: "G16,G17,G18,G19,G20,G21,G22 / G23,G24,G25,G26 / G31,G32,G33,G34 / G37,G38 / G39,G40 / G42 / G43 / G45", final: "G44", reset: "G45 from L44" },
   24: { pdf: "24teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7,G8 / G9,G10,G11,G12,G13,G14,G15,G16 / G29,G30,G31,G32 / G37,G38 / G43 / G46", loser: "G17,G18,G19,G20,G21,G22,G23,G24 / G25,G26,G27,G28 / G33,G34,G35,G36 / G39,G40 / G41,G42 / G44 / G45 / G47", final: "G46", reset: "G47 from L46" },
+  25: { pdf: "25teamdouble.pdf", winner: "G1,G2,G3,G4,G5,G6,G7,G8,G9 / G11,G18,G12,G13,G14,G15,G16,G17 / G27,G28,G29,G30 / G39,G40 / G45 / G48", loser: "G10 / G19,G20,G21,G22,G23,G24,G25,G26 / G27,G28,G29,G30 / G31,G32,G33,G34 / G35,G36,G37,G38 / G41,G42 / G43,G44 / G46 / G47 / G49", final: "G48", reset: "G49 from L48" },
 };
 let learnedPdfGraphs = null;
 let learnedPdfGraphsPromise = null;
@@ -928,7 +929,12 @@ async function buildBracket() {
       return;
     }
 
-    await loadPdfBracketGraphs();
+    const pdfGraphs = await loadPdfBracketGraphs();
+    if (activePlayers.length <= 24 && !pdfGraphs?.[activePlayers.length]) {
+      showMessage(`Unable to load the PDF bracket graph for ${activePlayers.length} teams.`);
+      return;
+    }
+
     state = createBracketGraph(activePlayers);
     renderBracket();
     queueActiveLodCodesRefresh();
@@ -3489,7 +3495,7 @@ function renderPdfColumnMirror(teamCount) {
 
   const layout = pdfBracketLayouts[teamCount];
   if (!layout) {
-    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 24 teams.</p>`;
+    pdfColumnMirror.innerHTML = `<p class="no-routes">PDF mirror is available for 3 to 25 teams.</p>`;
     return;
   }
 
@@ -3533,7 +3539,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-24", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-25", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
@@ -3558,44 +3564,8 @@ function createBracketGraph(players) {
     return createPdfLearnedBracketGraph(players, learnedPdfGraphs[players.length]);
   }
 
-  if (players.length === 3) {
-    return createThreeTeamBracketGraph(players);
-  }
-
-  if (players.length === 5) {
-    return createFiveTeamBracketGraph(players);
-  }
-
-  if (players.length === 7) {
-    return createSevenTeamBracketGraph(players);
-  }
-
-  if (players.length === 9) {
-    return createLearnedNineTeamBracketGraph(players);
-  }
-
-  if (players.length === 11) {
-    return createLearnedElevenTeamBracketGraph(players);
-  }
-
-  if (players.length === 13) {
-    return createLearnedThirteenTeamBracketGraph(players);
-  }
-
-  if (players.length === 15) {
-    return createLearnedFifteenTeamBracketGraph(players);
-  }
-
-  if (players.length === 17) {
-    return createLearnedSeventeenTeamBracketGraph(players);
-  }
-
-  if (players.length === 19) {
-    return createLearnedNineteenTeamBracketGraph(players);
-  }
-
-  if (players.length === 9) {
-    return createNineTeamBracketGraph(players);
+  if (players.length >= 3 && players.length <= 24) {
+    throw new Error(`Missing PDF bracket graph for ${players.length}-team bracket`);
   }
 
   const size = nextPowerOfTwo(players.length);
@@ -3776,8 +3746,8 @@ function assignGraphDisplayGameNumbers(bracketState) {
     bracketState.doubleDipFinal,
   ].filter(Boolean);
 
-  let displayGameNumber = 1;
   orderedMatches.forEach((match) => {
+    const displayGameNumber = Number(match?.id || match?.gameNumber || 0);
     match.gameNumber = displayGameNumber;
     if (match.type === "final") {
       match.title = `Game ${displayGameNumber} - Grand Final`;
@@ -3788,7 +3758,6 @@ function assignGraphDisplayGameNumbers(bracketState) {
     } else {
       match.title = `Game ${displayGameNumber}`;
     }
-    displayGameNumber += 1;
   });
 }
 
@@ -7167,7 +7136,7 @@ function renderPdfVisualBand(title, rounds, type) {
       <p class="pdf-band-title">${title}</p>
       <div class="pdf-visual-columns">
         ${rounds.map((round, index) => `
-          <div class="pdf-visual-column ${type}-column ${index === greyColumnIndex ? "grey-column" : ""}" style="--column-index: ${index};">
+          <div class="pdf-visual-column ${type}-column ${index === greyColumnIndex ? "grey-column" : ""} ${type === "winner" && state.originalPlayers.length === 9 && index === 0 ? "playin-align" : ""}" style="--column-index: ${index};">
             <p class="round-title">${type === "winner" ? "Winners" : "Losers"} R${index + 1}</p>
             <div class="pdf-column-matches" style="--match-count: ${Math.max(round.length, 1)};">
               ${round.map(renderMatch).join("")}
