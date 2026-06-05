@@ -1443,11 +1443,11 @@ textarea {
   overflow: hidden;
 }
 
-.pdf-reference-frame img {
+.pdf-reference-embed {
   display: block;
   width: 100%;
-  height: auto;
-  object-fit: contain;
+  min-height: 720px;
+  border: 0;
 }
 
 .pdf-reference-empty {
@@ -1457,6 +1457,19 @@ textarea {
   color: #666;
   padding: 18px;
   text-align: center;
+}
+
+.pdf-reference-link {
+  align-self: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #064f2b;
+  text-decoration: none;
+}
+
+.pdf-reference-link:hover,
+.pdf-reference-link:focus-visible {
+  text-decoration: underline;
 }
 
 .pdf-column-group {

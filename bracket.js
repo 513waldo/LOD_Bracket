@@ -7150,25 +7150,31 @@ function renderPdfVisualBand(title, rounds, type) {
 }
 
 function renderPdfReferencePanel() {
-  const pdfName = pdfBracketLayouts[state.originalPlayers.length]?.pdf;
-  const imageName = pdfName ? pdfName.replace(/\.pdf$/i, ".png") : null;
-  const imageSrc = imageName ? `assets/pdf-brackets/${imageName}` : null;
+  const layout = pdfBracketLayouts[state.originalPlayers.length];
+  const pdfName = layout?.pdf;
+  const pdfSrc = pdfName ? `assets/pdf-brackets/${pdfName}` : null;
 
   return `
     <section class="pdf-reference-panel" aria-label="PDF bracket reference">
       <div class="pdf-reference-heading">
         <div>
           <h4>PDF reference</h4>
-          <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams</p>
+          <p>Printed layout for ${escapeHtml(String(state.originalPlayers.length))} teams, including winners and losers pages</p>
         </div>
-        <span>${escapeHtml(pdfName || "No PDF reference available")}</span>
+        ${pdfSrc ? `
+          <a class="pdf-reference-link" href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open PDF</a>
+        ` : `
+          <span>${escapeHtml("No PDF reference available")}</span>
+        `}
       </div>
-      ${imageSrc ? `
+      ${pdfSrc ? `
         <div class="pdf-reference-frame">
-          <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(pdfName || "Bracket PDF reference")}" loading="lazy">
+          <object class="pdf-reference-embed" data="${escapeAttribute(pdfSrc)}" type="application/pdf">
+            <p>The PDF preview could not load in this browser. <a href="${escapeAttribute(pdfSrc)}" target="_blank" rel="noreferrer">Open the PDF</a>.</p>
+          </object>
         </div>
       ` : `
-        <div class="pdf-reference-empty">No PDF reference image is available for this team count.</div>
+        <div class="pdf-reference-empty">No PDF reference file is available for this team count.</div>
       `}
     </section>
   `;
