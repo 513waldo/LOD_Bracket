@@ -1443,46 +1443,6 @@ textarea {
   overflow: hidden;
 }
 
-.pdf-reference-views {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.pdf-reference-views.single {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.pdf-reference-card {
-  min-width: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.pdf-reference-card-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.pdf-reference-card-heading h5 {
-  margin: 0;
-  font-size: 0.92rem;
-}
-
-.pdf-reference-card-heading a {
-  color: #064f2b;
-  font-size: 0.8rem;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.pdf-reference-card-heading a:hover,
-.pdf-reference-card-heading a:focus-visible {
-  text-decoration: underline;
-}
-
 .pdf-reference-embed {
   display: block;
   width: 100%;
@@ -1510,16 +1470,6 @@ textarea {
 .pdf-reference-link:hover,
 .pdf-reference-link:focus-visible {
   text-decoration: underline;
-}
-
-@media (max-width: 1100px) {
-  .pdf-reference-views {
-    grid-template-columns: 1fr;
-  }
-
-  .pdf-reference-embed {
-    min-height: 520px;
-  }
 }
 
 .pdf-column-group {
