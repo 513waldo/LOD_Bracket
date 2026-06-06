@@ -396,18 +396,56 @@ function capturePortalScrollState() {
   return {
     x: window.scrollX || window.pageXOffset || 0,
     y: window.scrollY || window.pageYOffset || 0,
+    containers: Array.from(document.querySelectorAll(".rounds, .pdf-visual-scroll")).map((element) => ({
+      key: getScrollContainerKey(element),
+      left: element.scrollLeft || 0,
+      top: element.scrollTop || 0,
+    })),
   };
 }
 
 function restorePortalScrollState(scrollState) {
-  if (!scrollState || (!scrollState.x && !scrollState.y)) {
-    return;
+  window.requestAnimationFrame(() => {
+    if (scrollState && (scrollState.x || scrollState.y)) {
+      window.scrollTo(scrollState.x, scrollState.y);
+    }
+
+    if (!scrollState?.containers?.length) {
+      return;
+    }
+
+    const currentContainers = Array.from(document.querySelectorAll(".rounds, .pdf-visual-scroll"));
+    const byKey = new Map(scrollState.containers.map((container) => [container.key, container]));
+
+    currentContainers.forEach((element) => {
+      const key = getScrollContainerKey(element);
+      const saved = byKey.get(key);
+      if (!saved) {
+        return;
+      }
+
+      element.scrollLeft = saved.left;
+      element.scrollTop = saved.top;
+    });
+  });
+}
+
+function getScrollContainerKey(element) {
+  if (!element || !element.classList) {
+    return "";
   }
 
-  const { x, y } = scrollState;
-  window.requestAnimationFrame(() => {
-    window.scrollTo(x, y);
-  });
+  if (element.classList.contains("pdf-visual-scroll")) {
+    return "pdf-visual-scroll";
+  }
+
+  if (element.classList.contains("rounds")) {
+    const section = element.closest(".bracket-section");
+    const heading = section?.querySelector("h3")?.textContent || "";
+    return `rounds:${heading.trim()}`;
+  }
+
+  return "";
 }
 
 function getActiveMatchId(state) {
