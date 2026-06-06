@@ -485,14 +485,14 @@ function renderActiveLodRegistry(registry, sourceLabel) {
   lodRegistryList.className = "lod-registry-list";
   lodRegistryList.innerHTML = `
     <div class="lod-registry-meta">
-      <strong>${escapeHtml(`${codes.length} active LOD${codes.length === 1 ? "" : "s"}`)}</strong>
+      <strong>${escapeHtml(`${codes.length} admin launch LOD${codes.length === 1 ? "" : "s"}`)}</strong>
       <span>${escapeHtml(updatedLabel ? `Updated ${updatedLabel}` : sourceLabel || "")}</span>
     </div>
     <div class="lod-registry-codes">
-      ${codes.map((code) => `<a class="lod-registry-code" href="bracket.html?lod=${encodeURIComponent(code)}" data-admin-lod-code="${escapeHtml(code)}" title="Open the admin portal for ${escapeHtml(code)}">${escapeHtml(code)}</a>`).join("")}
+      ${codes.map((code) => `<a class="lod-registry-code" href="bracket.html?lod=${encodeURIComponent(code)}" data-admin-lod-code="${escapeHtml(code)}" title="Admin launch for ${escapeHtml(code)}">${escapeHtml(code)}<span class="lod-registry-code-hint">Admin launch</span></a>`).join("")}
     </div>
   `;
-  lodRegistryStatus.textContent = "Select a code to load that bracket snapshot.";
+  lodRegistryStatus.textContent = "Click a code to open the admin portal after password verification.";
 }
 
 function openAdminPortalForLod(code) {
