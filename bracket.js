@@ -78,7 +78,6 @@ const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const lodRegistryList = document.querySelector("#lodRegistryList");
-const clearRegistryButton = document.querySelector("#clearRegistry");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const EMPTY_QR_DATA_URL = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
 const API_BASE_URLS = getApiBaseUrls();
@@ -103,7 +102,7 @@ const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
 const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
-const bracketCleanupDurationMs = 60 * 60 * 1000;
+const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const splitPotFirstTicketNumber = 100;
 const splitPotMaxPurchaseAmount = 50;
@@ -367,8 +366,6 @@ if (pdfLayoutSelect) {
 refreshRegistryButton?.addEventListener("click", () => {
   loadActiveLodCodes(true);
 });
-
-clearRegistryButton?.addEventListener("click", clearActiveLodCodes);
 
 lodRegistryList?.addEventListener("click", (event) => {
   const codeButton = event.target.closest?.("[data-load-lod-code]");
@@ -5199,13 +5196,8 @@ function renderBracket() {
     refreshGraphSources(state);
   }
 
-  if (state.champion) {
-    if (!scheduleBracketCleanupIfNeeded()) {
-      return;
-    }
-  } else {
-    clearBracketCleanupTimer();
-    clearBracketCleanupStorage(lodCode);
+  if (!scheduleBracketCleanupIfNeeded()) {
+    return;
   }
 
   championOutput.textContent = state.champion ? `Champion: ${state.champion}` : "Champion: pending";
@@ -5238,7 +5230,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     version: 1,
     exportedAt,
     lodCode,
-    expiresAt: getBracketCleanupAt(lodCode) || "",
+    expiresAt: getOrCreateBracketCleanupAt(lodCode) || "",
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
     playerList: playerList?.value || "",
@@ -5541,13 +5533,25 @@ function restoreBracketDraft() {
     if (state.champion) {
       if (Number.isFinite(savedExpiry) && savedExpiry > 0) {
         saveBracketCleanupAt(lodCode, savedExpiry);
-        const remaining = savedExpiry - Date.now();
-        if (remaining <= 0) {
+        if (savedExpiry <= Date.now()) {
           expireBracketSession(lodCode);
           return;
         }
       } else {
-        saveBracketCleanupAt(lodCode, Date.now() + bracketCleanupDurationMs);
+        clearCompletedBracketCode(lodCode);
+      }
+    } else {
+      const cleanupAt = Number.isFinite(savedExpiry) && savedExpiry > 0
+        ? savedExpiry
+        : getOrCreateBracketCleanupAt(lodCode);
+
+      if (cleanupAt && cleanupAt <= Date.now()) {
+        expireBracketSession(lodCode);
+        return;
+      }
+
+      if (cleanupAt) {
+        saveBracketCleanupAt(lodCode, cleanupAt);
       }
     }
 
@@ -5845,7 +5849,7 @@ function buildBracketDraft() {
     },
     pdfLayoutValue: pdfLayoutSelect?.value || "",
     lodCode,
-    expiresAt: getBracketCleanupAt(lodCode) || "",
+    expiresAt: getOrCreateBracketCleanupAt(lodCode) || "",
     portalNotice,
     portalNoticeDraft,
     portalSupportNoticeAt,
@@ -5861,7 +5865,36 @@ function buildBracketDraft() {
 
 function scheduleBracketCleanupIfNeeded() {
   clearBracketCleanupTimer();
-  clearBracketCleanupStorage(lodCode);
+
+  if (!state) {
+    return false;
+  }
+
+  const normalizedCode = normalizeLodCode(lodCode);
+  if (!normalizedCode) {
+    return true;
+  }
+
+  if (state.champion) {
+    window.setTimeout(() => clearCompletedBracketCode(normalizedCode), 0);
+    return true;
+  }
+
+  const expiresAt = getOrCreateBracketCleanupAt(normalizedCode);
+  if (!expiresAt) {
+    return true;
+  }
+
+  const remaining = expiresAt - Date.now();
+  if (remaining <= 0) {
+    expireBracketSession(normalizedCode);
+    return false;
+  }
+
+  bracketCleanupTimer = window.setTimeout(() => {
+    expireBracketSession(normalizedCode);
+  }, remaining);
+
   return true;
 }
 
@@ -5874,19 +5907,54 @@ function expireBracketSession(code = lodCode) {
   }
   queueActiveLodCodesRefresh();
   showMessage(expiredCode
-    ? `LOD ${expiredCode} expired after 60 minutes and was cleared.`
+    ? `LOD ${expiredCode} expired after 24 hours and was cleared.`
     : "Expired bracket session cleared.");
 }
 
-function getBracketCleanupAt(code = lodCode) {
+function clearCompletedBracketCode(code = lodCode) {
+  const completedCode = normalizeLodCode(code);
+  if (!completedCode) {
+    return;
+  }
+
+  clearBracketCleanupTimer();
+  clearBracketCleanupStorage(completedCode);
+  clearPortalSnapshotStorage(completedCode);
+
+  if (normalizeLodCode(lodCode) === completedCode) {
+    lodCode = "";
+    saveStoredLodCode("");
+    clearAssistantAdminSessionCode();
+    renderPortalLink();
+  }
+
+  queueActiveLodCodesRefresh();
+}
+
+function getOrCreateBracketCleanupAt(code = lodCode) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return 0;
+  }
+
   if (!canUseLocalStorage()) {
     return 0;
   }
 
   try {
-    const raw = localStorage.getItem(getBracketCleanupStorageKey(code));
+    const raw = localStorage.getItem(getBracketCleanupStorageKey(normalizedCode));
     const value = Number(raw);
-    return Number.isFinite(value) && value > 0 ? value : 0;
+    if (Number.isFinite(value) && value > 0) {
+      return value;
+    }
+
+    if (!state || state.champion) {
+      return 0;
+    }
+
+    const expiresAt = Date.now() + bracketCleanupDurationMs;
+    localStorage.setItem(getBracketCleanupStorageKey(normalizedCode), String(expiresAt));
+    return expiresAt;
   } catch {
     return 0;
   }
@@ -5970,52 +6038,6 @@ async function loadActiveLodCodes(announceFailure = false) {
   renderActiveLodCodes({ codes: [], updatedAt: "" }, "");
   if (announceFailure) {
     showMessage("Unable to load the active LOD registry.");
-  }
-}
-
-async function clearActiveLodCodes() {
-  if (!API_BASE_URLS.length) {
-    showMessage("No active LOD registry host is configured.");
-    return;
-  }
-
-  const confirmed = window.confirm(
-    "Clear all active LOD codes? This removes every published code from the registry on each configured host.",
-  );
-
-  if (!confirmed) {
-    return;
-  }
-
-  if (clearRegistryButton) {
-    clearRegistryButton.disabled = true;
-  }
-
-  try {
-    let clearedCount = 0;
-
-    for (const baseUrl of API_BASE_URLS) {
-      try {
-        const response = await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
-        if (!response.ok) {
-          continue;
-        }
-
-        const payload = await response.json().catch(() => null);
-        clearedCount += Number(payload?.cleared || 0) || 0;
-      } catch {
-        // Try the next configured host.
-      }
-    }
-
-    await loadActiveLodCodes(false);
-    showMessage(clearedCount > 0
-      ? `Cleared ${clearedCount} active LOD code${clearedCount === 1 ? "" : "s"}.`
-      : "Active LOD registry cleared.");
-  } finally {
-    if (clearRegistryButton) {
-      clearRegistryButton.disabled = false;
-    }
   }
 }
 
