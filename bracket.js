@@ -7443,17 +7443,17 @@ function updateAssistantAdminControls() {
   }
 
   if (sendPortalSupportNoticeButton) {
-    sendPortalSupportNoticeButton.disabled = !sessionContext.active;
-    sendPortalSupportNoticeButton.title = sessionContext.active
+    sendPortalSupportNoticeButton.disabled = !sessionContext.lodCode;
+    sendPortalSupportNoticeButton.title = sessionContext.lodCode
       ? ""
-      : "Open the matching admin session before sending support messages.";
+      : "Load a bracket before sending support messages.";
   }
 
   if (clearPortalSupportNoticeButton) {
-    clearPortalSupportNoticeButton.disabled = !sessionContext.active;
-    clearPortalSupportNoticeButton.title = sessionContext.active
+    clearPortalSupportNoticeButton.disabled = !sessionContext.lodCode;
+    clearPortalSupportNoticeButton.title = sessionContext.lodCode
       ? ""
-      : "Open the matching admin session before clearing support messages.";
+      : "Load a bracket before clearing support messages.";
   }
 
   if (clearAllSentMessagesButton) {
