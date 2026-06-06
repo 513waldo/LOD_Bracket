@@ -78,6 +78,7 @@ const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const lodRegistryList = document.querySelector("#lodRegistryList");
+const clearRegistryButton = document.querySelector("#clearRegistry");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
@@ -366,6 +367,8 @@ refreshRegistryButton?.addEventListener("click", () => {
   loadActiveLodCodes(true);
 });
 
+clearRegistryButton?.addEventListener("click", clearActiveLodCodes);
+
 lodRegistryList?.addEventListener("click", (event) => {
   const codeButton = event.target.closest?.("[data-load-lod-code]");
   if (!codeButton) {
@@ -412,7 +415,7 @@ document.querySelector("#downloadPortalSnapshot").addEventListener("click", () =
   showMessage(`Portal snapshot downloaded as lod-${lodCode}.json.`);
 });
 
-function generateNewPortalCode() {
+function generateNewPortalCode({ silent = false } = {}) {
   lodCode = generateLodCode();
   saveStoredLodCode(lodCode);
   clearAssistantAdminSessionCode();
@@ -420,7 +423,9 @@ function generateNewPortalCode() {
   renderPortalLink(true);
   savePortalSnapshotToLocalStorage();
   queueActiveLodCodesRefresh();
-  showMessage(`New LOD code generated: ${lodCode}.`);
+  if (!silent) {
+    showMessage(`New LOD code generated: ${lodCode}.`);
+  }
 }
 
 newLodCodeButton?.addEventListener("click", generateNewPortalCode);
@@ -916,6 +921,8 @@ async function buildBracket() {
   if (assistantMode) {
     stopRemoteMirrorRefresh();
   }
+
+  generateNewPortalCode({ silent: true });
 
   try {
     if (state) {
@@ -5962,6 +5969,52 @@ async function loadActiveLodCodes(announceFailure = false) {
   renderActiveLodCodes({ codes: [], updatedAt: "" }, "");
   if (announceFailure) {
     showMessage("Unable to load the active LOD registry.");
+  }
+}
+
+async function clearActiveLodCodes() {
+  if (!API_BASE_URLS.length) {
+    showMessage("No active LOD registry host is configured.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Clear all active LOD codes? This removes every published code from the registry on each configured host.",
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (clearRegistryButton) {
+    clearRegistryButton.disabled = true;
+  }
+
+  try {
+    let clearedCount = 0;
+
+    for (const baseUrl of API_BASE_URLS) {
+      try {
+        const response = await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
+        if (!response.ok) {
+          continue;
+        }
+
+        const payload = await response.json().catch(() => null);
+        clearedCount += Number(payload?.cleared || 0) || 0;
+      } catch {
+        // Try the next configured host.
+      }
+    }
+
+    await loadActiveLodCodes(false);
+    showMessage(clearedCount > 0
+      ? `Cleared ${clearedCount} active LOD code${clearedCount === 1 ? "" : "s"}.`
+      : "Active LOD registry cleared.");
+  } finally {
+    if (clearRegistryButton) {
+      clearRegistryButton.disabled = false;
+    }
   }
 }
 

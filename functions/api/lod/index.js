@@ -17,12 +17,26 @@ export async function onRequest(context) {
     return jsonResponse({ error: "Missing BRACKET_STATE binding" }, 500);
   }
 
-  if (method !== "GET") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+  if (method === "GET") {
+    const registry = await readRegistry(bracketState);
+    return jsonResponse(registry);
   }
 
-  const registry = await readRegistry(bracketState);
-  return jsonResponse(registry);
+  if (method === "DELETE") {
+    const registry = await readRegistry(bracketState);
+    const codes = Array.isArray(registry.codes) ? registry.codes : [];
+
+    await Promise.all(codes.map((code) => bracketState.delete(snapshotKey(code))));
+    await bracketState.delete(registryKey());
+
+    return jsonResponse({
+      ok: true,
+      cleared: codes.length,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return jsonResponse({ error: "Method not allowed" }, 405);
 }
 
 function getBracketStateBinding(env) {
@@ -71,6 +85,10 @@ async function readRegistry(bracketState) {
 
 function registryKey() {
   return "lod-index";
+}
+
+function snapshotKey(code) {
+  return `lod-${code}`;
 }
 
 function normalizeLodCode(value) {

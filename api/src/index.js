@@ -56,20 +56,38 @@ export class BracketRoom {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const method = request.method.toUpperCase();
 
-    if (request.method.toUpperCase() === "OPTIONS") {
+    if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
     if (isRegistryRequest(url.pathname)) {
-      if (request.method.toUpperCase() !== "GET") {
-        return jsonResponse({ error: "Method not allowed" }, 405);
+      const registryStub = getRegistryStub(env);
+      if (method === "GET") {
+        const response = await registryStub.fetch(
+          new Request("https://registry/api/lod/index", { method: "GET" }),
+        );
+        return withCors(response);
       }
 
-      const response = await getRegistryStub(env).fetch(
-        new Request("https://registry/api/lod/index", { method: "GET" }),
-      );
-      return withCors(response);
+      if (method === "DELETE") {
+        const registry = await readRegistry(env);
+        const codes = Array.isArray(registry.codes) ? registry.codes : [];
+
+        for (const code of codes) {
+          const roomId = env.BRACKET_ROOMS.idFromName(code);
+          const stub = env.BRACKET_ROOMS.get(roomId);
+          await stub.fetch(new Request(`https://registry/api/lod/${code}`, { method: "DELETE" }));
+        }
+
+        const clearResponse = await registryStub.fetch(
+          new Request("https://registry/api/lod/index", { method: "DELETE" }),
+        );
+        return withCors(clearResponse);
+      }
+
+      return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
     const code = extractLodCode(url.pathname, url.searchParams.get("lod"));
@@ -87,7 +105,6 @@ export default {
     const stub = env.BRACKET_ROOMS.get(roomId);
     const targetUrl = new URL(request.url);
     targetUrl.pathname = `/api/lod/${code}`;
-    const method = request.method.toUpperCase();
     const payload = method === "PUT" || method === "PATCH"
       ? await request.clone().json().catch(() => null)
       : null;

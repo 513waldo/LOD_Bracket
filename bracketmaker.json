@@ -1,0 +1,25 @@
+{
+  "session_id": "019e9507-0b53-7480-81c7-815c72844ead",
+  "project": "/home/waldo/DARTS/tournament-bracket",
+  "local_test_url": "http://localhost:8003/bracket.html",
+  "status": {
+    "losers_bracket": "left as-is for now",
+    "winners_bracket": "25-team PDF order matched",
+    "display_numbering": "updated to preserve PDF game IDs",
+    "cache_buster": "bracket.html points at bracket.js?v=interactive-tools-248"
+  },
+  "25_team_pdf_order": {
+    "winners_round_1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "winners_round_2": [11, 18, 12, 13, 14, 15, 16, 17],
+    "winners_round_3": [27, 28, 29, 30],
+    "winners_round_4": [39, 40],
+    "winners_round_5": [45],
+    "final": [48],
+    "losers_round_1": [10]
+  },
+  "next_steps": [
+    "Open the repo and review git status",
+    "Load bracket.html locally on port 8003",
+    "If needed, continue from the 25-team bracket sanity check"
+  ]
+}
