@@ -593,17 +593,8 @@ function renderPortalSupportTranscript() {
 }
 
 sendPortalNoticeButton?.addEventListener("click", () => {
-  const stamp = new Date();
-  portalNotice = formatAdminPortalMessage("Admin", portalNoticeDraft, stamp);
-  portalNoticeAt = portalNotice ? new Date().toISOString() : "";
-  const didPublish = savePortalSnapshotToLocalStorage();
-  queueBracketDraftSave();
-  const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (portalNoticeStatus) {
-    portalNoticeStatus.textContent = portalNotice
-      ? (didPublish ? `Sent at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
-      : `Cleared at ${stampLabel}.`;
-  }
+  const didPublish = publishPortalNotice(portalNoticeDraft, { syncInput: false });
+  const stampLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   showMessage(portalNotice
     ? (didPublish ? `Board call sent to players portal at ${stampLabel}.` : `Board call saved at ${stampLabel}; set an LOD code to publish.`)
     : `Board call cleared at ${stampLabel}.`);
@@ -2063,6 +2054,25 @@ function setAutomatedPortalNotice(message) {
   return didPublish;
 }
 
+function publishPortalNotice(message, { syncInput = true } = {}) {
+  const text = String(message || "").trim();
+  const stamp = new Date();
+  portalNotice = text ? formatAdminPortalMessage("Admin", text, stamp) : "";
+  portalNoticeAt = portalNotice ? new Date().toISOString() : "";
+  if (syncInput && portalNoticeInput) {
+    portalNoticeInput.value = text;
+  }
+  const didPublish = savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = text
+      ? (didPublish ? `Sent at ${stampLabel}.` : `Message ready at ${stampLabel}; set an LOD code to publish.`)
+      : `Cleared at ${stampLabel}.`;
+  }
+  return didPublish;
+}
+
 function setAdminSupportPortalNotice(message, sender = getAdminSupportSenderLabel()) {
   const text = String(message || "").trim();
   const stamp = new Date();
@@ -2131,7 +2141,7 @@ function sendBracketLegWinnerPortalNotice(match, winnerName) {
   }
 
   const winnerLine = `Bracket leg winner: ${formatMatchTitle(match)} - ${winnerName}`;
-  return setAutomatedPortalNotice(winnerLine);
+  return publishPortalNotice(winnerLine, { syncInput: false });
 }
 
 function formatSplitPotTicketRange(row) {
