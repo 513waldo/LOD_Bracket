@@ -2414,7 +2414,7 @@ function resetTournament() {
   clearOutShots();
   renderMysteryOut();
   queueActiveLodCodesRefresh();
-  showMessage("All page fields reset except the active QR code.");
+  showMessage("All page fields reset.");
 }
 
 function clearPlayerNames() {
