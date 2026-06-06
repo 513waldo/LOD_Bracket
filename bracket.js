@@ -6385,36 +6385,36 @@ function saveAssistantAdminPassword(password) {
 }
 
 function getAssistantAdminSessionCode() {
-  if (!canUseSessionStorage()) {
+  if (!canUseLocalStorage()) {
     return "";
   }
 
   try {
-    return normalizeLodCode(sessionStorage.getItem(assistantAdminSessionStorageKey) || "");
+    return normalizeLodCode(localStorage.getItem(assistantAdminSessionStorageKey) || "");
   } catch {
     return "";
   }
 }
 
 function saveAssistantAdminSessionCode(code) {
-  if (!canUseSessionStorage()) {
+  if (!canUseLocalStorage()) {
     return;
   }
 
   try {
-    sessionStorage.setItem(assistantAdminSessionStorageKey, normalizeLodCode(code));
+    localStorage.setItem(assistantAdminSessionStorageKey, normalizeLodCode(code));
   } catch {
     // Ignore storage failures.
   }
 }
 
 function clearAssistantAdminSessionCode() {
-  if (!canUseSessionStorage()) {
+  if (!canUseLocalStorage()) {
     return;
   }
 
   try {
-    sessionStorage.removeItem(assistantAdminSessionStorageKey);
+    localStorage.removeItem(assistantAdminSessionStorageKey);
   } catch {
     // Ignore storage failures.
   }
@@ -6602,6 +6602,28 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
 window.loadAssistantAdminSnapshot = function loadAssistantAdminSnapshot(code) {
   return loadRemoteAdminSnapshot(code, true);
 };
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== assistantAdminSessionStorageKey && event.key !== assistantAdminPasswordStorageKey) {
+    return;
+  }
+
+  updateAssistantAdminControls();
+
+  const currentCode = normalizeLodCode(lodCode);
+  const sessionCode = getAssistantAdminSessionCode();
+  if (!currentCode) {
+    return;
+  }
+
+  if (sessionCode === currentCode) {
+    startRemoteMirrorRefresh();
+    void pollRemoteAdminSnapshot(currentCode);
+    return;
+  }
+
+  stopRemoteMirrorRefresh();
+});
 
 function normalizeAdminMirrorSnapshot(data) {
   if (!data || typeof data !== "object") {
