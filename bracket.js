@@ -101,6 +101,7 @@ const lodCodeStorageKey = "dartsTournamentLodCode";
 const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
+const assistantAdminLaunchAuthStorageKey = "dartsTournamentAssistantAdminLaunchAuth";
 const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
 const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
 const outShotSlotCount = 100;
@@ -337,6 +338,7 @@ updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 restoreBracketDraft();
+consumeAssistantAdminLaunchAuth(lodCode);
 if (getAssistantAdminSessionCode() && normalizeLodCode(lodCode) === getAssistantAdminSessionCode()) {
   loadRemoteAdminSnapshot(lodCode, false);
 }
@@ -6168,6 +6170,43 @@ function clearAssistantAdminSessionCode() {
     sessionStorage.removeItem(assistantAdminSessionStorageKey);
   } catch {
     // Ignore storage failures.
+  }
+}
+
+function consumeAssistantAdminLaunchAuth(code) {
+  if (!canUseLocalStorage()) {
+    return false;
+  }
+
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  try {
+    const raw = localStorage.getItem(assistantAdminLaunchAuthStorageKey);
+    if (!raw) {
+      return false;
+    }
+
+    const payload = JSON.parse(raw);
+    const launchCode = normalizeLodCode(payload?.code || "");
+    const expiresAt = Number(payload?.expiresAt || 0) || 0;
+    if (!launchCode || launchCode !== normalizedCode || expiresAt < Date.now()) {
+      localStorage.removeItem(assistantAdminLaunchAuthStorageKey);
+      return false;
+    }
+
+    localStorage.removeItem(assistantAdminLaunchAuthStorageKey);
+    saveAssistantAdminSessionCode(normalizedCode);
+    return true;
+  } catch {
+    try {
+      localStorage.removeItem(assistantAdminLaunchAuthStorageKey);
+    } catch {
+      // Ignore storage failures.
+    }
+    return false;
   }
 }
 

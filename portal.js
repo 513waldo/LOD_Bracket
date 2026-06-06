@@ -24,6 +24,9 @@ const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const portalLodCodeClearedValue = "__CLEARED__";
 const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
 const portalSessionDurationMs = 60 * 60 * 1000;
+const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
+const assistantAdminLaunchAuthStorageKey = "dartsTournamentAssistantAdminLaunchAuth";
+const assistantAdminLaunchAuthTtlMs = 2 * 60 * 1000;
 
 let activeSnapshot = null;
 const storedLodCode = getStoredPortalLodCode();
@@ -71,6 +74,21 @@ copyPortalLinkButton?.addEventListener("click", async () => {
   } catch {
     setMessage("Could not copy the portal link.");
   }
+});
+
+lodRegistryList?.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-admin-lod-code]");
+  if (!link) {
+    return;
+  }
+
+  event.preventDefault();
+  const code = normalizeLodCode(link.dataset.adminLodCode || "");
+  if (!code) {
+    return;
+  }
+
+  openAdminPortalForLod(code);
 });
 
 snapshotFile?.addEventListener("change", async () => {
@@ -471,10 +489,64 @@ function renderActiveLodRegistry(registry, sourceLabel) {
       <span>${escapeHtml(updatedLabel ? `Updated ${updatedLabel}` : sourceLabel || "")}</span>
     </div>
     <div class="lod-registry-codes">
-      ${codes.map((code) => `<a class="lod-registry-code" href="bracket.html?lod=${encodeURIComponent(code)}" target="_blank" rel="noopener noreferrer" title="Open the admin portal for ${escapeHtml(code)}">${escapeHtml(code)}</a>`).join("")}
+      ${codes.map((code) => `<a class="lod-registry-code" href="bracket.html?lod=${encodeURIComponent(code)}" data-admin-lod-code="${escapeHtml(code)}" title="Open the admin portal for ${escapeHtml(code)}">${escapeHtml(code)}</a>`).join("")}
     </div>
   `;
   lodRegistryStatus.textContent = "Select a code to load that bracket snapshot.";
+}
+
+function openAdminPortalForLod(code) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode) {
+    return false;
+  }
+
+  const storedPassword = getAssistantAdminPassword();
+  const entered = window.prompt(`Enter the assistant admin password to open LOD ${normalizedCode}.`, "");
+
+  if (!entered) {
+    setMessage("Assistant admin access was cancelled.");
+    return false;
+  }
+
+  if (!storedPassword) {
+    saveAssistantAdminPassword(entered);
+  } else if (entered !== storedPassword) {
+    setMessage("Incorrect assistant admin password.");
+    return false;
+  }
+
+  saveAssistantAdminLaunchAuth(normalizedCode);
+  window.open(`bracket.html?lod=${encodeURIComponent(normalizedCode)}`, "_blank", "noopener,noreferrer");
+  setMessage(`Opening admin portal for LOD ${normalizedCode}.`);
+  return true;
+}
+
+function getAssistantAdminPassword() {
+  try {
+    return localStorage.getItem(assistantAdminPasswordStorageKey) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveAssistantAdminPassword(password) {
+  try {
+    localStorage.setItem(assistantAdminPasswordStorageKey, String(password || ""));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function saveAssistantAdminLaunchAuth(code) {
+  try {
+    localStorage.setItem(assistantAdminLaunchAuthStorageKey, JSON.stringify({
+      code: normalizeLodCode(code),
+      expiresAt: Date.now() + assistantAdminLaunchAuthTtlMs,
+    }));
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 function capturePortalScrollState() {
