@@ -106,6 +106,7 @@ const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
 const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
+const productionAssistantAdminPassword = "513859Darts!";
 const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const splitPotFirstTicketNumber = 100;
@@ -6432,9 +6433,7 @@ function requireAssistantAdminPassword(code) {
   }
 
   const storedPassword = getAssistantAdminPassword();
-  const promptLabel = storedPassword
-    ? `Enter the assistant admin password to load LOD ${normalizedCode}.`
-    : `Set an assistant admin password before loading LOD ${normalizedCode}.`;
+  const promptLabel = `Enter the assistant admin password to load LOD ${normalizedCode}.`;
   const entered = window.prompt(promptLabel, "");
 
   if (!entered) {
@@ -6442,17 +6441,12 @@ function requireAssistantAdminPassword(code) {
     return false;
   }
 
-  if (!storedPassword) {
-    saveAssistantAdminPassword(entered);
-    saveAssistantAdminSessionCode(normalizedCode);
-    return true;
-  }
-
-  if (entered !== storedPassword) {
+  if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
     showMessage("Incorrect assistant admin password.");
     return false;
   }
 
+  saveAssistantAdminPassword(productionAssistantAdminPassword);
   saveAssistantAdminSessionCode(normalizedCode);
   return true;
 }
