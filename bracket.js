@@ -7472,7 +7472,7 @@ function updateAssistantAdminControls() {
 
   if (assistantAdminLogoutButton) {
     assistantAdminLogoutButton.hidden = false;
-    assistantAdminLogoutButton.textContent = "Return to player portal";
+    assistantAdminLogoutButton.textContent = "Return to Tournament Director Portal";
   }
 }
 
