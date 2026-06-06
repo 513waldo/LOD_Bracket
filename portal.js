@@ -508,48 +508,13 @@ function openAdminPortalForLod(code) {
   }
 
   const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
-  const adminWindow = window.open("", "_blank");
+  const adminWindow = window.open(launchUrl, "_blank");
   if (!adminWindow) {
     setMessage("Your browser blocked the admin portal tab.");
     return false;
   }
-
-  const storedPassword = getAssistantAdminPassword();
-  const entered = window.prompt(`Enter the assistant admin password to open LOD ${normalizedCode}.`, "");
-
-  if (!entered) {
-    adminWindow.close();
-    setMessage("Assistant admin access was cancelled.");
-    return false;
-  }
-
-  if (!storedPassword) {
-    saveAssistantAdminPassword(entered);
-  } else if (entered !== storedPassword) {
-    adminWindow.close();
-    setMessage("Incorrect assistant admin password.");
-    return false;
-  }
-
-  adminWindow.location.href = launchUrl;
   setMessage(`Opening admin portal for LOD ${normalizedCode}.`);
   return true;
-}
-
-function getAssistantAdminPassword() {
-  try {
-    return localStorage.getItem(assistantAdminPasswordStorageKey) || "";
-  } catch {
-    return "";
-  }
-}
-
-function saveAssistantAdminPassword(password) {
-  try {
-    localStorage.setItem(assistantAdminPasswordStorageKey, String(password || ""));
-  } catch {
-    // Ignore storage failures.
-  }
 }
 
 function capturePortalScrollState() {

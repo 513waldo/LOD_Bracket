@@ -257,7 +257,8 @@ let d20RollStartTime = 0;
 let diceRollerOriginalParent = null;
 let diceRollerOriginalNextSibling = null;
 const storedLodCode = getStoredLodCode();
-let lodCode = storedLodCode === null ? generateLodCode() : storedLodCode;
+const requestedLodCode = getRequestedLodCode();
+let lodCode = requestedLodCode || (storedLodCode === null ? generateLodCode() : storedLodCode);
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
 let lastPublishedPortalSnapshotSignature = "";
@@ -338,7 +339,9 @@ updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 restoreBracketDraft();
-if (getAssistantAdminSessionCode() && normalizeLodCode(lodCode) === getAssistantAdminSessionCode()) {
+if (requestedLodCode) {
+  loadRemoteAdminSnapshot(requestedLodCode, true);
+} else if (getAssistantAdminSessionCode() && normalizeLodCode(lodCode) === getAssistantAdminSessionCode()) {
   loadRemoteAdminSnapshot(lodCode, false);
 }
 syncTotalPlayersSection(true);
