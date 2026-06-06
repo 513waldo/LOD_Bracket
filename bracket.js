@@ -6550,6 +6550,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
     return false;
   }
 
+  saveAssistantAdminSessionCode(normalizedCode);
   saveAssistantAdminBackupDraft(buildBracketDraft());
   lodCode = normalizedCode;
   saveStoredLodCode(lodCode);
@@ -6557,6 +6558,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   queueActiveLodCodesRefresh();
   stopRemoteMirrorRefresh();
   lastRemoteMirrorSnapshotSignature = "";
+  startRemoteMirrorRefresh();
 
   for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
     if (!baseUrl) {
@@ -6576,8 +6578,6 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
 
       const snapshotSignature = getPortalSnapshotSignature(snapshot);
       if (snapshotSignature && snapshotSignature === lastRemoteMirrorSnapshotSignature) {
-        saveAssistantAdminSessionCode(normalizedCode);
-        startRemoteMirrorRefresh();
         updateAssistantAdminControls();
         return true;
       }
@@ -6587,8 +6587,6 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
       if (snapshotSignature) {
         lastPublishedPortalSnapshotSignature = snapshotSignature;
       }
-      saveAssistantAdminSessionCode(normalizedCode);
-      startRemoteMirrorRefresh();
       updateAssistantAdminControls();
       showMessage(`Live admin snapshot loaded for LOD ${normalizedCode}.`);
       return true;
