@@ -2094,6 +2094,7 @@ function setAdminSupportPortalNotice(message, sender = getAdminSupportSenderLabe
     }];
   }
   renderPortalSupportTranscript();
+  portalSupportTranscript?.lastElementChild?.scrollIntoView({ block: "end", behavior: "smooth" });
   const didPublish = savePortalSnapshotToLocalStorage();
   queueBracketDraftSave();
   const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
