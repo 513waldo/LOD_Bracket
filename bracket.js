@@ -801,6 +801,7 @@ bullseyeShootCurrentPotInput?.addEventListener("change", () => {
 clearBullseyeShootWinnerButton?.addEventListener("click", () => {
   stopBullseyeShootDrawAnimation();
   bullseyeShootWinner = null;
+  clearBullshootPortalNotice();
   saveBullseyeShoot();
   renderBullseyeShoot();
 });
@@ -809,6 +810,7 @@ function clearBullShootEntries() {
   stopBullseyeShootDrawAnimation();
   bullseyeShootEntries = [];
   bullseyeShootWinner = null;
+  clearBullshootPortalNotice();
   saveBullseyeShoot();
   renderBullseyeShoot();
   showMessage("Bull Shoot entries cleared.");
@@ -1727,6 +1729,7 @@ function drawBullseyeShootWinner() {
     return;
   }
 
+  clearBullshootPortalNotice();
   stopBullseyeShootDrawAnimation();
   bullseyeShootDrawAnimation = startTicketDrawAnimation({
     tickets,
@@ -2116,6 +2119,10 @@ function setBullshootPortalNotice(message) {
       : "";
   }
   return didPublish;
+}
+
+function clearBullshootPortalNotice() {
+  return setBullshootPortalNotice("");
 }
 
 function renderAdminNoticeMarkup(text, winnerPattern) {
