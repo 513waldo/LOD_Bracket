@@ -385,34 +385,9 @@ function renderEmptyPortal() {
 }
 
 function focusActiveMatch(state) {
-  const matchId = getActiveMatchId(state);
-  const normalizedCode = normalizeLodCode(activeLodCode);
-
-  if (!matchId || !normalizedCode) {
+  if (!state) {
     autoFocusAppliedForCode = "";
-    return;
   }
-
-  const focusKey = `${normalizedCode}:${matchId}`;
-  if (autoFocusAppliedForCode === focusKey) {
-    return;
-  }
-
-  const target = document.querySelector(`.match[data-match-id="${String(matchId)}"]`);
-  if (!target) {
-    autoFocusAppliedForCode = focusKey;
-    return;
-  }
-
-  window.requestAnimationFrame(() => {
-    target.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-      inline: "center",
-    });
-  });
-
-  autoFocusAppliedForCode = focusKey;
 }
 
 function getActiveMatchId(state) {
