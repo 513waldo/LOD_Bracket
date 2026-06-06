@@ -259,6 +259,69 @@ h1 {
   gap: 12px;
 }
 
+.lod-registry-panel {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+.lod-registry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lod-registry-list.empty {
+  color: var(--muted);
+}
+
+.lod-registry-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lod-registry-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(10, 10, 10, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.lod-registry-code:hover,
+.lod-registry-code:focus-visible {
+  border-color: rgba(12, 85, 143, 0.5);
+  box-shadow: 0 0 0 3px rgba(12, 85, 143, 0.12);
+}
+
+.lod-registry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.lod-registry-status {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .portal-message-group {
   display: grid;
   gap: 8px;

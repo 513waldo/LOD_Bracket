@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Players Portal</title>
-  <link rel="stylesheet" href="portal.css?v=21">
+  <link rel="stylesheet" href="portal.css?v=22">
 </head>
 <body>
   <main class="app">
@@ -63,6 +63,17 @@
       </div>
     </section>
 
+    <section class="lod-registry-panel" aria-labelledby="lodRegistryTitle">
+      <div class="section-heading">
+        <div>
+          <h2 id="lodRegistryTitle">Active LODs</h2>
+          <p>Live codes currently published to the registry.</p>
+        </div>
+      </div>
+      <div id="lodRegistryList" class="lod-registry-list" aria-live="polite">Loading active LODs...</div>
+      <p id="lodRegistryStatus" class="lod-registry-status" aria-live="polite"></p>
+    </section>
+
     <section class="bracket-shell" aria-labelledby="portalBracketTitle">
       <div class="section-heading">
         <div>
@@ -75,6 +86,6 @@
   </main>
 
   <script src="config.js?v=3"></script>
-  <script src="portal.js?v=36"></script>
+  <script src="portal.js?v=37"></script>
 </body>
 </html>

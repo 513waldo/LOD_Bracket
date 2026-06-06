@@ -8,6 +8,8 @@ const portalAutoMessage = document.querySelector("#portalAutoMessage");
 const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
 const portalBullshootMessage = document.querySelector("#portalBullshootMessage");
 const portalBullshootMessageWrap = document.querySelector("#portalBullshootMessageWrap");
+const lodRegistryList = document.querySelector("#lodRegistryList");
+const lodRegistryStatus = document.querySelector("#lodRegistryStatus");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
@@ -30,6 +32,11 @@ let activeLodCode = requestedLodCode || (storedLodCode !== null ? storedLodCode 
 let refreshTimer = null;
 let portalExpiryTimer = null;
 let autoFocusAppliedForCode = "";
+let activeLodRegistry = {
+  version: 1,
+  updatedAt: "",
+  codes: [],
+};
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput.value);
@@ -99,6 +106,7 @@ startAutoRefresh();
 
 async function boot() {
   syncPortalCodeInput();
+  await refreshActiveLodRegistry();
 
   if (!activeLodCode) {
     renderEmptyPortal();
@@ -208,6 +216,7 @@ function startAutoRefresh() {
   }
 
   refreshTimer = window.setInterval(() => {
+    refreshActiveLodRegistry();
     if (activeLodCode) {
       if (isPortalSessionExpired(activeLodCode)) {
         expirePortalSession(activeLodCode, "EXPIRED CODE");
@@ -386,10 +395,86 @@ function renderEmptyPortal() {
   setBullshootMessage("");
 }
 
+async function refreshActiveLodRegistry() {
+  if (!lodRegistryList || !lodRegistryStatus) {
+    return;
+  }
+
+  if (!API_BASE_URLS.length) {
+    activeLodRegistry = { version: 1, updatedAt: "", codes: [] };
+    renderActiveLodRegistry(activeLodRegistry, "No registry endpoint configured");
+    return;
+  }
+
+  for (const baseUrl of API_BASE_URLS) {
+    try {
+      const response = await fetch(`${baseUrl}/api/lod`, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const registry = normalizeRegistry(await response.json());
+      if (!registry) {
+        continue;
+      }
+
+      activeLodRegistry = registry;
+      renderActiveLodRegistry(registry, baseUrl ? `Active LODs from ${baseUrl}` : "Active LODs");
+      return;
+    } catch {
+      // Try the next configured host.
+    }
+  }
+
+  renderActiveLodRegistry(activeLodRegistry, "Unable to load active LODs");
+}
+
 function focusActiveMatch(state) {
   if (!state) {
     autoFocusAppliedForCode = "";
   }
+}
+
+function normalizeRegistry(data) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  return {
+    version: Number(data.version || 1),
+    updatedAt: String(data.updatedAt || ""),
+    codes: Array.isArray(data.codes)
+      ? Array.from(new Set(data.codes.map(normalizeLodCode).filter(Boolean))).sort()
+      : [],
+  };
+}
+
+function renderActiveLodRegistry(registry, sourceLabel) {
+  if (!lodRegistryList || !lodRegistryStatus) {
+    return;
+  }
+
+  const codes = Array.isArray(registry?.codes) ? registry.codes.filter(Boolean) : [];
+  const updatedLabel = registry?.updatedAt ? formatDate(registry.updatedAt) : "";
+
+  if (!codes.length) {
+    lodRegistryList.className = "lod-registry-list empty";
+    lodRegistryList.textContent = "No active LODs published yet.";
+    lodRegistryStatus.textContent = sourceLabel || "";
+    return;
+  }
+
+  lodRegistryList.className = "lod-registry-list";
+  lodRegistryList.innerHTML = `
+    <div class="lod-registry-meta">
+      <strong>${escapeHtml(`${codes.length} active LOD${codes.length === 1 ? "" : "s"}`)}</strong>
+      <span>${escapeHtml(updatedLabel ? `Updated ${updatedLabel}` : sourceLabel || "")}</span>
+    </div>
+    <div class="lod-registry-codes">
+      ${codes.map((code) => `<a class="lod-registry-code" href="?lod=${encodeURIComponent(code)}">${escapeHtml(code)}</a>`).join("")}
+    </div>
+  `;
+  lodRegistryStatus.textContent = "Select a code to load that bracket snapshot.";
 }
 
 function capturePortalScrollState() {
