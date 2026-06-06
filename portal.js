@@ -471,7 +471,7 @@ function renderActiveLodRegistry(registry, sourceLabel) {
       <span>${escapeHtml(updatedLabel ? `Updated ${updatedLabel}` : sourceLabel || "")}</span>
     </div>
     <div class="lod-registry-codes">
-      ${codes.map((code) => `<a class="lod-registry-code" href="?lod=${encodeURIComponent(code)}">${escapeHtml(code)}</a>`).join("")}
+      ${codes.map((code) => `<a class="lod-registry-code" href="bracket.html?lod=${encodeURIComponent(code)}" title="Open the admin portal for ${escapeHtml(code)}">${escapeHtml(code)}</a>`).join("")}
     </div>
   `;
   lodRegistryStatus.textContent = "Select a code to load that bracket snapshot.";
