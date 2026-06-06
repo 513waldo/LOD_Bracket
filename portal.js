@@ -508,7 +508,7 @@ function openAdminPortalForLod(code) {
   }
 
   const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
-  const adminWindow = window.open("", "lodAdminSession");
+  const adminWindow = window.open("", "_blank");
   if (!adminWindow) {
     setMessage("Your browser blocked the admin portal tab.");
     return false;
