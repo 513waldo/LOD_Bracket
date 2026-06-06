@@ -6237,10 +6237,22 @@ async function fetchActiveLodRegistry() {
 async function deleteAllActiveLods() {
   const activeSessionCode = getAssistantAdminSessionCode();
   const loadedCode = normalizeLodCode(lodCode);
-  if (!activeSessionCode || activeSessionCode !== loadedCode) {
-    if (!loadedCode || !requireAssistantAdminPassword(loadedCode)) {
-      showMessage("Assistant admin password is required before deleting active LODs.");
+  const storedPassword = getAssistantAdminPassword();
+  if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
+    const entered = window.prompt("Enter the assistant admin password to delete all active LODs.", "");
+    if (!entered) {
+      showMessage("Assistant admin access was cancelled.");
       return false;
+    }
+
+    if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
+      showMessage("Incorrect assistant admin password.");
+      return false;
+    }
+
+    saveAssistantAdminPassword(productionAssistantAdminPassword);
+    if (loadedCode) {
+      saveAssistantAdminSessionCode(loadedCode);
     }
   }
 
