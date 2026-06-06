@@ -25,6 +25,8 @@ const portalLodCodeClearedValue = "__CLEARED__";
 const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
 const portalSessionDurationMs = 60 * 60 * 1000;
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
+const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
+const productionAssistantAdminPassword = "513859Darts!";
 
 let activeSnapshot = null;
 const storedLodCode = getStoredPortalLodCode();
@@ -501,6 +503,24 @@ function openAdminPortalForLod(code) {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
     return false;
+  }
+
+  const entered = window.prompt(`Enter the assistant admin password to open LOD ${normalizedCode}.`, "");
+  if (!entered) {
+    setMessage("Admin portal launch cancelled.");
+    return false;
+  }
+
+  if (entered !== productionAssistantAdminPassword) {
+    setMessage("Incorrect assistant admin password.");
+    return false;
+  }
+
+  try {
+    localStorage.setItem(assistantAdminPasswordStorageKey, productionAssistantAdminPassword);
+    sessionStorage.setItem(assistantAdminSessionStorageKey, normalizedCode);
+  } catch {
+    // Ignore storage failures; the navigation can still proceed.
   }
 
   const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
