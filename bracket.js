@@ -499,7 +499,7 @@ function formatAdminPortalMessage(label, message, stamp = new Date()) {
 }
 
 function getAdminSupportSenderLabel() {
-  return isAssistantAdminSessionActive() ? "Admin Support" : "Admin";
+  return isAssistantAdminSessionActive() ? "Assistant Admin" : "Tournament Director";
 }
 
 function getAdminSupportSessionContext() {
@@ -518,9 +518,9 @@ function parseAdminPortalMessage(text) {
     return null;
   }
 
-  const match = value.match(/^(Admin Support|Admin Assist|Admin)\s*-\s*([^:]+):\s*(.*)$/i);
+  const match = value.match(/^(Assistant Admin|Tournament Director|Admin Support|Admin Assist|Admin)\s*-\s*([^:]+):\s*(.*)$/i);
   if (match) {
-    const sender = /admin$/i.test(match[1]) ? "Admin" : "Admin Support";
+    const sender = /assistant/i.test(match[1]) ? "Assistant Admin" : "Tournament Director";
     const message = String(match[3] || "").trim();
     if (!message) {
       return null;
@@ -533,7 +533,7 @@ function parseAdminPortalMessage(text) {
   }
 
   return {
-    sender: "Admin Support",
+    sender: "Assistant Admin",
     message: value,
     stamp: "",
   };
@@ -548,9 +548,9 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
         return;
       }
 
-      const sender = /assistant|support/i.test(String(entry.sender || entry.author || ""))
-        ? "Admin Support"
-        : "Admin";
+      const sender = /assistant/i.test(String(entry.sender || entry.author || ""))
+        ? "Assistant Admin"
+        : "Tournament Director";
       const message = String(entry.message || entry.text || "").trim();
       if (!message) {
         return;
@@ -572,7 +572,7 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
     const parsed = parseAdminPortalMessage(fallbackNotice);
     if (parsed) {
       entries.push({
-        sender: parsed.sender || "Admin Support",
+        sender: parsed.sender || "Assistant Admin",
         message: parsed.message || String(fallbackNotice || "").trim(),
         stamp: parsed.stamp || fallbackNoticeAt || "",
         lodCode: normalizeLodCode(lodCode),
@@ -580,7 +580,7 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
       });
     } else if (String(fallbackNotice || "").trim()) {
       entries.push({
-        sender: "Admin Support",
+        sender: "Assistant Admin",
         message: String(fallbackNotice || "").trim(),
         stamp: fallbackNoticeAt || "",
         lodCode: normalizeLodCode(lodCode),
@@ -606,13 +606,13 @@ function renderPortalSupportTranscript() {
 
   portalSupportTranscript.className = "portal-message-log";
   portalSupportTranscript.innerHTML = entries.map((entry) => {
-    const sender = entry.sender === "Admin" ? "Admin" : "Admin Support";
+    const sender = /assistant/i.test(String(entry.sender || "")) ? "Assistant Admin" : "Tournament Director";
     const stamp = entry.stamp && !Number.isNaN(new Date(entry.stamp).getTime())
       ? new Date(entry.stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
       : "";
     const body = escapeHtml(entry.message || "").replace(/\n/g, "<br>");
     return `
-      <div class="portal-message-entry ${sender === "Admin Support" ? "assistant" : "admin"}">
+      <div class="portal-message-entry ${sender === "Assistant Admin" ? "assistant" : "admin"}">
         <div class="portal-message-meta">
           <strong>${escapeHtml(sender)}</strong>
           <span>${escapeHtml(stamp || "unknown time")}</span>
@@ -7440,7 +7440,7 @@ function updateAssistantAdminControls() {
   if (assistantAdminStatus) {
     assistantAdminStatus.hidden = !activeSessionCode;
     assistantAdminStatus.textContent = activeSessionCode
-      ? `Admin session: ${activeSessionCode}`
+      ? `Assistant Admin session: ${activeSessionCode}`
       : "";
   }
 
