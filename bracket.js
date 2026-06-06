@@ -7057,6 +7057,15 @@ function normalizeLodCode(value) {
     .slice(0, 12);
 }
 
+function getRequestedLodCode() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return normalizeLodCode(params.get("lod") || params.get("code") || "");
+  } catch {
+    return "";
+  }
+}
+
 function getPortalLink() {
   const code = normalizeLodCode(lodCode);
   const url = new URL("portal.html", window.location.href);
