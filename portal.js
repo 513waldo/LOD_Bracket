@@ -4,6 +4,8 @@ const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
+const portalSupportMessage = document.querySelector("#portalSupportMessage");
+const portalSupportMessageWrap = document.querySelector("#portalSupportMessageWrap");
 const portalAutoMessage = document.querySelector("#portalAutoMessage");
 const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
 const portalBullshootMessage = document.querySelector("#portalBullshootMessage");
@@ -332,11 +334,14 @@ function shouldPreferSnapshot(candidate, current) {
   const currentNotice = String(current.portalNotice || "").trim();
   const candidateAutoNotice = String(candidate.portalAutoNotice || "").trim();
   const currentAutoNotice = String(current.portalAutoNotice || "").trim();
+  const candidateSupportNotice = String(candidate.portalSupportNotice || "").trim();
+  const currentSupportNotice = String(current.portalSupportNotice || "").trim();
   const candidateBullshootNotice = String(candidate.portalBullshootNotice || "").trim();
   const currentBullshootNotice = String(current.portalBullshootNotice || "").trim();
   const candidateStamp = Number(new Date(
     candidate.portalBullshootNoticeAt ||
     candidate.portalAutoNoticeAt ||
+    candidate.portalSupportNoticeAt ||
     candidate.portalNoticeAt ||
     candidate.exportedAt ||
     0,
@@ -344,16 +349,17 @@ function shouldPreferSnapshot(candidate, current) {
   const currentStamp = Number(new Date(
     current.portalBullshootNoticeAt ||
     current.portalAutoNoticeAt ||
+    current.portalSupportNoticeAt ||
     current.portalNoticeAt ||
     current.exportedAt ||
     0,
   ));
 
-  if ((candidateNotice || candidateAutoNotice || candidateBullshootNotice) && !(currentNotice || currentAutoNotice || currentBullshootNotice)) {
+  if ((candidateNotice || candidateAutoNotice || candidateSupportNotice || candidateBullshootNotice) && !(currentNotice || currentAutoNotice || currentSupportNotice || currentBullshootNotice)) {
     return true;
   }
 
-  if (!(candidateNotice || candidateAutoNotice || candidateBullshootNotice) && (currentNotice || currentAutoNotice || currentBullshootNotice)) {
+  if (!(candidateNotice || candidateAutoNotice || candidateSupportNotice || candidateBullshootNotice) && (currentNotice || currentAutoNotice || currentSupportNotice || currentBullshootNotice)) {
     return false;
   }
 
@@ -383,6 +389,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
   setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
+  setSupportMessage(formatPortalSupportCall(snapshot.portalSupportMessages, snapshot.portalSupportNotice, snapshot.portalSupportNoticeAt));
   setAutomatedMessage(formatPortalCall(snapshot.portalAutoNotice, snapshot.portalAutoNoticeAt));
   setBullshootMessage(formatPortalCall(snapshot.portalBullshootNotice, snapshot.portalBullshootNoticeAt));
 
@@ -409,6 +416,7 @@ function renderEmptyPortal() {
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
   setMessage("");
+  setSupportMessage("");
   setAutomatedMessage("");
   setBullshootMessage("");
 }
@@ -925,6 +933,16 @@ function setMessage(text) {
   portalMessage.hidden = false;
 }
 
+function setSupportMessage(text) {
+  if (!portalSupportMessage || !portalSupportMessageWrap) {
+    return;
+  }
+
+  const value = String(text || "").trim() || "No admin support messages yet.";
+  portalSupportMessage.textContent = value;
+  portalSupportMessageWrap.hidden = false;
+}
+
 function setAutomatedMessage(text) {
   if (!portalAutoMessage || !portalAutoMessageWrap) {
     return;
@@ -943,6 +961,21 @@ function setBullshootMessage(text) {
   const value = String(text || "").trim() || "No Bullshoot messages yet.";
   portalBullshootMessage.innerHTML = renderPortalMessageMarkup(value, /^Bullshoot winner\b/i);
   portalBullshootMessageWrap.hidden = false;
+}
+
+function formatPortalSupportCall(messages, notice, noticeAt) {
+  const entries = Array.isArray(messages) ? messages.filter(Boolean) : [];
+  if (entries.length) {
+    const latest = entries[entries.length - 1];
+    const sender = latest.sender === "Admin" ? "Admin" : "Admin Support";
+    const stamp = latest.stamp && !Number.isNaN(new Date(latest.stamp).getTime())
+      ? new Date(latest.stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      : "";
+    const body = String(latest.message || "").trim();
+    return stamp ? `${sender} - ${stamp}: ${body}` : `${sender}: ${body}`;
+  }
+
+  return formatPortalCall(notice, noticeAt);
 }
 
 function renderPortalMessageMarkup(value, winnerPattern) {

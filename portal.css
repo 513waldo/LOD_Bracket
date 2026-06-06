@@ -350,6 +350,11 @@ h1 {
   gap: 8px;
 }
 
+.portal-support-message-wrap {
+  display: grid;
+  gap: 8px;
+}
+
 .portal-bullshoot-message-wrap {
   display: grid;
   gap: 8px;
@@ -373,14 +378,21 @@ h1 {
 }
 
 .portal-auto-message-wrap .portal-message-label,
+.portal-support-message-wrap .portal-message-label,
 .portal-bullshoot-message-wrap .portal-message-label,
 .message.board-call.automated-call,
+.message.board-call.support-call,
 .message.board-call.bullshoot-call {
   color: #111;
 }
 
 .message.board-call.automated-call {
   border-style: dashed;
+}
+
+.message.board-call.support-call {
+  border-style: solid;
+  background: linear-gradient(180deg, rgba(235, 243, 255, 0.95), rgba(220, 233, 250, 0.9));
 }
 
 .message.board-call.bullshoot-call {
