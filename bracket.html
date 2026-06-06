@@ -20,7 +20,9 @@
           <button id="copyPortalLink" class="secondary" type="button">Copy link</button>
         </div>
         <div id="assistantAdminStatus" class="assistant-admin-status" aria-live="polite" hidden></div>
-        <button id="assistantAdminLogout" class="secondary" type="button" hidden>Return to default admin</button>
+        <button id="assistantAdminLogout" class="secondary" type="button">Return to player portal</button>
+        <button id="resetAssistantAdminPassword" class="secondary" type="button">Reset admin password</button>
+        <button id="clearAllSentMessages" class="secondary" type="button">Clear all sent messages</button>
         <button id="resetBracket" class="secondary" type="button" onclick="resetTournament()">Reset bracket</button>
       </div>
     </header>
@@ -152,6 +154,7 @@
             <div class="portal-notice-actions">
               <button id="sendPortalSupportNotice" type="button">Send support message</button>
               <button id="clearPortalSupportNotice" class="secondary" type="button">Clear message</button>
+              <button id="clearPendingAdminMessages" class="secondary" type="button">Clear pending drafts</button>
             </div>
             <p id="portalSupportNoticeStatus" class="portal-notice-status" aria-live="polite"></p>
             <div id="portalSupportTranscript" class="portal-message-log" aria-live="polite"></div>
@@ -441,6 +444,6 @@
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-261"></script>
+  <script src="bracket.js?v=interactive-tools-269"></script>
 </body>
 </html>

@@ -59,6 +59,7 @@ const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
+const resetAssistantAdminPasswordButton = document.querySelector("#resetAssistantAdminPassword");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
@@ -75,6 +76,8 @@ const portalBullshootNoticeInput = document.querySelector("#portalBullshootNotic
 const portalBullshootNoticeStatus = document.querySelector("#portalBullshootNoticeStatus");
 const sendPortalSupportNoticeButton = document.querySelector("#sendPortalSupportNotice");
 const clearPortalSupportNoticeButton = document.querySelector("#clearPortalSupportNotice");
+const clearPendingAdminMessagesButton = document.querySelector("#clearPendingAdminMessages");
+const clearAllSentMessagesButton = document.querySelector("#clearAllSentMessages");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
@@ -451,6 +454,7 @@ loadLodCodeButton?.addEventListener("click", () => {
 });
 
 assistantAdminLogoutButton?.addEventListener("click", logoutAssistantAdmin);
+resetAssistantAdminPasswordButton?.addEventListener("click", resetAssistantAdminPassword);
 
 clearLodCodeButton?.addEventListener("click", () => {
   const previousCode = lodCode;
@@ -493,6 +497,16 @@ function formatAdminPortalMessage(label, message, stamp = new Date()) {
 
 function getAdminSupportSenderLabel() {
   return isAssistantAdminSessionActive() ? "Admin Support" : "Admin";
+}
+
+function getAdminSupportSessionContext() {
+  const currentLodCode = normalizeLodCode(lodCode);
+  const sessionCode = getAssistantAdminSessionCode();
+  return {
+    active: Boolean(currentLodCode && (!sessionCode || currentLodCode === sessionCode)),
+    lodCode: currentLodCode,
+    sessionCode,
+  };
 }
 
 function parseAdminPortalMessage(text) {
@@ -541,7 +555,13 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
 
       const stampValue = String(entry.stamp || entry.timestamp || entry.createdAt || entry.sentAt || entry.at || "");
       const stamp = stampValue && !Number.isNaN(new Date(stampValue).getTime()) ? new Date(stampValue).toISOString() : "";
-      entries.push({ sender, message, stamp });
+      entries.push({
+        sender,
+        message,
+        stamp,
+        lodCode: normalizeLodCode(entry.lodCode || entry.lod || ""),
+        sessionCode: normalizeLodCode(entry.sessionCode || entry.session || ""),
+      });
     });
   }
 
@@ -552,12 +572,16 @@ function normalizePortalSupportMessages(value, fallbackNotice = "", fallbackNoti
         sender: parsed.sender || "Admin Support",
         message: parsed.message || String(fallbackNotice || "").trim(),
         stamp: parsed.stamp || fallbackNoticeAt || "",
+        lodCode: normalizeLodCode(lodCode),
+        sessionCode: getAssistantAdminSessionCode(),
       });
     } else if (String(fallbackNotice || "").trim()) {
       entries.push({
         sender: "Admin Support",
         message: String(fallbackNotice || "").trim(),
         stamp: fallbackNoticeAt || "",
+        lodCode: normalizeLodCode(lodCode),
+        sessionCode: getAssistantAdminSessionCode(),
       });
     }
   }
@@ -634,7 +658,94 @@ clearPortalNoticeButton?.addEventListener("click", () => {
   showMessage("Portal message cleared.");
 });
 
+function clearPendingAdminMessages() {
+  portalNoticeDraft = "";
+  portalSupportNoticeDraft = "";
+
+  if (portalNoticeInput) {
+    portalNoticeInput.value = "";
+  }
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = "";
+  }
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = "";
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = "";
+  }
+
+  queueBracketDraftSave();
+  showMessage("Pending admin messages cleared.");
+}
+
+function clearAllPortalMessages({ publish = true } = {}) {
+  portalNotice = "";
+  portalNoticeAt = "";
+  portalNoticeDraft = "";
+  portalSupportNotice = "";
+  portalSupportNoticeAt = "";
+  portalSupportNoticeDraft = "";
+  portalSupportMessages = [];
+  portalAutoNotice = "";
+  portalAutoNoticeAt = "";
+  portalBullshootNotice = "";
+  portalBullshootNoticeAt = "";
+
+  if (portalNoticeInput) {
+    portalNoticeInput.value = "";
+  }
+  if (portalSupportNoticeInput) {
+    portalSupportNoticeInput.value = "";
+  }
+  if (portalAutoNoticeInput) {
+    portalAutoNoticeInput.innerHTML = "";
+  }
+  if (portalBullshootNoticeInput) {
+    portalBullshootNoticeInput.innerHTML = "";
+  }
+  if (portalNoticeStatus) {
+    portalNoticeStatus.textContent = "";
+  }
+  if (portalSupportNoticeStatus) {
+    portalSupportNoticeStatus.textContent = "";
+  }
+  if (portalAutoNoticeStatus) {
+    portalAutoNoticeStatus.textContent = "";
+  }
+  if (portalBullshootNoticeStatus) {
+    portalBullshootNoticeStatus.textContent = "";
+  }
+  renderPortalSupportTranscript();
+
+  let didPublish = false;
+  if (publish) {
+    didPublish = savePortalSnapshotToLocalStorage();
+    if (didPublish) {
+      void flushPortalSnapshotPublish();
+    }
+  }
+
+  queueBracketDraftSave();
+  return didPublish;
+}
+
+function clearAllSentMessages() {
+  const didPublish = clearAllPortalMessages({ publish: true });
+  showMessage("All sent admin messages cleared.");
+  return didPublish;
+}
+
 clearPortalSupportNoticeButton?.addEventListener("click", () => {
+  if (!getAdminSupportSessionContext().active) {
+    showMessage("Assistant admin session is required before clearing support messages.");
+    if (portalSupportNoticeStatus) {
+      portalSupportNoticeStatus.textContent = "Assistant admin session is required before clearing support messages.";
+    }
+    updateAssistantAdminControls();
+    return;
+  }
+
   portalSupportNotice = "";
   portalSupportNoticeAt = "";
   portalSupportNoticeDraft = "";
@@ -648,6 +759,16 @@ clearPortalSupportNoticeButton?.addEventListener("click", () => {
   queueBracketDraftSave();
   showMessage("Admin support message cleared.");
 });
+
+clearPendingAdminMessagesButton?.addEventListener("click", () => {
+  clearPendingAdminMessages();
+});
+
+clearAllSentMessagesButton?.addEventListener("click", () => {
+  clearAllSentMessages();
+});
+
+window.clearPendingAdminMessages = clearPendingAdminMessages;
 
 copyPortalLinkButton?.addEventListener("click", async () => {
   const link = getPortalLink();
@@ -2083,6 +2204,25 @@ function publishPortalNotice(message, { syncInput = true } = {}) {
 function setAdminSupportPortalNotice(message, sender = getAdminSupportSenderLabel()) {
   const text = String(message || "").trim();
   const stamp = new Date();
+  const sessionContext = getAdminSupportSessionContext();
+  if (!sessionContext.active) {
+    portalSupportNotice = "";
+    portalSupportNoticeAt = "";
+    portalSupportMessages = normalizePortalSupportMessages(
+      portalSupportMessages,
+      portalSupportNotice,
+      portalSupportNoticeAt,
+    );
+    renderPortalSupportTranscript();
+    portalSupportTranscript?.lastElementChild?.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (portalSupportNoticeStatus) {
+      portalSupportNoticeStatus.textContent = "Assistant admin session is required before sending support messages.";
+    }
+    showMessage("Assistant admin session is required before sending support messages.");
+    updateAssistantAdminControls();
+    return false;
+  }
+
   portalSupportNotice = text ? formatAdminPortalMessage(sender, text, stamp) : "";
   portalSupportNoticeAt = portalSupportNotice ? new Date().toISOString() : "";
   if (portalSupportNoticeInput) {
@@ -2093,11 +2233,16 @@ function setAdminSupportPortalNotice(message, sender = getAdminSupportSenderLabe
       sender,
       message: text,
       stamp: portalSupportNoticeAt,
+      lodCode: sessionContext.lodCode,
+      sessionCode: sessionContext.sessionCode,
     }];
   }
   renderPortalSupportTranscript();
   portalSupportTranscript?.lastElementChild?.scrollIntoView({ block: "end", behavior: "smooth" });
   const didPublish = savePortalSnapshotToLocalStorage();
+  if (didPublish) {
+    void flushPortalSnapshotPublish();
+  }
   queueBracketDraftSave();
   const stampLabel = stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   if (portalSupportNoticeStatus) {
@@ -4510,6 +4655,7 @@ function resetMatchResult(matchId) {
   });
 
   renderBracket();
+  clearAllPortalMessages({ publish: true });
   queueActiveLodCodesRefresh();
   showMessage("Match result cleared. Pick the correct winner.");
 }
@@ -4982,6 +5128,7 @@ function resetMatchResultLegacy(type, roundIndex, matchIndex) {
   });
 
   renderBracket();
+  clearAllPortalMessages({ publish: true });
   showMessage("Match result cleared. Pick the correct winner.");
 }
 
@@ -6140,6 +6287,18 @@ function saveAssistantAdminPassword(password) {
   }
 }
 
+function clearAssistantAdminPassword() {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(assistantAdminPasswordStorageKey);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function getAssistantAdminSessionCode() {
   if (!canUseSessionStorage()) {
     return "";
@@ -6210,6 +6369,33 @@ function requireAssistantAdminPassword(code) {
   }
 
   saveAssistantAdminSessionCode(normalizedCode);
+  return true;
+}
+
+function resetAssistantAdminPassword() {
+  const currentPassword = getAssistantAdminPassword();
+  const confirmMessage = currentPassword
+    ? "Reset the assistant admin password? You will need to set a new one before opening admin sessions."
+    : "Set a new assistant admin password now?";
+
+  if (!window.confirm(confirmMessage)) {
+    showMessage("Assistant admin password reset cancelled.");
+    return false;
+  }
+
+  clearAssistantAdminPassword();
+  clearAssistantAdminSessionCode();
+
+  const newPassword = window.prompt("Enter the new assistant admin password.", "");
+  if (!newPassword) {
+    showMessage("Assistant admin password cleared.");
+    updateAssistantAdminControls();
+    return true;
+  }
+
+  saveAssistantAdminPassword(newPassword);
+  showMessage("Assistant admin password updated.");
+  updateAssistantAdminControls();
   return true;
 }
 
@@ -6598,6 +6784,9 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
 
 function logoutAssistantAdmin() {
   const backup = readAssistantAdminBackupDraft();
+  const returnUrl = new URL("portal.html", window.location.href);
+  const currentCode = normalizeLodCode(lodCode);
+
   clearAssistantAdminSessionCode();
   stopRemoteMirrorRefresh();
   lastPublishedPortalSnapshotSignature = "";
@@ -6609,7 +6798,11 @@ function logoutAssistantAdmin() {
   }
 
   clearAssistantAdminBackupDraft();
-  window.location.reload();
+
+  if (currentCode) {
+    returnUrl.searchParams.set("lod", currentCode);
+  }
+  window.location.href = returnUrl.toString();
 }
 
 function clearPortalSnapshotStorage(code = lodCode) {
@@ -7124,6 +7317,7 @@ function renderPortalLink(forceRefresh = false) {
 
 function updateAssistantAdminControls() {
   const activeSessionCode = getAssistantAdminSessionCode();
+  const sessionContext = getAdminSupportSessionContext();
   if (assistantAdminStatus) {
     assistantAdminStatus.hidden = !activeSessionCode;
     assistantAdminStatus.textContent = activeSessionCode
@@ -7131,9 +7325,30 @@ function updateAssistantAdminControls() {
       : "";
   }
 
+  if (sendPortalSupportNoticeButton) {
+    sendPortalSupportNoticeButton.disabled = !sessionContext.active;
+    sendPortalSupportNoticeButton.title = sessionContext.active
+      ? ""
+      : "Open the matching admin session before sending support messages.";
+  }
+
+  if (clearPortalSupportNoticeButton) {
+    clearPortalSupportNoticeButton.disabled = !sessionContext.active;
+    clearPortalSupportNoticeButton.title = sessionContext.active
+      ? ""
+      : "Open the matching admin session before clearing support messages.";
+  }
+
+  if (clearAllSentMessagesButton) {
+    clearAllSentMessagesButton.disabled = !sessionContext.lodCode;
+    clearAllSentMessagesButton.title = sessionContext.lodCode
+      ? ""
+      : "Open or load a bracket before clearing sent messages.";
+  }
+
   if (assistantAdminLogoutButton) {
-    assistantAdminLogoutButton.hidden = !activeSessionCode;
-    assistantAdminLogoutButton.textContent = "Return to default admin";
+    assistantAdminLogoutButton.hidden = false;
+    assistantAdminLogoutButton.textContent = "Return to player portal";
   }
 }
 

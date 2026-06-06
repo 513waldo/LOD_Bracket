@@ -4,8 +4,6 @@ const API_BASE_URLS = getApiBaseUrls();
 const API_REFRESH_MS = Number(window.BRACKET_API_POLL_MS || 5000);
 const portalBracket = document.querySelector("#portalBracket");
 const portalMessage = document.querySelector("#portalMessage");
-const portalSupportMessage = document.querySelector("#portalSupportMessage");
-const portalSupportMessageWrap = document.querySelector("#portalSupportMessageWrap");
 const portalAutoMessage = document.querySelector("#portalAutoMessage");
 const portalAutoMessageWrap = document.querySelector("#portalAutoMessageWrap");
 const portalBullshootMessage = document.querySelector("#portalBullshootMessage");
@@ -387,7 +385,6 @@ function renderSnapshot(snapshot, sourceLabel) {
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
   setMessage(formatPortalCall(snapshot.portalNotice, snapshot.portalNoticeAt));
-  setSupportMessage(formatPortalSupportCall(snapshot.portalSupportMessages, snapshot.portalSupportNotice, snapshot.portalSupportNoticeAt));
   setAutomatedMessage(formatPortalCall(snapshot.portalAutoNotice, snapshot.portalAutoNoticeAt));
   setBullshootMessage(formatPortalCall(snapshot.portalBullshootNotice, snapshot.portalBullshootNoticeAt));
 
@@ -414,7 +411,6 @@ function renderEmptyPortal() {
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
   setMessage("");
-  setSupportMessage("");
   setAutomatedMessage("");
   setBullshootMessage("");
 }
@@ -508,11 +504,7 @@ function openAdminPortalForLod(code) {
   }
 
   const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
-  const adminWindow = window.open(launchUrl, "_blank");
-  if (!adminWindow) {
-    setMessage("Your browser blocked the admin portal tab.");
-    return false;
-  }
+  window.location.href = launchUrl;
   setMessage(`Opening admin portal for LOD ${normalizedCode}.`);
   return true;
 }
@@ -893,16 +885,6 @@ function setMessage(text) {
   portalMessage.hidden = false;
 }
 
-function setSupportMessage(text) {
-  if (!portalSupportMessage || !portalSupportMessageWrap) {
-    return;
-  }
-
-  const value = String(text || "").trim() || "No admin support messages yet.";
-  portalSupportMessage.textContent = value;
-  portalSupportMessageWrap.hidden = false;
-}
-
 function setAutomatedMessage(text) {
   if (!portalAutoMessage || !portalAutoMessageWrap) {
     return;
@@ -921,21 +903,6 @@ function setBullshootMessage(text) {
   const value = String(text || "").trim() || "No Bullshoot messages yet.";
   portalBullshootMessage.innerHTML = renderPortalMessageMarkup(value, /^Bullshoot winner\b/i);
   portalBullshootMessageWrap.hidden = false;
-}
-
-function formatPortalSupportCall(messages, notice, noticeAt) {
-  const entries = Array.isArray(messages) ? messages.filter(Boolean) : [];
-  if (entries.length) {
-    const latest = entries[entries.length - 1];
-    const sender = latest.sender === "Admin" ? "Admin" : "Admin Support";
-    const stamp = latest.stamp && !Number.isNaN(new Date(latest.stamp).getTime())
-      ? new Date(latest.stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-      : "";
-    const body = String(latest.message || "").trim();
-    return stamp ? `${sender} - ${stamp}: ${body}` : `${sender}: ${body}`;
-  }
-
-  return formatPortalCall(notice, noticeAt);
 }
 
 function renderPortalMessageMarkup(value, winnerPattern) {
