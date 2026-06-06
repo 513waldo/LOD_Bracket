@@ -57,6 +57,7 @@ const bullseyeShootWinnerOutput = document.querySelector("#bullseyeShootWinner")
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
+const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
@@ -7149,15 +7150,18 @@ function renderPortalLink(forceRefresh = false) {
 }
 
 function updateAssistantAdminControls() {
-  if (!assistantAdminLogoutButton) {
-    return;
+  const activeSessionCode = getAssistantAdminSessionCode();
+  if (assistantAdminStatus) {
+    assistantAdminStatus.hidden = !activeSessionCode;
+    assistantAdminStatus.textContent = activeSessionCode
+      ? `Admin session: ${activeSessionCode}`
+      : "";
   }
 
-  const activeSessionCode = getAssistantAdminSessionCode();
-  assistantAdminLogoutButton.hidden = !activeSessionCode;
-  assistantAdminLogoutButton.textContent = activeSessionCode
-    ? `Return to admin`
-    : "Return to admin";
+  if (assistantAdminLogoutButton) {
+    assistantAdminLogoutButton.hidden = !activeSessionCode;
+    assistantAdminLogoutButton.textContent = "Return to default admin";
+  }
 }
 
 function formatBackupTime(value) {

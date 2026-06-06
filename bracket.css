@@ -527,6 +527,22 @@ textarea:focus {
   justify-content: center;
 }
 
+.assistant-admin-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 122, 67, 0.28);
+  background: rgba(229, 244, 234, 0.92);
+  color: #0b7a43;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .lod-link-group {
   display: flex;
   flex-wrap: wrap;
