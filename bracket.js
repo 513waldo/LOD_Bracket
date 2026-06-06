@@ -6234,6 +6234,15 @@ async function fetchActiveLodRegistry() {
 }
 
 async function deleteAllActiveLods() {
+  const activeSessionCode = getAssistantAdminSessionCode();
+  const loadedCode = normalizeLodCode(lodCode);
+  if (!activeSessionCode || activeSessionCode !== loadedCode) {
+    if (!loadedCode || !requireAssistantAdminPassword(loadedCode)) {
+      showMessage("Assistant admin password is required before deleting active LODs.");
+      return false;
+    }
+  }
+
   const { registry } = await fetchActiveLodRegistry();
   const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
 
