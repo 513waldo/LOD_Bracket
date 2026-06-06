@@ -80,6 +80,7 @@ const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const clearRegistryButton = document.querySelector("#clearRegistry");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
+const EMPTY_QR_DATA_URL = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
 const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
 const REGISTRY_REFRESH_DEBOUNCE_MS = 300;
@@ -2341,7 +2342,7 @@ function resetTournament() {
 
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
-  clearTournamentState({ preserveLodCode: true, clearDraft: true, code: lodCode });
+  clearTournamentState({ preserveLodCode: false, clearDraft: true, code: lodCode });
 
   if (totalPlayers) {
     totalPlayers.value = "0";
@@ -7049,7 +7050,8 @@ function getApiSnapshotUrl(baseUrl, code) {
 }
 
 function renderPortalLink(forceRefresh = false) {
-  const code = normalizeLodCode(lodCode) || "------";
+  const normalizedCode = normalizeLodCode(lodCode);
+  const code = normalizedCode || "------";
   const link = getPortalLink();
 
   if (lodCodeText) {
@@ -7057,7 +7059,7 @@ function renderPortalLink(forceRefresh = false) {
   }
 
   if (portalQrCode) {
-    portalQrCode.src = createPortalQrDataUrl(link, 500);
+    portalQrCode.src = normalizedCode ? createPortalQrDataUrl(link, 500) : EMPTY_QR_DATA_URL;
   }
 
   if (lodCodeInput) {
