@@ -6259,20 +6259,18 @@ async function deleteAllActiveLods() {
   const { registry } = await fetchActiveLodRegistry();
   const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
 
-  if (!codes.length) {
-    showMessage("No active LODs are currently published.");
-    queueActiveLodCodesRefresh();
-    return false;
-  }
-
-  if (!window.confirm(`Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`)) {
+  const confirmLabel = codes.length
+    ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
+    : "Delete all active LODs and clear their messages?";
+  if (!window.confirm(confirmLabel)) {
     showMessage("Delete all active LODs cancelled.");
     return false;
   }
 
   const cleanupCode = normalizeLodCode(lodCode);
+  const deletedCodes = new Set(codes);
 
-  for (const code of codes) {
+  for (const code of deletedCodes) {
     clearBracketCleanupStorage(code);
     for (const baseUrl of API_BASE_URLS) {
       if (!baseUrl) {
@@ -6304,6 +6302,11 @@ async function deleteAllActiveLods() {
     } catch {
       // Keep going so every configured host gets a delete attempt.
     }
+  }
+
+  if (!deletedCodes.size && cleanupCode) {
+    clearPortalSnapshotStorage(cleanupCode);
+    clearBracketCleanupStorage(cleanupCode);
   }
 
   if (cleanupCode) {
