@@ -60,6 +60,7 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const resetAssistantAdminPasswordButton = document.querySelector("#resetAssistantAdminPassword");
+const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
@@ -455,6 +456,9 @@ loadLodCodeButton?.addEventListener("click", () => {
 
 assistantAdminLogoutButton?.addEventListener("click", logoutAssistantAdmin);
 resetAssistantAdminPasswordButton?.addEventListener("click", resetAssistantAdminPassword);
+deleteAllActiveLodsButton?.addEventListener("click", () => {
+  void deleteAllActiveLods();
+});
 
 clearLodCodeButton?.addEventListener("click", () => {
   const previousCode = lodCode;
@@ -6210,6 +6214,92 @@ async function loadActiveLodCodes(announceFailure = false) {
   }
 }
 
+async function fetchActiveLodRegistry() {
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getRegistryUrl(baseUrl), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      return { registry: normalizeRegistry(await response.json()), baseUrl };
+    } catch {
+      // Try the next host.
+    }
+  }
+
+  return { registry: { version: 1, updatedAt: "", codes: [] }, baseUrl: "" };
+}
+
+async function deleteAllActiveLods() {
+  const { registry } = await fetchActiveLodRegistry();
+  const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
+
+  if (!codes.length) {
+    showMessage("No active LODs are currently published.");
+    queueActiveLodCodesRefresh();
+    return false;
+  }
+
+  if (!window.confirm(`Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`)) {
+    showMessage("Delete all active LODs cancelled.");
+    return false;
+  }
+
+  const cleanupCode = normalizeLodCode(lodCode);
+
+  for (const code of codes) {
+    clearBracketCleanupStorage(code);
+    for (const baseUrl of API_BASE_URLS) {
+      if (!baseUrl) {
+        continue;
+      }
+
+      try {
+        await fetch(getApiSnapshotUrl(baseUrl, code), { method: "DELETE" });
+      } catch {
+        // Keep deleting other codes even if one host fails.
+      }
+    }
+    if (canUseLocalStorage()) {
+      try {
+        localStorage.removeItem(`${portalSnapshotStorageKey}:${code}`);
+      } catch {
+        // Ignore local cache cleanup failures.
+      }
+    }
+  }
+
+  for (const baseUrl of API_BASE_URLS) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
+    } catch {
+      // Keep going so every configured host gets a delete attempt.
+    }
+  }
+
+  if (cleanupCode) {
+    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: cleanupCode });
+  } else {
+    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: "" });
+  }
+
+  clearAssistantAdminSessionCode();
+  clearAllPortalMessages({ publish: false });
+  queueActiveLodCodesRefresh();
+  updateAssistantAdminControls();
+  showMessage("All active LODs and their messages were deleted.");
+  return true;
+}
+
 function getRegistryUrl(baseUrl) {
   return `${baseUrl}/api/lod`;
 }
@@ -7344,6 +7434,11 @@ function updateAssistantAdminControls() {
     clearAllSentMessagesButton.title = sessionContext.lodCode
       ? ""
       : "Open or load a bracket before clearing sent messages.";
+  }
+
+  if (deleteAllActiveLodsButton) {
+    deleteAllActiveLodsButton.disabled = false;
+    deleteAllActiveLodsButton.title = "";
   }
 
   if (assistantAdminLogoutButton) {
