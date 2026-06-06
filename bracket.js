@@ -59,7 +59,6 @@ const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
-const resetAssistantAdminPasswordButton = document.querySelector("#resetAssistantAdminPassword");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
@@ -455,7 +454,6 @@ loadLodCodeButton?.addEventListener("click", () => {
 });
 
 assistantAdminLogoutButton?.addEventListener("click", logoutAssistantAdmin);
-resetAssistantAdminPasswordButton?.addEventListener("click", resetAssistantAdminPassword);
 deleteAllActiveLodsButton?.addEventListener("click", () => {
   void deleteAllActiveLods();
 });
@@ -6377,18 +6375,6 @@ function saveAssistantAdminPassword(password) {
   }
 }
 
-function clearAssistantAdminPassword() {
-  if (!canUseLocalStorage()) {
-    return;
-  }
-
-  try {
-    localStorage.removeItem(assistantAdminPasswordStorageKey);
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
 function getAssistantAdminSessionCode() {
   if (!canUseSessionStorage()) {
     return "";
@@ -6459,33 +6445,6 @@ function requireAssistantAdminPassword(code) {
   }
 
   saveAssistantAdminSessionCode(normalizedCode);
-  return true;
-}
-
-function resetAssistantAdminPassword() {
-  const currentPassword = getAssistantAdminPassword();
-  const confirmMessage = currentPassword
-    ? "Reset the assistant admin password? You will need to set a new one before opening admin sessions."
-    : "Set a new assistant admin password now?";
-
-  if (!window.confirm(confirmMessage)) {
-    showMessage("Assistant admin password reset cancelled.");
-    return false;
-  }
-
-  clearAssistantAdminPassword();
-  clearAssistantAdminSessionCode();
-
-  const newPassword = window.prompt("Enter the new assistant admin password.", "");
-  if (!newPassword) {
-    showMessage("Assistant admin password cleared.");
-    updateAssistantAdminControls();
-    return true;
-  }
-
-  saveAssistantAdminPassword(newPassword);
-  showMessage("Assistant admin password updated.");
-  updateAssistantAdminControls();
   return true;
 }
 
