@@ -509,18 +509,10 @@ function openAdminPortalForLod(code) {
     return false;
   }
 
-  const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
-  const adminWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
-  if (!adminWindow) {
-    setMessage("Your browser blocked the admin portal tab.");
-    return false;
-  }
-
   const storedPassword = getAssistantAdminPassword();
   const entered = window.prompt(`Enter the assistant admin password to open LOD ${normalizedCode}.`, "");
 
   if (!entered) {
-    adminWindow.close();
     setMessage("Assistant admin access was cancelled.");
     return false;
   }
@@ -528,13 +520,16 @@ function openAdminPortalForLod(code) {
   if (!storedPassword) {
     saveAssistantAdminPassword(entered);
   } else if (entered !== storedPassword) {
-    adminWindow.close();
     setMessage("Incorrect assistant admin password.");
     return false;
   }
 
-  saveAssistantAdminLaunchAuth(normalizedCode);
-  adminWindow.location.href = launchUrl;
+  const launchUrl = `bracket.html?lod=${encodeURIComponent(normalizedCode)}`;
+  const adminWindow = window.open(launchUrl, "_blank");
+  if (!adminWindow) {
+    setMessage("Your browser blocked the admin portal tab.");
+    return false;
+  }
   setMessage(`Opening admin portal for LOD ${normalizedCode}.`);
   return true;
 }
@@ -556,14 +551,17 @@ function saveAssistantAdminPassword(password) {
 }
 
 function saveAssistantAdminLaunchAuth(code) {
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
   try {
     localStorage.setItem(assistantAdminLaunchAuthStorageKey, JSON.stringify({
       code: normalizeLodCode(code),
+      token,
       expiresAt: Date.now() + assistantAdminLaunchAuthTtlMs,
     }));
   } catch {
     // Ignore storage failures.
   }
+  return token;
 }
 
 function capturePortalScrollState() {
