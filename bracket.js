@@ -6401,36 +6401,36 @@ function saveAssistantAdminPassword(password) {
 }
 
 function getAssistantAdminSessionCode() {
-  if (!canUseLocalStorage()) {
+  if (!canUseSessionStorage()) {
     return "";
   }
 
   try {
-    return normalizeLodCode(localStorage.getItem(assistantAdminSessionStorageKey) || "");
+    return normalizeLodCode(sessionStorage.getItem(assistantAdminSessionStorageKey) || "");
   } catch {
     return "";
   }
 }
 
 function saveAssistantAdminSessionCode(code) {
-  if (!canUseLocalStorage()) {
+  if (!canUseSessionStorage()) {
     return;
   }
 
   try {
-    localStorage.setItem(assistantAdminSessionStorageKey, normalizeLodCode(code));
+    sessionStorage.setItem(assistantAdminSessionStorageKey, normalizeLodCode(code));
   } catch {
     // Ignore storage failures.
   }
 }
 
 function clearAssistantAdminSessionCode() {
-  if (!canUseLocalStorage()) {
+  if (!canUseSessionStorage()) {
     return;
   }
 
   try {
-    localStorage.removeItem(assistantAdminSessionStorageKey);
+    sessionStorage.removeItem(assistantAdminSessionStorageKey);
   } catch {
     // Ignore storage failures.
   }
@@ -6495,11 +6495,6 @@ async function pollRemoteAdminSnapshot(code) {
   }
 
   const requestEpoch = remoteMirrorRequestEpoch;
-
-  const sessionCode = getAssistantAdminSessionCode();
-  if (sessionCode !== normalizedCode) {
-    return false;
-  }
 
   for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
     if (!baseUrl) {
