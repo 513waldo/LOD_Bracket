@@ -6610,25 +6610,58 @@ window.loadAssistantAdminSnapshot = function loadAssistantAdminSnapshot(code) {
 };
 
 window.addEventListener("storage", (event) => {
-  if (event.key !== assistantAdminSessionStorageKey && event.key !== assistantAdminPasswordStorageKey) {
+  if (!event.key) {
     return;
   }
 
-  updateAssistantAdminControls();
+  if (event.key === assistantAdminSessionStorageKey || event.key === assistantAdminPasswordStorageKey) {
+    updateAssistantAdminControls();
 
-  const currentCode = normalizeLodCode(lodCode);
-  const sessionCode = getAssistantAdminSessionCode();
-  if (!currentCode) {
+    const currentCode = normalizeLodCode(lodCode);
+    const sessionCode = getAssistantAdminSessionCode();
+    if (!currentCode) {
+      return;
+    }
+
+    if (sessionCode === currentCode) {
+      startRemoteMirrorRefresh();
+      void pollRemoteAdminSnapshot(currentCode);
+      return;
+    }
+
+    stopRemoteMirrorRefresh();
     return;
   }
 
-  if (sessionCode === currentCode) {
-    startRemoteMirrorRefresh();
-    void pollRemoteAdminSnapshot(currentCode);
+  if (!event.key.startsWith(`${portalSnapshotStorageKey}:`) || !event.newValue) {
     return;
   }
 
-  stopRemoteMirrorRefresh();
+  try {
+    const snapshot = normalizeAdminMirrorSnapshot(JSON.parse(event.newValue));
+    if (!snapshot) {
+      return;
+    }
+
+    const currentCode = normalizeLodCode(lodCode);
+    if (!currentCode || normalizeLodCode(snapshot.lodCode) !== currentCode) {
+      return;
+    }
+
+    const signature = getPortalSnapshotSignature(snapshot);
+    if (signature && signature === lastRemoteMirrorSnapshotSignature) {
+      return;
+    }
+
+    applyRemoteAdminSnapshot(snapshot, "local-storage");
+    lastRemoteMirrorSnapshotSignature = signature;
+    if (signature) {
+      lastPublishedPortalSnapshotSignature = signature;
+    }
+    updateAssistantAdminControls();
+  } catch {
+    // Ignore malformed storage payloads.
+  }
 });
 
 function normalizeAdminMirrorSnapshot(data) {
