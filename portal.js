@@ -27,8 +27,6 @@ const portalLodCodeClearedValue = "__CLEARED__";
 const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
 const portalSessionDurationMs = 60 * 60 * 1000;
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
-const assistantAdminLaunchAuthStorageKey = "dartsTournamentAssistantAdminLaunchAuth";
-const assistantAdminLaunchAuthTtlMs = 2 * 60 * 1000;
 
 let activeSnapshot = null;
 const storedLodCode = getStoredPortalLodCode();
@@ -548,20 +546,6 @@ function saveAssistantAdminPassword(password) {
   } catch {
     // Ignore storage failures.
   }
-}
-
-function saveAssistantAdminLaunchAuth(code) {
-  const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  try {
-    localStorage.setItem(assistantAdminLaunchAuthStorageKey, JSON.stringify({
-      code: normalizeLodCode(code),
-      token,
-      expiresAt: Date.now() + assistantAdminLaunchAuthTtlMs,
-    }));
-  } catch {
-    // Ignore storage failures.
-  }
-  return token;
 }
 
 function capturePortalScrollState() {
