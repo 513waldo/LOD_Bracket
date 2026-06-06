@@ -338,6 +338,7 @@ function shouldPreferSnapshot(candidate, current) {
 }
 
 function renderSnapshot(snapshot, sourceLabel) {
+  const scrollState = capturePortalScrollState();
   activeSnapshot = snapshot;
 
   if (snapshot.lodCode) {
@@ -369,6 +370,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   focusActiveMatch(state);
   updateUrlForCode(activeLodCode);
   updatePortalExpiryFromSnapshot(activeLodCode, snapshot.expiresAt, state);
+  restorePortalScrollState(scrollState);
 }
 
 function renderEmptyPortal() {
@@ -388,6 +390,24 @@ function focusActiveMatch(state) {
   if (!state) {
     autoFocusAppliedForCode = "";
   }
+}
+
+function capturePortalScrollState() {
+  return {
+    x: window.scrollX || window.pageXOffset || 0,
+    y: window.scrollY || window.pageYOffset || 0,
+  };
+}
+
+function restorePortalScrollState(scrollState) {
+  if (!scrollState || (!scrollState.x && !scrollState.y)) {
+    return;
+  }
+
+  const { x, y } = scrollState;
+  window.requestAnimationFrame(() => {
+    window.scrollTo(x, y);
+  });
 }
 
 function getActiveMatchId(state) {
