@@ -795,6 +795,10 @@ document.querySelector("#deleteBackups").addEventListener("click", () => {
 });
 
 document.querySelector("#saveOutShots").addEventListener("click", () => {
+  if (!validateOutShotsBeforeSave()) {
+    return;
+  }
+
   saveOutShots();
   showMessage("Out shots saved.");
 });
@@ -805,7 +809,13 @@ document.querySelector("#clearOutShots").addEventListener("click", () => {
 });
 
 outShotSheet.addEventListener("input", (event) => {
-  preventDuplicateOutShotNumber(event.target);
+  updateOutShotWinners();
+  renderHighestOutRecord();
+  renderMysteryOutWinner();
+  saveOutShots();
+});
+
+outShotSheet.addEventListener("change", (event) => {
   updateOutShotWinners();
   renderHighestOutRecord();
   renderMysteryOutWinner();
@@ -2679,6 +2689,35 @@ function preventDuplicateOutShotNumber(input) {
     input.value = "";
     showMessage(`Out shot ${numberHit} is already listed.`);
   }
+}
+
+function validateOutShotsBeforeSave() {
+  const duplicateNumber = getDuplicateOutShotNumber();
+  if (duplicateNumber === null) {
+    return true;
+  }
+
+  showMessage(`Out shot ${duplicateNumber} is already listed.`);
+  return false;
+}
+
+function getDuplicateOutShotNumber() {
+  const seen = new Set();
+
+  for (const input of outShotSheet.querySelectorAll('[data-out-field="number"]')) {
+    const numberHit = getOutShotNumberValue(input);
+    if (numberHit === null) {
+      continue;
+    }
+
+    if (seen.has(numberHit)) {
+      return numberHit;
+    }
+
+    seen.add(numberHit);
+  }
+
+  return null;
 }
 
 function updateOutShotWinners() {
