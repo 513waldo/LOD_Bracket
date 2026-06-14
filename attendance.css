@@ -317,6 +317,13 @@ h3 {
   color: #7d331d;
 }
 
+.roster-note {
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .attendance-table {
   display: grid;
   gap: 12px;
