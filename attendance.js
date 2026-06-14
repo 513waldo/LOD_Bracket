@@ -801,7 +801,7 @@ function getBracketRosterNames() {
         return;
       }
 
-      const key = normalizeRosterKey(name);
+      const key = getExactRosterKey(name);
       if (seen.has(key)) {
         return;
       }
@@ -848,6 +848,10 @@ function normalizeRosterName(value) {
 }
 
 function normalizeRosterKey(value) {
+  return getExactRosterKey(value);
+}
+
+function getExactRosterKey(value) {
   return normalizeRosterName(value).toLowerCase();
 }
 
