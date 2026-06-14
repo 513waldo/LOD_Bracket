@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Sheet</title>
+  <link rel="stylesheet" href="attendance.css?v=2">
+</head>
+<body>
+  <div id="attendanceGate" class="attendance-gate">
+    <section class="gate-card" aria-labelledby="gateTitle">
+      <p class="eyebrow">Director access</p>
+      <h1 id="gateTitle">Locked attendance sheet</h1>
+      <p id="gateMessage" class="gate-message">Enter the root password to unlock the director-only attendance sheet.</p>
+      <label>
+        Root password
+        <input id="attendancePasswordInput" type="password" autocomplete="current-password" placeholder="Root password">
+      </label>
+      <div class="action-row">
+        <button id="unlockAttendanceButton" type="button">Unlock sheet</button>
+        <a class="button-link secondary-link" href="bracket.html">Back to director portal</a>
+      </div>
+    </section>
+  </div>
+
+  <main id="attendanceApp" class="sheet-shell" hidden>
+    <section class="hero" aria-labelledby="attendanceTitle">
+      <div class="hero-copy">
+        <p class="eyebrow"><a href="bracket.html">Director Portal</a> / Attendance Sheet</p>
+        <h1 id="attendanceTitle">Attendance Sheet</h1>
+        <p class="hero-text">
+          Track who showed up, set the eligibility rule for the current bar, and generate a Facebook-ready post when the tournament director needs to publish the full list.
+        </p>
+        <p class="hero-note">Director portal only. Keep the roster and attendance rule in one place for the current bar.</p>
+        <div class="hero-actions">
+          <a class="button-link" href="#sheet">Open sheet</a>
+          <a class="button-link secondary-link" href="#share">Facebook post</a>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <div class="stat-grid">
+          <article>
+            <strong id="eligibleCount">0</strong>
+            <span>eligible players</span>
+          </article>
+          <article>
+            <strong id="playerCount">0</strong>
+            <span>players tracked</span>
+          </article>
+          <article>
+            <strong id="requiredWeeksText">0</strong>
+            <span>weeks required</span>
+          </article>
+          <article>
+            <strong id="totalWeeksText">0</strong>
+            <span>weeks in season</span>
+          </article>
+        </div>
+        <p class="hero-note" id="summaryNote">Set the venue and attendance rule, then mark the roster.</p>
+      </aside>
+    </section>
+
+    <section class="feature-band">
+      <article class="feature-tile">
+        <h2>Bar-specific rules</h2>
+        <p>Adjust the requirement for each venue, whether it is 6 of 12 weeks or some other cutoff.</p>
+      </article>
+      <article class="feature-tile">
+        <h2>Fast weekly marking</h2>
+        <p>Use the week checkboxes to log attendance without leaving the page or re-entering names.</p>
+      </article>
+      <article class="feature-tile">
+        <h2>Facebook-ready output</h2>
+        <p>Generate a full roster post, copy it, and paste it into Facebook when you need to publish the list.</p>
+      </article>
+    </section>
+
+    <section class="workspace-grid" id="sheet">
+      <section class="panel control-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Venue setup</p>
+            <h2>Eligibility rule</h2>
+          </div>
+          <p>Configure the current appreciation tournament.</p>
+        </div>
+
+        <div class="field-grid">
+          <label>
+            Venue / bar
+            <input id="venueName" type="text" placeholder="Bullseye Taproom">
+          </label>
+          <label>
+            Tournament name
+            <input id="eventName" type="text" placeholder="Appreciation Tournament">
+          </label>
+          <label>
+            Total weeks
+            <input id="totalWeeks" type="number" min="1" max="52" value="12">
+          </label>
+          <label>
+            Weeks required
+            <input id="requiredWeeks" type="number" min="1" max="52" value="6">
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="addPlayerButton" type="button">Add player</button>
+          <button id="clearDemoButton" type="button" class="secondary">Reset demo</button>
+        </div>
+
+        <div class="field-grid roster-add">
+          <label>
+            Player name
+            <input id="newPlayerName" type="text" placeholder="Chris M.">
+          </label>
+          <label>
+            Note
+            <input id="newPlayerNote" type="text" placeholder="Optional note">
+          </label>
+        </div>
+
+        <p class="flash-message" id="statusMessage" aria-live="polite"></p>
+      </section>
+
+      <section class="panel roster-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Attendance</p>
+            <h2>Weekly sheet</h2>
+          </div>
+          <p>Mark a week as present for each player.</p>
+        </div>
+
+        <div id="rosterMeta" class="roster-meta"></div>
+        <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <section class="panel share-panel" id="share">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Facebook</p>
+          <h2>Publish the full list</h2>
+        </div>
+        <p>Copy a post or open Facebook’s share dialog.</p>
+      </div>
+
+      <div class="share-controls">
+        <label class="radio">
+          <input type="radio" name="shareMode" value="eligible" checked>
+          Eligible only
+        </label>
+        <label class="radio">
+          <input type="radio" name="shareMode" value="full">
+          Full roster
+        </label>
+      </div>
+
+      <label class="share-text">
+        Facebook post text
+        <textarea id="facebookPost" rows="14" spellcheck="false"></textarea>
+      </label>
+
+      <div class="action-row">
+        <button id="copyPostButton" type="button">Copy post text</button>
+        <button id="openFacebookButton" type="button" class="secondary">Open Facebook share</button>
+        <button id="downloadJsonButton" type="button" class="secondary">Download JSON</button>
+      </div>
+
+      <p class="share-note">
+        Facebook does not let a browser prefill a post directly without a logged-in share flow, so this sheet gives you ready-to-paste text and a share link.
+      </p>
+    </section>
+  </main>
+
+  <script src="attendance-auth.js?v=2"></script>
+  <script src="attendance.js?v=3"></script>
+</body>
+</html>

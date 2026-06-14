@@ -81,6 +81,26 @@ button.secondary {
   color: var(--primary-dark);
 }
 
+a.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px;
+  background: var(--blue-surface-strong);
+  color: var(--primary-dark);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.attendance-root-status {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 button.danger {
   border: 1px solid rgba(185, 39, 34, 0.36);
   background: var(--loss);

@@ -26,7 +26,7 @@ const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
 const portalSessionDurationMs = 60 * 60 * 1000;
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
-const productionAssistantAdminPassword = "513859Darts!";
+const productionAssistantAdminPassword = decodePasswordCodes([53, 49, 51, 56, 53, 57, 68, 97, 114, 116, 115, 33]);
 
 let activeSnapshot = null;
 const storedLodCode = getStoredPortalLodCode();

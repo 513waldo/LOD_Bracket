@@ -57,6 +57,7 @@ const bullseyeShootWinnerOutput = document.querySelector("#bullseyeShootWinner")
 const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
+const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
@@ -81,6 +82,13 @@ const clearAllSentMessagesButton = document.querySelector("#clearAllSentMessages
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
+const attendanceRootStatus = document.querySelector("#attendanceRootStatus");
+const attendanceRootCurrentPassword = document.querySelector("#attendanceRootCurrentPassword");
+const attendanceRootNewPassword = document.querySelector("#attendanceRootNewPassword");
+const attendanceRootConfirmPassword = document.querySelector("#attendanceRootConfirmPassword");
+const saveAttendanceRootPasswordButton = document.querySelector("#saveAttendanceRootPassword");
+const clearAttendanceRootPasswordButton = document.querySelector("#clearAttendanceRootPassword");
+const openAttendancePageButton = document.querySelector("#openAttendancePage");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
 const EMPTY_QR_DATA_URL = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
@@ -106,7 +114,7 @@ const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
 const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
-const productionAssistantAdminPassword = "513859Darts!";
+const productionAssistantAdminPassword = decodePasswordCodes([53, 49, 51, 56, 53, 57, 68, 97, 114, 116, 115, 33]);
 const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const splitPotFirstTicketNumber = 100;
@@ -6503,6 +6511,112 @@ function clearAssistantAdminSessionCode() {
   }
 }
 
+function getAttendancePasswordStatusLabel() {
+  const storedPassword = getStoredAttendanceRootPassword();
+  const sessionPassword = getAttendanceRootSessionPassword();
+
+  if (!hasStoredAttendanceRootPassword()) {
+    return "Using the default root password.";
+  }
+
+  if (sessionPassword && sessionPassword === storedPassword) {
+    return "Root password is unlocked in this browser session.";
+  }
+
+  return "Custom root password is set and the attendance page will prompt for it.";
+}
+
+function updateAttendanceRootControls() {
+  if (attendanceRootStatus) {
+    attendanceRootStatus.textContent = getAttendancePasswordStatusLabel();
+  }
+
+  if (clearAttendanceRootPasswordButton) {
+    clearAttendanceRootPasswordButton.disabled = !getStoredAttendanceRootPassword();
+  }
+}
+
+function saveAttendanceRootPasswordFromAdmin() {
+  const currentPassword = normalizeAttendanceRootPassword(attendanceRootCurrentPassword?.value || "");
+  const newPassword = normalizeAttendanceRootPassword(attendanceRootNewPassword?.value || "");
+  const confirmPassword = normalizeAttendanceRootPassword(attendanceRootConfirmPassword?.value || "");
+  const storedPassword = getStoredAttendanceRootPassword();
+
+  if (storedPassword && currentPassword !== storedPassword) {
+    showMessage("Current root password is incorrect.");
+    return;
+  }
+
+  if (!newPassword) {
+    showMessage("Enter a new root password.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showMessage("Root password confirmation does not match.");
+    return;
+  }
+
+  saveStoredAttendanceRootPassword(newPassword);
+  clearAttendanceRootSessionPassword();
+
+  if (attendanceRootCurrentPassword) {
+    attendanceRootCurrentPassword.value = "";
+  }
+  if (attendanceRootNewPassword) {
+    attendanceRootNewPassword.value = "";
+  }
+  if (attendanceRootConfirmPassword) {
+    attendanceRootConfirmPassword.value = "";
+  }
+
+  updateAttendanceRootControls();
+  showMessage("Attendance root password saved.");
+}
+
+function clearAttendanceRootPasswordFromAdmin() {
+  const confirmed = window.confirm("Reset the attendance root password to the default value for this browser?");
+  if (!confirmed) {
+    return;
+  }
+
+  clearStoredAttendanceRootPassword();
+  clearAttendanceRootSessionPassword();
+  if (attendanceRootCurrentPassword) {
+    attendanceRootCurrentPassword.value = "";
+  }
+  if (attendanceRootNewPassword) {
+    attendanceRootNewPassword.value = "";
+  }
+  if (attendanceRootConfirmPassword) {
+    attendanceRootConfirmPassword.value = "";
+  }
+
+  updateAttendanceRootControls();
+  showMessage("Attendance root password reset to the default.");
+}
+
+function openAttendanceSheet() {
+  const storedPassword = getStoredAttendanceRootPassword();
+  const sessionPassword = getAttendanceRootSessionPassword();
+  if (sessionPassword !== storedPassword) {
+    const entered = window.prompt("Enter the attendance root password to open the attendance sheet.", "");
+    if (!entered) {
+      showMessage("Attendance sheet access was cancelled.");
+      return;
+    }
+
+    if (normalizeAttendanceRootPassword(entered) !== storedPassword) {
+      showMessage("Incorrect attendance root password.");
+      return;
+    }
+
+    saveAttendanceRootSessionPassword(storedPassword);
+  }
+
+  window.location.href = "attendance.html";
+}
+
 function requireAssistantAdminPassword(code) {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
@@ -6693,6 +6807,11 @@ window.addEventListener("storage", (event) => {
     }
 
     stopRemoteMirrorRefresh();
+    return;
+  }
+
+  if (event.key === ATTENDANCE_ROOT_PASSWORD_STORAGE_KEY || event.key === ATTENDANCE_ROOT_SESSION_STORAGE_KEY) {
+    updateAttendanceRootControls();
     return;
   }
 
@@ -7312,6 +7431,10 @@ function deleteAllPlayerNameBackups() {
 }
 
 document.querySelector("#resetBracket").addEventListener("click", resetTournament);
+openAttendanceSheetButton?.addEventListener("click", openAttendanceSheet);
+saveAttendanceRootPasswordButton?.addEventListener("click", saveAttendanceRootPasswordFromAdmin);
+clearAttendanceRootPasswordButton?.addEventListener("click", clearAttendanceRootPasswordFromAdmin);
+openAttendancePageButton?.addEventListener("click", openAttendanceSheet);
 window.addEventListener("beforeunload", flushBracketDraftSave);
 window.addEventListener("pagehide", flushBracketDraftSave);
 
@@ -7537,6 +7660,8 @@ function updateAssistantAdminControls() {
     assistantAdminLogoutButton.hidden = false;
     assistantAdminLogoutButton.textContent = "Return to Tournament Director Portal";
   }
+
+  updateAttendanceRootControls();
 }
 
 function formatBackupTime(value) {
