@@ -41,11 +41,6 @@ const facebookPost = document.querySelector("#facebookPost");
 const copyPostButton = document.querySelector("#copyPostButton");
 const openFacebookButton = document.querySelector("#openFacebookButton");
 const downloadJsonButton = document.querySelector("#downloadJsonButton");
-const eligibleCount = document.querySelector("#eligibleCount");
-const playerCount = document.querySelector("#playerCount");
-const requiredWeeksText = document.querySelector("#requiredWeeksText");
-const totalWeeksText = document.querySelector("#totalWeeksText");
-const summaryNote = document.querySelector("#summaryNote");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
 
 let sheet = loadSheet();
@@ -348,16 +343,6 @@ function render() {
 }
 
 function updateDerivedOutputs() {
-  requiredWeeksText.textContent = String(sheet.requiredWeeks);
-  totalWeeksText.textContent = String(sheet.totalWeeks);
-  playerCount.textContent = String(sheet.players.length);
-  eligibleCount.textContent = String(getEligiblePlayers().length);
-
-  const eligible = getEligiblePlayers().length;
-  summaryNote.textContent = sheet.players.length
-    ? `${eligible} of ${sheet.players.length} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks.`
-    : "Add players to start tracking attendance.";
-
   const weekDates = getWeekDates();
   const firstDate = weekDates[0] ? formatWeekDateLabel(weekDates[0]) : "";
   const lastDate = weekDates[weekDates.length - 1] ? formatWeekDateLabel(weekDates[weekDates.length - 1]) : "";
