@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=6">
+  <link rel="stylesheet" href="attendance.css?v=7">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -109,6 +109,10 @@
             Weeks required
             <input id="requiredWeeks" type="number" min="1" max="52" value="6">
           </label>
+          <label>
+            First Saturday
+            <input id="startSaturday" type="date">
+          </label>
         </div>
 
         <div class="action-row">
@@ -201,6 +205,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=7"></script>
+  <script src="attendance.js?v=9"></script>
 </body>
 </html>

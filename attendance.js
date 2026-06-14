@@ -6,6 +6,7 @@ const DEMO = {
   eventName: "Appreciation Tournament",
   totalWeeks: 12,
   requiredWeeks: 6,
+  startSaturday: "",
   players: [
     { id: "p1", name: "Jason R.", weeks: [true, true, true, true, false, true, false, true, false, false, false, true] },
     { id: "p2", name: "Alyssa D.", weeks: [true, true, false, true, true, true, false, false, true, false, false, true] },
@@ -18,6 +19,7 @@ const venueName = document.querySelector("#venueName");
 const eventName = document.querySelector("#eventName");
 const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
+const startSaturday = document.querySelector("#startSaturday");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
@@ -125,6 +127,7 @@ function normalizeSheet(value) {
     eventName: String(value?.eventName || DEMO.eventName),
     totalWeeks: total,
     requiredWeeks: required,
+    startSaturday: normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput(),
     authUsername: String(value?.authUsername || ""),
     authPassword: String(value?.authPassword || ""),
     players,
@@ -161,6 +164,60 @@ function clampWeekCount(value, fallback, max = 52) {
 
 function saveSheet() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sheet));
+}
+
+function normalizeSaturdayInput(value) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
+function getDefaultSaturdayInput() {
+  const today = new Date();
+  const offset = (6 - today.getDay() + 7) % 7;
+  return formatDateInputValue(new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset, 12, 0, 0, 0));
+}
+
+function formatDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateInputValue(value) {
+  const text = normalizeSaturdayInput(value);
+  if (!text) {
+    return null;
+  }
+
+  const [year, month, day] = text.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getWeekDates() {
+  const start = parseDateInputValue(sheet.startSaturday) || parseDateInputValue(getDefaultSaturdayInput());
+  if (!start) {
+    return [];
+  }
+
+  return Array.from({ length: sheet.totalWeeks }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(date.getDate() + (index * 7));
+    return date;
+  });
+}
+
+function formatWeekDateLabel(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
 }
 
 function readAttendanceAccessSession() {
@@ -280,6 +337,9 @@ function render() {
   eventName.value = sheet.eventName;
   totalWeeks.value = String(sheet.totalWeeks);
   requiredWeeks.value = String(sheet.requiredWeeks);
+  if (startSaturday) {
+    startSaturday.value = sheet.startSaturday;
+  }
   requiredWeeks.max = String(sheet.totalWeeks);
 
   updateDerivedOutputs();
@@ -298,17 +358,22 @@ function updateDerivedOutputs() {
     ? `${eligible} of ${sheet.players.length} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks.`
     : "Add players to start tracking attendance.";
 
-  rosterMeta.textContent = `${sheet.venueName || "Venue"} · ${sheet.eventName || "Attendance Sheet"} · ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks required`;
+  const weekDates = getWeekDates();
+  const firstDate = weekDates[0] ? formatWeekDateLabel(weekDates[0]) : "";
+  const lastDate = weekDates[weekDates.length - 1] ? formatWeekDateLabel(weekDates[weekDates.length - 1]) : "";
+  const dateSpan = firstDate && lastDate ? `${firstDate} to ${lastDate}` : firstDate || lastDate || "Dates not set";
+  rosterMeta.textContent = `${sheet.venueName || "Venue"} · ${sheet.eventName || "Attendance Sheet"} · ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks required · ${dateSpan}`;
   facebookPost.value = buildFacebookPost();
   updateVenueAccessStatus();
 }
 
 function renderTable() {
+  const weekDates = getWeekDates();
   const head = `
     <div class="table-head">
       <div class="head-cell">Player</div>
       <div class="head-cell">Status</div>
-      ${Array.from({ length: sheet.totalWeeks }, (_, index) => `<div class="head-cell">W${index + 1}</div>`).join("")}
+      ${weekDates.map((date, index) => `<div class="head-cell" title="${escapeHtml(date.toDateString())}">${escapeHtml(formatWeekDateLabel(date) || `W${index + 1}`)}</div>`).join("")}
       <div class="head-cell"></div>
     </div>
   `;
@@ -342,7 +407,8 @@ function renderTable() {
               type="button"
               class="week-toggle${present ? " attended" : ""}"
               data-toggle-week="${weekIndex}"
-              aria-label="Mark week ${weekIndex + 1} for ${escapeHtml(player.name || "player")}"
+              aria-label="Mark ${formatWeekDateLabel(weekDates[weekIndex]) || `week ${weekIndex + 1}`} for ${escapeHtml(player.name || "player")}"
+              title="${escapeHtml(formatWeekDateLabel(weekDates[weekIndex]) || `Week ${weekIndex + 1}`)}"
             >${present ? "✓" : ""}</button>
           </div>
         `).join("")}
@@ -363,6 +429,14 @@ function buildFacebookPost(mode = getShareMode()) {
     lines.push(`Venue: ${sheet.venueName}`);
   }
   lines.push(`Attendance rule: ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks`);
+  const weekDates = getWeekDates();
+  if (weekDates.length) {
+    const firstDate = formatWeekDateLabel(weekDates[0]);
+    const lastDate = formatWeekDateLabel(weekDates[weekDates.length - 1]);
+    if (firstDate && lastDate) {
+      lines.push(`Dates: ${firstDate} to ${lastDate}`);
+    }
+  }
   lines.push("");
 
   if (mode === "eligible") {
@@ -407,12 +481,17 @@ function getShareMode() {
 function syncFromInputs() {
   sheet.venueName = venueName.value.trim();
   sheet.eventName = eventName.value.trim();
+  sheet.startSaturday = normalizeSaturdayInput(startSaturday?.value || "") || getDefaultSaturdayInput();
   saveSheet();
   updateDerivedOutputs();
 }
 
 venueName.addEventListener("input", syncFromInputs);
 eventName.addEventListener("input", syncFromInputs);
+startSaturday?.addEventListener("change", () => {
+  syncFromInputs();
+  render();
+});
 totalWeeks.addEventListener("change", () => {
   sheet.totalWeeks = clampWeekCount(totalWeeks.value, sheet.totalWeeks);
   if (sheet.requiredWeeks > sheet.totalWeeks) {
