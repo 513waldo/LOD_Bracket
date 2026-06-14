@@ -2305,6 +2305,13 @@ body.dice-roller-maximized .setup-stack > * {
   margin-top: 12px;
 }
 
+.shared-backup-note {
+  margin-top: 4px;
+  color: var(--primary-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .name-backup-history .backup-list {
   height: 214px;
   overflow: auto;
