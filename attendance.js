@@ -633,6 +633,15 @@ function saveVenueAccessCredentials() {
     venueAccessPasswordConfirm.value = "";
   }
   updateVenueAccessStatus();
+  const importedNames = getBracketRosterNames();
+  const importedCount = importedNames.length ? mergeImportedPlayers(importedNames) : 0;
+  if (importedCount) {
+    saveSheet();
+    render();
+    setStatus(`Saved the bar login and imported ${importedCount} player${importedCount === 1 ? "" : "s"} for ${sheet.venueName || "this venue"}.`);
+    return;
+  }
+
   setStatus(`Saved the bar login for ${sheet.venueName || "this venue"}.`);
 }
 

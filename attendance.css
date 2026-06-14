@@ -108,14 +108,16 @@ h3 {
   display: grid;
   place-items: center;
   padding: 24px;
+  background: #000;
 }
 
 .gate-card {
   width: min(100%, 560px);
   padding: 28px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 28px;
-  background: rgba(245, 239, 227, 0.96);
+  background: rgba(0, 0, 0, 0.96);
+  color: #f7f3ea;
   box-shadow: var(--shadow);
 }
 
@@ -127,8 +129,12 @@ h3 {
 
 .gate-message {
   margin-bottom: 18px;
-  color: var(--muted);
+  color: rgba(247, 243, 234, 0.72);
   line-height: 1.55;
+}
+
+.gate-card label {
+  color: rgba(247, 243, 234, 0.92);
 }
 
 .hero,
