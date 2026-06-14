@@ -6611,23 +6611,6 @@ function clearAttendanceRootPasswordFromAdmin() {
 }
 
 function openAttendanceSheet() {
-  const storedPassword = getStoredAttendanceRootPassword();
-  const sessionPassword = getAttendanceRootSessionPassword();
-  if (sessionPassword !== storedPassword) {
-    const entered = window.prompt("Enter the attendance root password to open the attendance sheet.", "");
-    if (!entered) {
-      showMessage("Attendance sheet access was cancelled.");
-      return;
-    }
-
-    if (normalizeAttendanceRootPassword(entered) !== storedPassword) {
-      showMessage("Incorrect attendance root password.");
-      return;
-    }
-
-    saveAttendanceRootSessionPassword(storedPassword);
-  }
-
   window.location.href = "attendance.html";
 }
 

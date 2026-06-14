@@ -44,6 +44,7 @@ const downloadJsonButton = document.querySelector("#downloadJsonButton");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
 
 let sheet = loadSheet();
+syncVenueNameFromBracketDraft();
 syncRosterFromBracketDraft(true);
 
 if (unlockAttendanceButton) {
@@ -79,6 +80,29 @@ function loadSheet() {
     return normalizeSheet(parsed);
   } catch {
     return cloneSheet(DEMO);
+  }
+}
+
+function syncVenueNameFromBracketDraft(saveChanges = false) {
+  try {
+    const raw = localStorage.getItem(BRACKET_DRAFT_STORAGE_KEY);
+    if (!raw) {
+      return false;
+    }
+
+    const draft = JSON.parse(raw);
+    const barName = String(draft?.barName || "").trim();
+    if (!barName || sheet.venueName === barName) {
+      return false;
+    }
+
+    sheet.venueName = barName;
+    if (saveChanges) {
+      saveSheet();
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -611,6 +635,7 @@ window.addEventListener("storage", (event) => {
     }
   }
   if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
+    syncVenueNameFromBracketDraft(true);
     syncRosterFromBracketDraft(true);
     if (hasAttendanceAccess()) {
       showAttendanceApp();
@@ -715,6 +740,8 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   if (!importedNames.length) {
     return 0;
   }
+
+  syncVenueNameFromBracketDraft(false);
 
   const existing = new Map();
   sheet.players.forEach((player) => {
