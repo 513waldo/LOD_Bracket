@@ -7,10 +7,10 @@ const DEMO = {
   totalWeeks: 12,
   requiredWeeks: 6,
   players: [
-    { id: "p1", name: "Jason R.", note: "Captain", weeks: [true, true, true, true, false, true, false, true, false, false, false, true] },
-    { id: "p2", name: "Alyssa D.", note: "", weeks: [true, true, false, true, true, true, false, false, true, false, false, true] },
-    { id: "p3", name: "Chris B.", note: "Late shift", weeks: [false, true, false, false, true, false, false, true, true, false, true, false] },
-    { id: "p4", name: "Dana K.", note: "", weeks: [true, true, true, true, true, true, true, true, true, true, true, true] },
+    { id: "p1", name: "Jason R.", weeks: [true, true, true, true, false, true, false, true, false, false, false, true] },
+    { id: "p2", name: "Alyssa D.", weeks: [true, true, false, true, true, true, false, false, true, false, false, true] },
+    { id: "p3", name: "Chris B.", weeks: [false, true, false, false, true, false, false, true, true, false, true, false] },
+    { id: "p4", name: "Dana K.", weeks: [true, true, true, true, true, true, true, true, true, true, true, true] },
   ],
 };
 
@@ -18,10 +18,7 @@ const venueName = document.querySelector("#venueName");
 const eventName = document.querySelector("#eventName");
 const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
-const newPlayerName = document.querySelector("#newPlayerName");
-const newPlayerNote = document.querySelector("#newPlayerNote");
-const addPlayerButton = document.querySelector("#addPlayerButton");
-const importBracketPlayersButton = document.querySelector("#importBracketPlayersButton");
+const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
 const attendanceUsernameInput = document.querySelector("#attendanceUsernameInput");
@@ -50,6 +47,7 @@ const summaryNote = document.querySelector("#summaryNote");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
 
 let sheet = loadSheet();
+syncRosterFromBracketDraft(true);
 
 if (unlockAttendanceButton) {
   unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
@@ -145,7 +143,6 @@ function normalizePlayer(player, weekCount, index) {
   return {
     id: String(player?.id || `p-${Date.now()}-${index}`),
     name: String(player?.name || ""),
-    note: String(player?.note || ""),
     weeks,
   };
 }
@@ -310,7 +307,6 @@ function renderTable() {
   const head = `
     <div class="table-head">
       <div class="head-cell">Player</div>
-      <div class="head-cell">Present</div>
       <div class="head-cell">Status</div>
       ${Array.from({ length: sheet.totalWeeks }, (_, index) => `<div class="head-cell">W${index + 1}</div>`).join("")}
       <div class="head-cell"></div>
@@ -335,9 +331,6 @@ function renderTable() {
       <div class="player-row" data-player-index="${rowIndex}">
         <div class="player-cell player-name">
           <input data-player-name type="text" value="${escapeHtml(player.name)}" placeholder="Player name">
-        </div>
-        <div class="player-cell player-note">
-          <input data-player-note type="text" value="${escapeHtml(player.note)}" placeholder="Note">
         </div>
         <div class="player-cell">
           <span class="${statusClass}">${escapeHtml(`${presentCount}/${sheet.totalWeeks}`)}</span>
@@ -435,8 +428,14 @@ requiredWeeks.addEventListener("change", () => {
   render();
 });
 
-if (importBracketPlayersButton) {
-  importBracketPlayersButton.addEventListener("click", importPlayersFromBracketDraft);
+if (syncBracketPlayersButton) {
+  syncBracketPlayersButton.addEventListener("click", () => {
+    const syncedCount = syncRosterFromBracketDraft(true);
+    setStatus(syncedCount
+      ? `Synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster.`
+      : "Bracket roster already matches the sheet.");
+    render();
+  });
 }
 
 saveVenueAccessCredentialsButton?.addEventListener("click", saveVenueAccessCredentials);
@@ -485,34 +484,8 @@ attendanceTable.addEventListener("input", (event) => {
     player.name = event.target.value;
   }
 
-  if (event.target.matches("[data-player-note]")) {
-    player.note = event.target.value;
-  }
-
   saveSheet();
   updateDerivedOutputs();
-});
-
-addPlayerButton.addEventListener("click", () => {
-  const name = newPlayerName.value.trim();
-  const note = newPlayerNote.value.trim();
-  if (!name) {
-    setStatus("Enter a player name first.");
-    return;
-  }
-
-  sheet.players.unshift({
-    id: `p-${Date.now()}`,
-    name,
-    note,
-    weeks: Array.from({ length: sheet.totalWeeks }, () => false),
-  });
-
-  newPlayerName.value = "";
-  newPlayerNote.value = "";
-  saveSheet();
-  render();
-  setStatus(`${name} added to the roster.`);
 });
 
 clearDemoButton.addEventListener("click", () => {
@@ -571,6 +544,13 @@ window.addEventListener("storage", (event) => {
       render();
     } else {
       showAttendanceGate();
+    }
+  }
+  if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
+    syncRosterFromBracketDraft(true);
+    if (hasAttendanceAccess()) {
+      showAttendanceApp();
+      render();
     }
   }
   if (event.key === STORAGE_KEY) {
@@ -634,11 +614,10 @@ function saveVenueAccessCredentials() {
   }
   updateVenueAccessStatus();
   const importedNames = getBracketRosterNames();
-  const importedCount = importedNames.length ? mergeImportedPlayers(importedNames) : 0;
-  if (importedCount) {
-    saveSheet();
+  const syncedCount = importedNames.length ? syncRosterFromBracketDraft(true) : 0;
+  if (importedNames.length) {
     render();
-    setStatus(`Saved the bar login and imported ${importedCount} player${importedCount === 1 ? "" : "s"} for ${sheet.venueName || "this venue"}.`);
+    setStatus(`Saved the bar login and synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster for ${sheet.venueName || "this venue"}.`);
     return;
   }
 
@@ -667,22 +646,12 @@ function clearVenueAccessCredentials() {
   setStatus("Bar login cleared.");
 }
 
-function importPlayersFromBracketDraft() {
+function syncRosterFromBracketDraft(overwriteExisting = false) {
   const importedNames = getBracketRosterNames();
   if (!importedNames.length) {
-    setStatus("No tournament player list found to import.");
-    return;
+    return 0;
   }
 
-  const addedCount = mergeImportedPlayers(importedNames);
-  saveSheet();
-  render();
-  setStatus(addedCount
-    ? `Imported ${addedCount} player${addedCount === 1 ? "" : "s"} from the tournament list.`
-    : "Tournament list already matches the sheet.");
-}
-
-function mergeImportedPlayers(importedNames) {
   const existing = new Map();
   sheet.players.forEach((player) => {
     const key = normalizeRosterKey(player.name);
@@ -712,22 +681,24 @@ function mergeImportedPlayers(importedNames) {
     nextPlayers.push(normalizePlayer({
       id: `p-${Date.now()}-${index}`,
       name,
-      note: "",
       weeks: Array.from({ length: sheet.totalWeeks }, () => false),
     }, sheet.totalWeeks, nextPlayers.length));
   });
 
-  sheet.players.forEach((player, index) => {
-    const key = normalizeRosterKey(player.name);
-    if (!key || seen.has(key)) {
-      return;
-    }
+  if (!overwriteExisting) {
+    sheet.players.forEach((player, index) => {
+      const key = normalizeRosterKey(player.name);
+      if (!key || seen.has(key)) {
+        return;
+      }
 
-    seen.add(key);
-    nextPlayers.push(normalizePlayer(player, sheet.totalWeeks, nextPlayers.length + index));
-  });
+      seen.add(key);
+      nextPlayers.push(normalizePlayer(player, sheet.totalWeeks, nextPlayers.length + index));
+    });
+  }
 
   sheet.players = nextPlayers;
+  saveSheet();
   return addedCount;
 }
 

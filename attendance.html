@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=4">
+  <link rel="stylesheet" href="attendance.css?v=6">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -112,20 +112,8 @@
         </div>
 
         <div class="action-row">
-          <button id="addPlayerButton" type="button">Add player</button>
-          <button id="importBracketPlayersButton" type="button" class="secondary">Import tournament list</button>
+          <button id="syncBracketPlayersButton" type="button">Sync bracket roster</button>
           <button id="clearDemoButton" type="button" class="secondary">Reset demo</button>
-        </div>
-
-        <div class="field-grid roster-add">
-          <label>
-            Player name
-            <input id="newPlayerName" type="text" placeholder="Chris M.">
-          </label>
-          <label>
-            Note
-            <input id="newPlayerNote" type="text" placeholder="Optional note">
-          </label>
         </div>
 
         <p class="flash-message" id="statusMessage" aria-live="polite"></p>
@@ -213,6 +201,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=5"></script>
+  <script src="attendance.js?v=7"></script>
 </body>
 </html>

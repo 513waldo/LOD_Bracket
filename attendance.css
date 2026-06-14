@@ -188,7 +188,6 @@ h3 {
 .section-note,
 .share-note,
 .roster-meta,
-.player-note,
 .status-text {
   color: var(--muted);
   line-height: 1.55;
@@ -276,10 +275,6 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.roster-add {
-  margin-top: 14px;
-}
-
 .admin-password-panel {
   margin-top: 18px;
   padding-top: 18px;
@@ -301,7 +296,7 @@ h3 {
 .table-head,
 .player-row {
   display: grid;
-  grid-template-columns: minmax(180px, 220px) 110px 110px repeat(var(--week-count), minmax(42px, 1fr)) 72px;
+  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), minmax(42px, 1fr)) 72px;
   gap: 8px;
   align-items: center;
 }
@@ -330,13 +325,7 @@ h3 {
   background: rgba(255, 255, 255, 0.8);
 }
 
-.player-name,
-.player-note {
-  font-size: 0.88rem;
-}
-
-.player-name input,
-.player-note input {
+.player-name input {
   border-radius: 14px;
   padding: 10px 12px;
 }
