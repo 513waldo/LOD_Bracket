@@ -220,6 +220,7 @@ function normalizeSnapshot(data) {
       portalBullshootNotice: String(data.portalBullshootNotice || ""),
       portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
       portalSupportMessages,
+      nameBackups: normalizeNameBackups(data.nameBackups),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -238,6 +239,7 @@ function normalizeSnapshot(data) {
     portalBullshootNotice: String(data.portalBullshootNotice || ""),
     portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
     portalSupportMessages,
+    nameBackups: normalizeNameBackups(data.nameBackups),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -268,6 +270,28 @@ function normalizePortalSupportMessages(value) {
       : "";
 
     return { sender, message, stamp };
+  }).filter(Boolean);
+}
+
+function normalizeNameBackups(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object" || !entry.id) {
+      return null;
+    }
+
+    const names = entry.names && typeof entry.names === "object" ? entry.names : {};
+
+    return {
+      id: String(entry.id),
+      createdAt: String(entry.createdAt || new Date().toISOString()),
+      playerCount: Math.max(0, Math.floor(Number(entry.playerCount) || 0)),
+      barName: String(entry.barName || ""),
+      names,
+    };
   }).filter(Boolean);
 }
 

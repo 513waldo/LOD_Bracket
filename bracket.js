@@ -5488,6 +5488,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     barName: getBarName(),
     playerList: playerList?.value || "",
     nameMap: getPlayerNameMap(),
+    nameBackups: readNameBackupsForSnapshot(),
     currentTeams,
     hasGeneratedTeams,
     blockedGenerateCount,
@@ -6880,6 +6881,7 @@ function normalizeAdminMirrorSnapshot(data) {
     barName: String(data.barName || ""),
     playerList: String(data.playerList || ""),
     nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
+    nameBackups: Array.isArray(data.nameBackups) ? data.nameBackups : [],
     currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
     hasGeneratedTeams: Boolean(data.hasGeneratedTeams),
     blockedGenerateCount: Math.max(0, Math.floor(Number(data.blockedGenerateCount) || 0)),
@@ -6937,6 +6939,10 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
 
   if (snapshot.nameMap && typeof snapshot.nameMap === "object") {
     applyPlayerNameMap(snapshot.nameMap, true);
+  }
+  if (Array.isArray(snapshot.nameBackups)) {
+    syncNameBackupsToLocalStorage(snapshot.nameBackups);
+    renderNameBackups();
   }
 
   if (typeof snapshot.playerList === "string") {
@@ -7349,6 +7355,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
   });
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
+  savePortalSnapshotToLocalStorage();
 }
 
 if (nameList) {
@@ -7420,6 +7427,7 @@ function mergePlayerNameBackup(id) {
 
   applyPlayerNameMap(backup.names, false);
   queueBracketDraftSave();
+  savePortalSnapshotToLocalStorage();
   showMessage(`Player names merged${backup.barName ? ` from ${backup.barName}` : ""}. Existing typed names were kept.`);
 }
 
@@ -7432,6 +7440,7 @@ function deletePlayerNameBackup(id) {
   localStorage.removeItem(`${nameBackupKeyPrefix}${id}`);
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
+  savePortalSnapshotToLocalStorage();
 }
 
 function deleteAllPlayerNameBackups() {
@@ -7445,6 +7454,7 @@ function deleteAllPlayerNameBackups() {
   });
   localStorage.removeItem(nameBackupIndexKey);
   renderNameBackups();
+  savePortalSnapshotToLocalStorage();
 }
 
 document.querySelector("#resetBracket").addEventListener("click", resetTournament);
@@ -7467,6 +7477,12 @@ function readNameBackupIndex() {
   }
 }
 
+function readNameBackupsForSnapshot() {
+  return readNameBackupIndex()
+    .map((backup) => readNameBackup(backup.id))
+    .filter((backup) => backup && typeof backup === "object");
+}
+
 function readNameBackup(id) {
   if (!canUseLocalStorage()) {
     return null;
@@ -7477,6 +7493,51 @@ function readNameBackup(id) {
   } catch {
     return null;
   }
+}
+
+function syncNameBackupsToLocalStorage(backups) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  const normalized = Array.isArray(backups)
+    ? backups
+        .map((backup) => normalizeNameBackup(backup))
+        .filter(Boolean)
+    : [];
+
+  const index = normalized.map((backup) => ({
+    id: backup.id,
+    createdAt: backup.createdAt,
+    playerCount: backup.playerCount,
+    barName: backup.barName || "",
+    nameCount: Object.keys(backup.names || {}).length,
+  }));
+
+  try {
+    normalized.forEach((backup) => {
+      localStorage.setItem(`${nameBackupKeyPrefix}${backup.id}`, JSON.stringify(backup));
+    });
+    localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
+  } catch {
+    // Ignore storage failures; the in-memory snapshot still renders.
+  }
+}
+
+function normalizeNameBackup(backup) {
+  if (!backup || typeof backup !== "object" || !backup.id) {
+    return null;
+  }
+
+  const names = backup.names && typeof backup.names === "object" ? backup.names : {};
+
+  return {
+    id: String(backup.id),
+    createdAt: String(backup.createdAt || new Date().toISOString()),
+    playerCount: Math.max(0, Math.floor(Number(backup.playerCount) || 0)),
+    barName: String(backup.barName || ""),
+    names,
+  };
 }
 
 function readBackupIndex() {
