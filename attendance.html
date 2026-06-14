@@ -4,18 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=2">
+  <link rel="stylesheet" href="attendance.css?v=3">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
     <section class="gate-card" aria-labelledby="gateTitle">
       <p class="eyebrow">Director access</p>
       <h1 id="gateTitle">Locked attendance sheet</h1>
-      <p id="gateMessage" class="gate-message">Enter the root password to unlock the director-only attendance sheet.</p>
-      <label>
-        Root password
-        <input id="attendancePasswordInput" type="password" autocomplete="current-password" placeholder="Root password">
-      </label>
+      <p id="gateMessage" class="gate-message">Enter the root password or the bar username and password to unlock the attendance sheet.</p>
+      <div class="field-grid gate-fields">
+        <label>
+          Bar username
+          <input id="attendanceUsernameInput" type="text" autocomplete="username" placeholder="Optional for root login">
+        </label>
+        <label>
+          Password
+          <input id="attendancePasswordInput" type="password" autocomplete="current-password" placeholder="Password">
+        </label>
+      </div>
       <div class="action-row">
         <button id="unlockAttendanceButton" type="button">Unlock sheet</button>
         <a class="button-link secondary-link" href="bracket.html">Back to director portal</a>
@@ -31,7 +37,7 @@
         <p class="hero-text">
           Track who showed up, set the eligibility rule for the current bar, and generate a Facebook-ready post when the tournament director needs to publish the full list.
         </p>
-        <p class="hero-note">Director portal only. Keep the roster and attendance rule in one place for the current bar.</p>
+        <p class="hero-note">Director portal only. Keep the roster and attendance rule in one place for the current bar, and pull the player list straight from the bracket portal when needed.</p>
         <div class="hero-actions">
           <a class="button-link" href="#sheet">Open sheet</a>
           <a class="button-link secondary-link" href="#share">Facebook post</a>
@@ -107,6 +113,7 @@
 
         <div class="action-row">
           <button id="addPlayerButton" type="button">Add player</button>
+          <button id="importBracketPlayersButton" type="button" class="secondary">Import tournament list</button>
           <button id="clearDemoButton" type="button" class="secondary">Reset demo</button>
         </div>
 
@@ -122,6 +129,36 @@
         </div>
 
         <p class="flash-message" id="statusMessage" aria-live="polite"></p>
+
+        <section class="admin-password-panel" aria-labelledby="venuePasswordTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Venue access</p>
+              <h3 id="venuePasswordTitle">Sheet username and password</h3>
+            </div>
+            <p id="venueAccessStatus" class="section-note">No bar login set. Root access still works.</p>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Bar username
+              <input id="venueAccessUsername" type="text" autocomplete="off" placeholder="Set a username for this bar">
+            </label>
+            <label>
+              Bar password
+              <input id="venueAccessPassword" type="password" autocomplete="new-password" placeholder="Set a password for this bar">
+            </label>
+            <label>
+              Confirm password
+              <input id="venueAccessPasswordConfirm" type="password" autocomplete="new-password" placeholder="Repeat the password">
+            </label>
+          </div>
+
+          <div class="action-row">
+            <button id="saveVenueAccessCredentials" type="button">Save bar login</button>
+            <button id="clearVenueAccessCredentials" type="button" class="secondary">Clear bar login</button>
+          </div>
+        </section>
       </section>
 
       <section class="panel roster-panel">
@@ -176,6 +213,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=3"></script>
+  <script src="attendance.js?v=4"></script>
 </body>
 </html>

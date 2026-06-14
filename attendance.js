@@ -1,4 +1,6 @@
 const STORAGE_KEY = "dartsTournamentAttendanceSheet:v1";
+const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
+const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const DEMO = {
   venueName: "Bullseye Taproom",
   eventName: "Appreciation Tournament",
@@ -19,8 +21,16 @@ const requiredWeeks = document.querySelector("#requiredWeeks");
 const newPlayerName = document.querySelector("#newPlayerName");
 const newPlayerNote = document.querySelector("#newPlayerNote");
 const addPlayerButton = document.querySelector("#addPlayerButton");
+const importBracketPlayersButton = document.querySelector("#importBracketPlayersButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
+const attendanceUsernameInput = document.querySelector("#attendanceUsernameInput");
+const venueAccessUsername = document.querySelector("#venueAccessUsername");
+const venueAccessPassword = document.querySelector("#venueAccessPassword");
+const venueAccessPasswordConfirm = document.querySelector("#venueAccessPasswordConfirm");
+const saveVenueAccessCredentialsButton = document.querySelector("#saveVenueAccessCredentials");
+const clearVenueAccessCredentialsButton = document.querySelector("#clearVenueAccessCredentials");
+const venueAccessStatus = document.querySelector("#venueAccessStatus");
 const attendanceApp = document.querySelector("#attendanceApp");
 const attendanceGate = document.querySelector("#attendanceGate");
 const gateMessage = document.querySelector("#gateMessage");
@@ -51,7 +61,13 @@ attendancePasswordInput?.addEventListener("keydown", (event) => {
   }
 });
 
-if (hasAttendanceRootAccess()) {
+attendanceUsernameInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    unlockAttendanceSheet();
+  }
+});
+
+if (hasAttendanceAccess()) {
   showAttendanceApp();
 } else {
   showAttendanceGate();
@@ -82,7 +98,7 @@ function showAttendanceApp() {
 
 function showAttendanceGate(message) {
   if (gateMessage) {
-    gateMessage.textContent = message || "Enter the root password to unlock the director-only attendance sheet.";
+    gateMessage.textContent = message || getAttendanceGateMessage();
   }
 
   if (attendanceApp) {
@@ -91,6 +107,14 @@ function showAttendanceGate(message) {
   if (attendanceGate) {
     attendanceGate.hidden = false;
   }
+}
+
+function getAttendanceGateMessage() {
+  if (sheet.authUsername && sheet.authPassword) {
+    return `Enter the root password or the ${sheet.authUsername} login to unlock the director-only attendance sheet.`;
+  }
+
+  return "Enter the root password or bar login to unlock the director-only attendance sheet.";
 }
 
 function normalizeSheet(value) {
@@ -103,6 +127,8 @@ function normalizeSheet(value) {
     eventName: String(value?.eventName || DEMO.eventName),
     totalWeeks: total,
     requiredWeeks: required,
+    authUsername: String(value?.authUsername || ""),
+    authPassword: String(value?.authPassword || ""),
     players,
   };
 }
@@ -140,23 +166,112 @@ function saveSheet() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sheet));
 }
 
+function readAttendanceAccessSession() {
+  try {
+    const raw = sessionStorage.getItem(ATTENDANCE_ACCESS_SESSION_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    return {
+      kind: String(parsed.kind || ""),
+      username: normalizeAttendanceRootPassword(parsed.username || ""),
+      password: normalizeAttendanceRootPassword(parsed.password || ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveAttendanceAccessSession(session) {
+  try {
+    sessionStorage.setItem(ATTENDANCE_ACCESS_SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function clearAttendanceAccessSession() {
+  try {
+    sessionStorage.removeItem(ATTENDANCE_ACCESS_SESSION_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getStoredSheetAdminPassword() {
+  return normalizeAttendanceRootPassword(sheet.authPassword || "");
+}
+
+function hasAttendanceAccess() {
+  const rootPassword = getStoredAttendanceRootPassword();
+  const rootSessionPassword = normalizeAttendanceRootPassword(getAttendanceRootSessionPassword());
+  if (rootSessionPassword && rootSessionPassword === rootPassword) {
+    return true;
+  }
+
+  const session = readAttendanceAccessSession();
+  if (!session) {
+    return false;
+  }
+
+  if (session.kind === "root" && session.password === rootPassword) {
+    return true;
+  }
+
+  if (session.kind === "bar") {
+    return session.username === normalizeAttendanceRootPassword(sheet.authUsername || "")
+      && session.password === getStoredSheetAdminPassword();
+  }
+
+  return false;
+}
+
 function unlockAttendanceSheet() {
   const storedPassword = getStoredAttendanceRootPassword();
-  const entered = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
+  const enteredUsername = normalizeAttendanceRootPassword(attendanceUsernameInput?.value || "");
+  const enteredPassword = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
+  const venueUsername = normalizeAttendanceRootPassword(sheet.authUsername || "");
+  const venuePassword = getStoredSheetAdminPassword();
 
-  if (!entered) {
-    showAttendanceGate("Enter the root password to unlock the attendance sheet.");
+  if (!enteredPassword) {
+    showAttendanceGate("Enter the root password or bar login to unlock the attendance sheet.");
     return;
   }
 
-  if (entered !== storedPassword) {
-    showAttendanceGate("Incorrect root password.");
-    return;
+  if (!enteredUsername) {
+    if (enteredPassword !== storedPassword) {
+      showAttendanceGate("Incorrect root password.");
+      return;
+    }
+
+    saveAttendanceRootSessionPassword(enteredPassword);
+    saveAttendanceAccessSession({ kind: "root", password: enteredPassword });
+  } else {
+    if (!venueUsername || !venuePassword || enteredUsername !== venueUsername || enteredPassword !== venuePassword) {
+      showAttendanceGate(sheet.authUsername
+        ? `Incorrect login for ${sheet.authUsername}.`
+        : "Incorrect bar login.");
+      return;
+    }
+
+    saveAttendanceAccessSession({
+      kind: "bar",
+      username: enteredUsername,
+      password: enteredPassword,
+    });
   }
 
-  saveAttendanceRootSessionPassword(storedPassword);
   if (attendancePasswordInput) {
     attendancePasswordInput.value = "";
+  }
+  if (attendanceUsernameInput) {
+    attendanceUsernameInput.value = "";
   }
   showAttendanceApp();
   render();
@@ -187,6 +302,7 @@ function updateDerivedOutputs() {
 
   rosterMeta.textContent = `${sheet.venueName || "Venue"} · ${sheet.eventName || "Attendance Sheet"} · ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks required`;
   facebookPost.value = buildFacebookPost();
+  updateVenueAccessStatus();
 }
 
 function renderTable() {
@@ -318,6 +434,13 @@ requiredWeeks.addEventListener("change", () => {
   render();
 });
 
+if (importBracketPlayersButton) {
+  importBracketPlayersButton.addEventListener("click", importPlayersFromBracketDraft);
+}
+
+saveVenueAccessCredentialsButton?.addEventListener("click", saveVenueAccessCredentials);
+clearVenueAccessCredentialsButton?.addEventListener("click", clearVenueAccessCredentials);
+
 attendanceTable.addEventListener("click", (event) => {
   const toggleButton = event.target.closest("[data-toggle-week]");
   const removeButton = event.target.closest("[data-remove-player]");
@@ -434,7 +557,24 @@ shareModeInputs.forEach((input) => {
 
 window.addEventListener("storage", (event) => {
   if (event.key === ATTENDANCE_ROOT_PASSWORD_STORAGE_KEY || event.key === ATTENDANCE_ROOT_SESSION_STORAGE_KEY) {
-    if (hasAttendanceRootAccess()) {
+    if (hasAttendanceAccess()) {
+      showAttendanceApp();
+      render();
+    } else {
+      showAttendanceGate();
+    }
+  }
+  if (event.key === ATTENDANCE_ACCESS_SESSION_STORAGE_KEY) {
+    if (hasAttendanceAccess()) {
+      showAttendanceApp();
+      render();
+    } else {
+      showAttendanceGate();
+    }
+  }
+  if (event.key === STORAGE_KEY) {
+    sheet = loadSheet();
+    if (hasAttendanceAccess()) {
       showAttendanceApp();
       render();
     } else {
@@ -445,6 +585,210 @@ window.addEventListener("storage", (event) => {
 
 function setStatus(text) {
   statusMessage.textContent = text;
+}
+
+function updateVenueAccessStatus() {
+  if (!venueAccessStatus) {
+    return;
+  }
+
+  if (sheet.authUsername && sheet.authPassword) {
+    venueAccessStatus.textContent = `Login set for ${sheet.authUsername}. Root access still works.`;
+  } else {
+    venueAccessStatus.textContent = "No bar login set. Root access still works.";
+  }
+}
+
+function saveVenueAccessCredentials() {
+  const nextUsername = normalizeAttendanceRootPassword(venueAccessUsername?.value || "");
+  const nextPassword = normalizeAttendanceRootPassword(venueAccessPassword?.value || "");
+  const confirmPassword = normalizeAttendanceRootPassword(venueAccessPasswordConfirm?.value || "");
+
+  if (!nextUsername) {
+    setStatus("Enter a bar username first.");
+    return;
+  }
+
+  if (!nextPassword) {
+    setStatus("Enter a bar password first.");
+    return;
+  }
+
+  if (nextPassword !== confirmPassword) {
+    setStatus("Bar passwords do not match.");
+    return;
+  }
+
+  sheet.authUsername = nextUsername;
+  sheet.authPassword = nextPassword;
+  saveSheet();
+  if (venueAccessUsername) {
+    venueAccessUsername.value = "";
+  }
+  if (venueAccessPassword) {
+    venueAccessPassword.value = "";
+  }
+  if (venueAccessPasswordConfirm) {
+    venueAccessPasswordConfirm.value = "";
+  }
+  updateVenueAccessStatus();
+  setStatus(`Saved the bar login for ${sheet.venueName || "this venue"}.`);
+}
+
+function clearVenueAccessCredentials() {
+  if (!sheet.authUsername && !sheet.authPassword) {
+    setStatus("No bar login is currently set.");
+    return;
+  }
+
+  sheet.authUsername = "";
+  sheet.authPassword = "";
+  saveSheet();
+  if (venueAccessUsername) {
+    venueAccessUsername.value = "";
+  }
+  if (venueAccessPassword) {
+    venueAccessPassword.value = "";
+  }
+  if (venueAccessPasswordConfirm) {
+    venueAccessPasswordConfirm.value = "";
+  }
+  updateVenueAccessStatus();
+  setStatus("Bar login cleared.");
+}
+
+function importPlayersFromBracketDraft() {
+  const importedNames = getBracketRosterNames();
+  if (!importedNames.length) {
+    setStatus("No tournament player list found to import.");
+    return;
+  }
+
+  const addedCount = mergeImportedPlayers(importedNames);
+  saveSheet();
+  render();
+  setStatus(addedCount
+    ? `Imported ${addedCount} player${addedCount === 1 ? "" : "s"} from the tournament list.`
+    : "Tournament list already matches the sheet.");
+}
+
+function mergeImportedPlayers(importedNames) {
+  const existing = new Map();
+  sheet.players.forEach((player) => {
+    const key = normalizeRosterKey(player.name);
+    if (key && !existing.has(key)) {
+      existing.set(key, player);
+    }
+  });
+
+  const nextPlayers = [];
+  const seen = new Set();
+  let addedCount = 0;
+
+  importedNames.forEach((name, index) => {
+    const key = normalizeRosterKey(name);
+    if (!key || seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+
+    const match = existing.get(key);
+    if (match) {
+      nextPlayers.push(normalizePlayer({ ...match, name }, sheet.totalWeeks, nextPlayers.length));
+      return;
+    }
+
+    addedCount += 1;
+    nextPlayers.push(normalizePlayer({
+      id: `p-${Date.now()}-${index}`,
+      name,
+      note: "",
+      weeks: Array.from({ length: sheet.totalWeeks }, () => false),
+    }, sheet.totalWeeks, nextPlayers.length));
+  });
+
+  sheet.players.forEach((player, index) => {
+    const key = normalizeRosterKey(player.name);
+    if (!key || seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    nextPlayers.push(normalizePlayer(player, sheet.totalWeeks, nextPlayers.length + index));
+  });
+
+  sheet.players = nextPlayers;
+  return addedCount;
+}
+
+function getBracketRosterNames() {
+  try {
+    const raw = localStorage.getItem(BRACKET_DRAFT_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft !== "object") {
+      return [];
+    }
+
+    const names = [];
+    const seen = new Set();
+    const addName = (value) => {
+      const name = normalizeRosterName(value);
+      if (!name) {
+        return;
+      }
+
+      const key = normalizeRosterKey(name);
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      names.push(name);
+    };
+
+    if (typeof draft.playerList === "string" && draft.playerList.trim()) {
+      draft.playerList.split(/\r?\n/).forEach((line) => {
+        extractRosterNamesFromLine(line).forEach(addName);
+      });
+    }
+
+    if (!names.length && draft.nameMap && typeof draft.nameMap === "object") {
+      Object.keys(draft.nameMap)
+        .sort((left, right) => Number(left) - Number(right))
+        .forEach((key) => addName(draft.nameMap[key]));
+    }
+
+    if (!names.length && Array.isArray(draft.currentTeams)) {
+      draft.currentTeams.flat(Infinity).forEach((entry) => addName(draft.nameMap?.[String(entry)] || entry));
+    }
+
+    return names;
+  } catch {
+    return [];
+  }
+}
+
+function extractRosterNamesFromLine(line) {
+  return String(line || "")
+    .split("/")
+    .map((part) => part
+      .replace(/^\s*(?:\d+[\.\)]\s*|[-*•]\s*)/, "")
+      .replace(/\s*\(#\d+\)\s*$/, "")
+      .replace(/\s*#\d+\s*$/, "")
+      .trim())
+    .filter(Boolean);
+}
+
+function normalizeRosterName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function normalizeRosterKey(value) {
+  return normalizeRosterName(value).toLowerCase();
 }
 
 function escapeHtml(value) {
