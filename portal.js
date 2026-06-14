@@ -625,10 +625,7 @@ function renderBracket(state) {
 }
 
 function renderPdfVisualBracket(state) {
-  const doubleDipFinal = state.resetFinal && state.resetFinal.winner && state.resetFinal.winner !== state.resetFinal.players[0]
-    ? ensureDoubleDipFinal(state, state.resetFinal, state.resetFinal.players[0], state.resetFinal.players[1])
-    : state.doubleDipFinal;
-  const finalMatches = [state.final, state.resetFinal, doubleDipFinal].filter(Boolean);
+  const finalMatches = [state.final, state.resetFinal].filter(hasRenderableFinalMatch);
   const maxColumns = Math.max(state.rounds?.winner?.length || 0, state.rounds?.loser?.length || 0, finalMatches.length ? 1 : 0);
 
   return `
@@ -681,7 +678,7 @@ function renderPdfVisualBand(title, rounds, type, state) {
 }
 
 function renderFinalMatchBlock(match, title) {
-  if (!match) {
+  if (!hasRenderableFinalMatch(match)) {
     return "";
   }
 
@@ -737,8 +734,7 @@ function renderFinalSection(state) {
   const matches = [
     state.final,
     state.resetFinal,
-    state.doubleDipFinal,
-  ].filter(Boolean);
+  ].filter(hasRenderableFinalMatch);
 
   return `
     <section class="bracket-section">
@@ -766,6 +762,16 @@ function renderChampionBox(state) {
 
 function isPlayInMatch(match) {
   return Boolean(match?.isPlayIn);
+}
+
+function hasRenderableFinalMatch(match) {
+  if (!match) {
+    return false;
+  }
+
+  const players = Array.isArray(match.players) ? match.players : [];
+  const sources = Array.isArray(match.slotSources) ? match.slotSources : [];
+  return Boolean(match.winner || match.autoAdvanced || players.some(Boolean) || sources.some(Boolean));
 }
 
 function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, losersSidePlayer) {
