@@ -570,7 +570,11 @@ h1 {
 }
 
 .pdf-visual-section .match-meta {
-  display: none;
+  margin: 0 0 8px;
+  color: #444;
+  font-size: 0.66rem;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .pdf-visual-section .slots {
