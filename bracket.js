@@ -60,6 +60,7 @@ const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
+const barNameInput = document.querySelector("#barName");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
@@ -1008,7 +1009,7 @@ async function generatePlayers() {
     }
 
     const nameMap = getPlayerNameMap();
-    savePlayerNameBackup(count, nameMap);
+    savePlayerNameBackup(count, nameMap, getBarName());
     const players = Array.from({ length: count }, (_, index) => String(index + 1));
     const teams = chunk(shuffle(players), groupSize);
     currentTeams = teams;
@@ -3602,6 +3603,10 @@ function getPlayerNameMap() {
   return names;
 }
 
+function getBarName() {
+  return String(barNameInput?.value || "").trim();
+}
+
 function shrinkTotalPlayersToEnteredNames() {
   const enteredNames = Array.from(nameList?.querySelectorAll("[data-player-number]") || [])
     .map((input) => input.value.trim())
@@ -5480,6 +5485,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     expiresAt: getOrCreateBracketCleanupAt(lodCode) || "",
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
+    barName: getBarName(),
     playerList: playerList?.value || "",
     nameMap: getPlayerNameMap(),
     currentTeams,
@@ -6079,6 +6085,7 @@ function buildBracketDraft() {
     savedAt: new Date().toISOString(),
     totalPlayers: Number(totalPlayers.value) || 0,
     playersPerGroup: Number(playersPerGroup.value) || 0,
+    barName: getBarName(),
     playerList: playerList.value || "",
     nameMap: getPlayerNameMap(),
     currentTeams,
@@ -6870,6 +6877,7 @@ function normalizeAdminMirrorSnapshot(data) {
     portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
     totalPlayers: Math.max(0, Math.floor(Number(data.totalPlayers) || 0)),
     playersPerGroup: Math.max(0, Math.floor(Number(data.playersPerGroup) || 0)),
+    barName: String(data.barName || ""),
     playerList: String(data.playerList || ""),
     nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
     currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
@@ -6920,6 +6928,9 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
   if (snapshot.playersPerGroup !== undefined) {
     playersPerGroup.value = String(snapshot.playersPerGroup || 0);
+  }
+  if (snapshot.barName !== undefined && barNameInput) {
+    barNameInput.value = String(snapshot.barName || "");
   }
   renderNameInputs(Number(totalPlayers.value));
   lastSyncedPlayerCount = Number(totalPlayers.value) || 0;
@@ -7312,7 +7323,7 @@ function deleteAllBackups() {
   renderBackups();
 }
 
-function savePlayerNameBackup(playerCount, names = getPlayerNameMap()) {
+function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName = getBarName()) {
   if (!canUseLocalStorage()) {
     return;
   }
@@ -7323,6 +7334,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap()) {
     id,
     createdAt,
     playerCount,
+    barName: String(barName || "").trim(),
     names,
   };
   const index = readNameBackupIndex();
@@ -7332,6 +7344,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap()) {
     id,
     createdAt,
     playerCount,
+    barName: backup.barName,
     nameCount: Object.keys(names).length,
   });
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
@@ -7375,7 +7388,7 @@ function renderNameBackups() {
         <div>
           <strong>Name backup ${number}</strong>
           <span>${escapeHtml(formatBackupTime(backup.createdAt))}</span>
-          <small>${backup.nameCount} saved name${backup.nameCount === 1 ? "" : "s"} for ${backup.playerCount} player slots</small>
+          <small>${escapeHtml(backup.barName || "Unlabeled bar")} · ${backup.nameCount} saved name${backup.nameCount === 1 ? "" : "s"} for ${backup.playerCount} player slots</small>
         </div>
         <div class="backup-item-actions">
           <button class="secondary" type="button" onclick="mergePlayerNameBackup('${escapeAttribute(backup.id)}')">Merge names</button>
@@ -7401,9 +7414,13 @@ function mergePlayerNameBackup(id) {
     renderNameInputs(backup.playerCount);
   }
 
+  if (barNameInput && backup.barName) {
+    barNameInput.value = backup.barName;
+  }
+
   applyPlayerNameMap(backup.names, false);
   queueBracketDraftSave();
-  showMessage("Player names merged. Existing typed names were kept.");
+  showMessage(`Player names merged${backup.barName ? ` from ${backup.barName}` : ""}. Existing typed names were kept.`);
 }
 
 function deletePlayerNameBackup(id) {

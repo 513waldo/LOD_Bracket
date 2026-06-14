@@ -753,6 +753,10 @@ h2 {
   gap: 12px;
 }
 
+.setup-full-span {
+  grid-column: 1 / -1;
+}
+
 label {
   display: grid;
   gap: 7px;
@@ -2377,6 +2381,10 @@ body.dice-roller-maximized .setup-stack > * {
   .setup-grid {
     grid-template-columns: 1fr 1fr;
     align-items: end;
+  }
+
+  .setup-full-span {
+    grid-column: 1 / -1;
   }
 
   .actions {
