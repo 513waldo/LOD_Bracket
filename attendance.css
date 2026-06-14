@@ -306,7 +306,7 @@ h3 {
 .table-head,
 .player-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), minmax(42px, 1fr)) 72px;
+  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), minmax(42px, 1fr)) 88px;
   gap: 8px;
   align-items: center;
 }
@@ -385,7 +385,14 @@ h3 {
 }
 
 .player-remove {
-  justify-self: end;
+  justify-self: stretch;
+}
+
+.player-remove button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 0.84rem;
 }
 
 .roster-meta {
@@ -455,6 +462,6 @@ h3 {
 
   .table-head,
   .player-row {
-    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 42px) 60px;
+    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 42px) 72px;
   }
 }
