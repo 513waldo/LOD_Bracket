@@ -182,6 +182,10 @@ h3 {
   line-height: 1.55;
 }
 
+#summaryNote {
+  color: #000;
+}
+
 .feature-tile p,
 .section-heading p,
 .flash-message,
