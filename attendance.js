@@ -238,13 +238,14 @@ function unlockAttendanceSheet() {
   const enteredPassword = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
   const venueUsername = normalizeAttendanceRootPassword(sheet.authUsername || "");
   const venuePassword = getStoredSheetAdminPassword();
+  const isRootLogin = !enteredUsername || enteredUsername.toLowerCase() === "root";
 
   if (!enteredPassword) {
     showAttendanceGate("Enter the root password or bar login to unlock the attendance sheet.");
     return;
   }
 
-  if (!enteredUsername) {
+  if (isRootLogin) {
     if (enteredPassword !== storedPassword) {
       showAttendanceGate("Incorrect root password.");
       return;
