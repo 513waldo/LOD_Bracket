@@ -280,6 +280,7 @@ let remoteMirrorTimer = null;
 let remoteMirrorRequestEpoch = 0;
 let lastRemoteMirrorSnapshotSignature = "";
 let bracketDraftSaveTimer = null;
+let sharedNameBackupRefreshTimer = null;
 let bracketCleanupTimer = null;
 let resetBracketClickLock = false;
 let lastSyncedPlayerCount = null;
@@ -338,6 +339,12 @@ diceRollerOverlay.className = "dice-roller-overlay";
 renderNameInputs(Number(totalPlayers.value));
 renderBackups();
 renderNameBackups();
+if (API_BASE_URLS.length) {
+  void loadSharedNameBackups();
+  sharedNameBackupRefreshTimer = window.setInterval(() => {
+    void loadSharedNameBackups();
+  }, 30000);
+}
 renderOutShotSheet();
 renderDice();
 renderMysteryOut();
@@ -5488,7 +5495,6 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     barName: getBarName(),
     playerList: playerList?.value || "",
     nameMap: getPlayerNameMap(),
-    nameBackups: readNameBackupsForSnapshot(),
     currentTeams,
     hasGeneratedTeams,
     blockedGenerateCount,
@@ -6881,7 +6887,6 @@ function normalizeAdminMirrorSnapshot(data) {
     barName: String(data.barName || ""),
     playerList: String(data.playerList || ""),
     nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
-    nameBackups: Array.isArray(data.nameBackups) ? data.nameBackups : [],
     currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
     hasGeneratedTeams: Boolean(data.hasGeneratedTeams),
     blockedGenerateCount: Math.max(0, Math.floor(Number(data.blockedGenerateCount) || 0)),
@@ -6939,10 +6944,6 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
 
   if (snapshot.nameMap && typeof snapshot.nameMap === "object") {
     applyPlayerNameMap(snapshot.nameMap, true);
-  }
-  if (Array.isArray(snapshot.nameBackups)) {
-    syncNameBackupsToLocalStorage(snapshot.nameBackups);
-    renderNameBackups();
   }
 
   if (typeof snapshot.playerList === "string") {
@@ -7356,6 +7357,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
   savePortalSnapshotToLocalStorage();
+  void publishGlobalNameBackups();
 }
 
 if (nameList) {
@@ -7441,6 +7443,7 @@ function deletePlayerNameBackup(id) {
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
   savePortalSnapshotToLocalStorage();
+  void publishGlobalNameBackups();
 }
 
 function deleteAllPlayerNameBackups() {
@@ -7455,6 +7458,7 @@ function deleteAllPlayerNameBackups() {
   localStorage.removeItem(nameBackupIndexKey);
   renderNameBackups();
   savePortalSnapshotToLocalStorage();
+  void publishGlobalNameBackups();
 }
 
 document.querySelector("#resetBracket").addEventListener("click", resetTournament);
@@ -7463,7 +7467,9 @@ saveAttendanceRootPasswordButton?.addEventListener("click", saveAttendanceRootPa
 clearAttendanceRootPasswordButton?.addEventListener("click", clearAttendanceRootPasswordFromAdmin);
 openAttendancePageButton?.addEventListener("click", openAttendanceSheet);
 window.addEventListener("beforeunload", flushBracketDraftSave);
+window.addEventListener("beforeunload", clearSharedNameBackupRefreshTimer);
 window.addEventListener("pagehide", flushBracketDraftSave);
+window.addEventListener("pagehide", clearSharedNameBackupRefreshTimer);
 
 function readNameBackupIndex() {
   if (!canUseLocalStorage()) {
@@ -7475,12 +7481,6 @@ function readNameBackupIndex() {
   } catch {
     return [];
   }
-}
-
-function readNameBackupsForSnapshot() {
-  return readNameBackupIndex()
-    .map((backup) => readNameBackup(backup.id))
-    .filter((backup) => backup && typeof backup === "object");
 }
 
 function readNameBackup(id) {
@@ -7524,6 +7524,85 @@ function syncNameBackupsToLocalStorage(backups) {
   }
 }
 
+function getSharedNameBackupsUrl(baseUrl) {
+  return `${baseUrl}/api/name-backups`;
+}
+
+async function loadSharedNameBackups() {
+  if (!nameBackupList) {
+    return;
+  }
+
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getSharedNameBackupsUrl(baseUrl), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json().catch(() => null);
+      const backups = normalizeSharedNameBackupPayload(payload);
+      syncNameBackupsToLocalStorage(backups);
+      renderNameBackups();
+      return;
+    } catch {
+      // Try the next host.
+    }
+  }
+}
+
+async function publishGlobalNameBackups() {
+  if (!API_BASE_URLS.length) {
+    return;
+  }
+
+  const backups = readNameBackupIndex()
+    .map((backup) => readNameBackup(backup.id))
+    .filter((backup) => backup && typeof backup === "object");
+
+  const payload = {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    backups,
+  };
+
+  for (const baseUrl of API_BASE_URLS) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      await fetch(getSharedNameBackupsUrl(baseUrl), {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      // Ignore publish failures; the local cache remains available.
+    }
+  }
+}
+
+function normalizeSharedNameBackupPayload(payload) {
+  if (!payload) {
+    return [];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (typeof payload === "object" && Array.isArray(payload.backups)) {
+    return payload.backups;
+  }
+
+  return [];
+}
+
 function normalizeNameBackup(backup) {
   if (!backup || typeof backup !== "object" || !backup.id) {
     return null;
@@ -7538,6 +7617,13 @@ function normalizeNameBackup(backup) {
     barName: String(backup.barName || ""),
     names,
   };
+}
+
+function clearSharedNameBackupRefreshTimer() {
+  if (sharedNameBackupRefreshTimer) {
+    clearInterval(sharedNameBackupRefreshTimer);
+    sharedNameBackupRefreshTimer = null;
+  }
 }
 
 function readBackupIndex() {

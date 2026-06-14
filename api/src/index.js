@@ -12,9 +12,35 @@ export class BracketRoom {
 
   async fetch(request) {
     const method = request.method.toUpperCase();
+    const pathname = new URL(request.url).pathname;
 
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    if (isNameBackupsRequest(pathname)) {
+      if (method === "GET") {
+        return jsonResponse(await readGlobalNameBackups(this.state.storage));
+      }
+
+      if (method === "PUT" || method === "PATCH") {
+        const payload = await request.json().catch(() => null);
+        const backups = normalizeGlobalNameBackupsPayload(payload);
+        const record = {
+          version: 1,
+          updatedAt: String(payload?.updatedAt || new Date().toISOString()),
+          backups,
+        };
+        await this.state.storage.put("nameBackups", record);
+        return jsonResponse(record);
+      }
+
+      if (method === "DELETE") {
+        await this.state.storage.delete("nameBackups");
+        return jsonResponse({ ok: true });
+      }
+
+      return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
     if (method === "GET") {
@@ -90,6 +116,18 @@ export default {
       return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
+    if (isNameBackupsRequest(url.pathname)) {
+      const nameBackupsStub = getNameBackupsStub(env);
+      if (method === "GET" || method === "PUT" || method === "PATCH" || method === "DELETE") {
+        const targetUrl = new URL(request.url);
+        targetUrl.pathname = "/api/name-backups";
+        const response = await nameBackupsStub.fetch(new Request(targetUrl, request));
+        return withCors(response);
+      }
+
+      return jsonResponse({ error: "Method not allowed" }, 405);
+    }
+
     const code = extractLodCode(url.pathname, url.searchParams.get("lod"));
     if (!code) {
       return jsonResponse(
@@ -132,6 +170,10 @@ function isRegistryRequest(pathname) {
   return pathname === "/api/lod" || pathname === "/api/lod/" || pathname === "/api/lod/index";
 }
 
+function isNameBackupsRequest(pathname) {
+  return pathname === "/api/name-backups" || pathname === "/api/name-backups/";
+}
+
 function extractLodCode(pathname, queryCode) {
   const fromPath = pathname.match(/^\/api\/lod\/([A-Z0-9]+)$/i)?.[1];
   const normalized = normalizeLodCode(fromPath || queryCode);
@@ -140,6 +182,11 @@ function extractLodCode(pathname, queryCode) {
 
 function getRegistryStub(env) {
   const roomId = env.BRACKET_ROOMS.idFromName("__registry__");
+  return env.BRACKET_ROOMS.get(roomId);
+}
+
+function getNameBackupsStub(env) {
+  const roomId = env.BRACKET_ROOMS.idFromName("__global_name_backups__");
   return env.BRACKET_ROOMS.get(roomId);
 }
 
@@ -162,6 +209,11 @@ async function readRegistry(env) {
     updatedAt: registry.updatedAt || "",
     codes: Array.isArray(registry.codes) ? registry.codes.map(normalizeLodCode).filter(Boolean) : [],
   };
+}
+
+async function readGlobalNameBackups(storage) {
+  const record = await storage.get("nameBackups");
+  return normalizeGlobalNameBackupsRecord(record);
 }
 
 async function updateRegistry(env, code, add = true) {
@@ -220,7 +272,6 @@ function normalizeSnapshot(data) {
       portalBullshootNotice: String(data.portalBullshootNotice || ""),
       portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
       portalSupportMessages,
-      nameBackups: normalizeNameBackups(data.nameBackups),
       state: data.state && typeof data.state === "object" ? data.state : null,
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
@@ -239,7 +290,6 @@ function normalizeSnapshot(data) {
     portalBullshootNotice: String(data.portalBullshootNotice || ""),
     portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
     portalSupportMessages,
-    nameBackups: normalizeNameBackups(data.nameBackups),
     state: data,
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
@@ -298,6 +348,38 @@ function normalizeNameBackups(value) {
 function isExpiredSnapshot(snapshot) {
   const expiresAt = Number(snapshot?.expiresAt || 0);
   return Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt <= Date.now();
+}
+
+function normalizeGlobalNameBackupsPayload(data) {
+  if (!data) {
+    return [];
+  }
+
+  if (Array.isArray(data)) {
+    return normalizeNameBackups(data);
+  }
+
+  if (typeof data === "object" && Array.isArray(data.backups)) {
+    return normalizeNameBackups(data.backups);
+  }
+
+  return [];
+}
+
+function normalizeGlobalNameBackupsRecord(record) {
+  if (!record || typeof record !== "object") {
+    return {
+      version: 1,
+      updatedAt: "",
+      backups: [],
+    };
+  }
+
+  return {
+    version: Number(record.version || 1),
+    updatedAt: record.updatedAt || "",
+    backups: normalizeNameBackups(Array.isArray(record.backups) ? record.backups : []),
+  };
 }
 
 function jsonResponse(data, status = 200) {
