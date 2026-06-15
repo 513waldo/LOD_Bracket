@@ -344,12 +344,25 @@ h3 {
   padding-bottom: 12px;
 }
 
-.table-head .head-cell:nth-child(n + 3):not(:last-child) {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.72rem;
+.week-head {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 42px;
+  white-space: normal;
   line-height: 1;
+}
+
+.week-head-day {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.week-head-date {
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .player-row {
@@ -495,5 +508,18 @@ h3 {
   .table-head,
   .player-row {
     grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 52px) 72px;
+  }
+
+  .week-head {
+    min-height: 44px;
+    gap: 1px;
+  }
+
+  .week-head-day {
+    font-size: 0.68rem;
+  }
+
+  .week-head-date {
+    font-size: 0.76rem;
   }
 }

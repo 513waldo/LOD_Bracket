@@ -238,6 +238,16 @@ function formatWeekDateLabel(date) {
   }).format(date);
 }
 
+function formatWeekDayLabel(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+  }).format(date);
+}
+
 function readAttendanceAccessSession() {
   try {
     const raw = sessionStorage.getItem(ATTENDANCE_ACCESS_SESSION_STORAGE_KEY);
@@ -381,7 +391,17 @@ function renderTable() {
     <div class="table-head">
       <div class="head-cell">Player</div>
       <div class="head-cell">Status</div>
-      ${weekDates.map((date, index) => `<div class="head-cell" title="${escapeHtml(date.toDateString())}">${escapeHtml(formatWeekDateLabel(date) || `W${index + 1}`)}</div>`).join("")}
+      ${weekDates.map((date, index) => {
+        const day = formatWeekDayLabel(date) || `W${index + 1}`;
+        const dateLabel = formatWeekDateLabel(date) || "";
+        const title = date.toDateString();
+        return `
+          <div class="head-cell week-head" title="${escapeHtml(title)}">
+            <span class="week-head-day">${escapeHtml(day)}</span>
+            <span class="week-head-date">${escapeHtml(dateLabel)}</span>
+          </div>
+        `;
+      }).join("")}
       <div class="head-cell"></div>
     </div>
   `;
@@ -415,8 +435,8 @@ function renderTable() {
               type="button"
               class="week-toggle${present ? " attended" : ""}"
               data-toggle-week="${weekIndex}"
-              aria-label="Mark ${formatWeekDateLabel(weekDates[weekIndex]) || `week ${weekIndex + 1}`} for ${escapeHtml(player.name || "player")}"
-              title="${escapeHtml(formatWeekDateLabel(weekDates[weekIndex]) || `Week ${weekIndex + 1}`)}"
+              aria-label="Mark ${formatWeekDayLabel(weekDates[weekIndex]) || `week ${weekIndex + 1}`} ${formatWeekDateLabel(weekDates[weekIndex]) || ""} for ${escapeHtml(player.name || "player")}"
+              title="${escapeHtml(`${formatWeekDayLabel(weekDates[weekIndex]) || `Week ${weekIndex + 1}`} ${formatWeekDateLabel(weekDates[weekIndex]) || ""}`.trim())}"
             >${present ? "✓" : ""}</button>
           </div>
         `).join("")}
