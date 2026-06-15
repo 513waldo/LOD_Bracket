@@ -239,7 +239,7 @@ h3 {
 }
 
 .workspace-grid {
-  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: start;
 }
 
