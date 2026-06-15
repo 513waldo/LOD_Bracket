@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=31">
+  <link rel="stylesheet" href="attendance.css?v=32">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -168,6 +168,20 @@
             <div id="rosterMeta" class="roster-meta"></div>
           </div>
         </div>
+
+        <section class="tracker-section" aria-labelledby="trackerTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Tracker</p>
+              <h2 id="trackerTitle">Mystery Out and Bullshoot</h2>
+            </div>
+            <p>Record the result and who got picked for each draw.</p>
+          </div>
+          <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
+          <div class="action-row sheet-footer-actions">
+            <button id="syncBracketGamesButton" type="button" class="secondary">Sync from bracket data</button>
+          </div>
+        </section>
       </section>
     </section>
 

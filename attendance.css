@@ -577,6 +577,16 @@ h3 {
   color: var(--gold);
 }
 
+.tracker-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(18, 33, 39, 0.12);
+}
+
+.tracker-section .tracker-grid {
+  margin-top: 12px;
+}
+
 .tracker-grid {
   display: grid;
   gap: 0;
