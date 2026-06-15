@@ -301,6 +301,7 @@ h3 {
   display: grid;
   gap: 0;
   overflow-x: auto;
+  --week-col-width: clamp(58px, 5vw, 72px);
   border: 1px solid rgba(18, 33, 39, 0.14);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.96);
@@ -309,7 +310,7 @@ h3 {
 .table-head,
 .player-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), minmax(42px, 1fr)) 88px;
+  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), var(--week-col-width)) 88px;
   gap: 0;
   align-items: center;
 }
@@ -327,7 +328,7 @@ h3 {
 .head-cell,
 .player-cell {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 10px 10px;
   border-right: 1px solid rgba(18, 33, 39, 0.12);
   border-bottom: 1px solid rgba(18, 33, 39, 0.12);
   background: transparent;
@@ -413,6 +414,11 @@ h3 {
   font-size: 0.84rem;
 }
 
+.table-head .head-cell:nth-child(n + 3):not(:last-child),
+.player-row .player-cell:nth-child(n + 3):not(:last-child) {
+  text-align: center;
+}
+
 .roster-meta {
   margin-bottom: 10px;
   color: var(--muted);
@@ -480,6 +486,6 @@ h3 {
 
   .table-head,
   .player-row {
-    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 40px) 72px;
+    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 52px) 72px;
   }
 }
