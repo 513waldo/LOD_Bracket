@@ -22,6 +22,7 @@ const requiredWeeks = document.querySelector("#requiredWeeks");
 const startSaturday = document.querySelector("#startSaturday");
 const weekDateEditor = document.querySelector("#weekDateEditor");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
+const syncBracketGamesButton = document.querySelector("#syncBracketGamesButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
 const attendanceUsernameInput = document.querySelector("#attendanceUsernameInput");
@@ -38,11 +39,17 @@ const attendancePasswordInput = document.querySelector("#attendancePasswordInput
 const unlockAttendanceButton = document.querySelector("#unlockAttendanceButton");
 const attendanceTable = document.querySelector("#attendanceTable");
 const rosterMeta = document.querySelector("#rosterMeta");
+const gameTracker = document.querySelector("#gameTracker");
 const facebookPost = document.querySelector("#facebookPost");
 const copyPostButton = document.querySelector("#copyPostButton");
 const openFacebookButton = document.querySelector("#openFacebookButton");
 const downloadJsonButton = document.querySelector("#downloadJsonButton");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
+
+const DEFAULT_EVENT_TRACKER = [
+  { id: "mysteryOut", label: "Mystery Out", result: "", picked: "", note: "" },
+  { id: "bullshoot", label: "Bullshoot", result: "", picked: "", note: "" },
+];
 
 let sheet = loadSheet();
 syncVenueNameFromBracketDraft();
@@ -151,6 +158,7 @@ function normalizeSheet(value) {
     weekDates: normalizeWeekDates(value?.weekDates, total, normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput()),
     authUsername: String(value?.authUsername || ""),
     authPassword: String(value?.authPassword || ""),
+    eventTracker: normalizeEventTracker(value?.eventTracker),
     players,
   };
 }
@@ -185,6 +193,20 @@ function clampWeekCount(value, fallback, max = 52) {
 
 function saveSheet() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sheet));
+}
+
+function normalizeEventTracker(value) {
+  const sourceRows = Array.isArray(value) ? value : [];
+  return DEFAULT_EVENT_TRACKER.map((fallbackRow) => {
+    const row = sourceRows.find((entry) => String(entry?.id || "") === fallbackRow.id) || {};
+    return {
+      id: fallbackRow.id,
+      label: fallbackRow.label,
+      result: String(row.result || ""),
+      picked: String(row.picked || ""),
+      note: String(row.note || ""),
+    };
+  });
 }
 
 function normalizeWeekDates(value, weekCount, fallbackStart) {
@@ -401,6 +423,7 @@ function render() {
   renderWeekDateEditor();
   attendanceTable.style.setProperty("--week-count", String(sheet.totalWeeks));
   attendanceTable.innerHTML = renderTable();
+  renderGameTracker();
 }
 
 function renderWeekDateEditor() {
@@ -431,6 +454,34 @@ function updateDerivedOutputs() {
   rosterMeta.textContent = `${eligibleCount} of ${playerCount} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks. Dates: ${dateSpan}.`;
   facebookPost.value = buildFacebookPost();
   updateVenueAccessStatus();
+}
+
+function renderGameTracker() {
+  if (!gameTracker) {
+    return;
+  }
+
+  const rows = Array.isArray(sheet.eventTracker) ? sheet.eventTracker : normalizeEventTracker();
+  gameTracker.innerHTML = rows.map((row) => `
+    <article class="tracker-row" data-tracker-id="${escapeHtml(row.id)}">
+      <div class="tracker-cell">
+        <div class="tracker-label">Game</div>
+        <div class="tracker-name">${escapeHtml(row.label)}</div>
+      </div>
+      <label class="tracker-cell">
+        <span class="tracker-label">Result</span>
+        <input class="tracker-input" type="text" data-tracker-field="result" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.result)}" placeholder="Score or ticket">
+      </label>
+      <label class="tracker-cell">
+        <span class="tracker-label">Picked</span>
+        <input class="tracker-input" type="text" data-tracker-field="picked" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.picked)}" placeholder="Player name">
+      </label>
+      <label class="tracker-cell">
+        <span class="tracker-label">Notes</span>
+        <input class="tracker-input" type="text" data-tracker-field="note" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.note)}" placeholder="Optional notes">
+      </label>
+    </article>
+  `).join("");
 }
 
 function renderTable() {
@@ -559,6 +610,7 @@ function syncFromInputs() {
   sheet.eventName = eventName.value.trim();
   sheet.startSaturday = normalizeSaturdayInput(startSaturday?.value || "") || getDefaultSaturdayInput();
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
+  sheet.eventTracker = normalizeEventTracker(sheet.eventTracker);
   saveSheet();
   updateDerivedOutputs();
 }
@@ -576,6 +628,7 @@ totalWeeks.addEventListener("change", () => {
   }
   sheet.players = sheet.players.map((player, index) => normalizePlayer(player, sheet.totalWeeks, index));
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
+  sheet.eventTracker = normalizeEventTracker(sheet.eventTracker);
   saveSheet();
   render();
 });
@@ -594,6 +647,14 @@ if (syncBracketPlayersButton) {
     render();
   });
 }
+
+syncBracketGamesButton?.addEventListener("click", () => {
+  const synced = syncEventTrackerFromBracketDraft(true);
+  setStatus(synced
+    ? "Synced mystery out and bullshoot from the bracket portal."
+    : "No mystery out or bullshoot data found to sync.");
+  render();
+});
 
 saveVenueAccessCredentialsButton?.addEventListener("click", saveVenueAccessCredentials);
 clearVenueAccessCredentialsButton?.addEventListener("click", clearVenueAccessCredentials);
@@ -641,6 +702,30 @@ attendanceTable.addEventListener("input", (event) => {
     player.name = event.target.value;
   }
 
+  saveSheet();
+  updateDerivedOutputs();
+});
+
+gameTracker?.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-tracker-field]");
+  if (!input) {
+    return;
+  }
+
+  const trackerId = String(input.dataset.trackerId || "");
+  const field = String(input.dataset.trackerField || "");
+  if (!trackerId || !field) {
+    return;
+  }
+
+  const rows = Array.isArray(sheet.eventTracker) ? sheet.eventTracker : normalizeEventTracker();
+  const row = rows.find((entry) => entry.id === trackerId);
+  if (!row) {
+    return;
+  }
+
+  row[field] = input.value;
+  sheet.eventTracker = rows;
   saveSheet();
   updateDerivedOutputs();
 });
@@ -730,6 +815,7 @@ window.addEventListener("storage", (event) => {
   if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
     syncVenueNameFromBracketDraft(true);
     syncRosterFromBracketDraft(true);
+    syncEventTrackerFromBracketDraft(false);
     if (hasAttendanceAccess()) {
       showAttendanceApp();
       render();
@@ -883,8 +969,89 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
 
   sheet.players = nextPlayers;
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
+  sheet.eventTracker = normalizeEventTracker(sheet.eventTracker);
   saveSheet();
   return addedCount;
+}
+
+function syncEventTrackerFromBracketDraft(saveChanges = false) {
+  try {
+    const raw = localStorage.getItem(BRACKET_DRAFT_STORAGE_KEY);
+    if (!raw) {
+      return false;
+    }
+
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft !== "object") {
+      return false;
+    }
+
+    const nextRows = normalizeEventTracker(sheet.eventTracker);
+
+    const mysteryOutRow = nextRows.find((row) => row.id === "mysteryOut");
+    if (mysteryOutRow) {
+      mysteryOutRow.result = String(draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut.score || "" : draft?.mysteryOut || "");
+      mysteryOutRow.picked = getMysteryOutPickedName(draft);
+      mysteryOutRow.note = getMysteryOutNote(draft);
+    }
+
+    const bullshootRow = nextRows.find((row) => row.id === "bullshoot");
+    if (bullshootRow) {
+      const winner = draft?.bullseyeShoot?.winner && typeof draft.bullseyeShoot.winner === "object" ? draft.bullseyeShoot.winner : null;
+      bullshootRow.result = winner?.ticketLabel || "";
+      bullshootRow.picked = winner?.name || "";
+      bullshootRow.note = winner ? `Drawn ${winner.drawnAt ? formatTrackDate(winner.drawnAt) : "recently"}` : "";
+    }
+
+    sheet.eventTracker = nextRows;
+    if (saveChanges) {
+      saveSheet();
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getMysteryOutPickedName(draft) {
+  const target = Number(draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut.score : draft?.mysteryOut);
+  if (!Number.isFinite(target)) {
+    return "";
+  }
+
+  const rows = Array.isArray(draft?.outShots) ? draft.outShots : [];
+  const winners = rows
+    .filter((row) => Number(row?.number || row?.score) === target)
+    .map((row) => String(row?.player || "").trim())
+    .filter(Boolean);
+
+  if (!winners.length) {
+    return "";
+  }
+
+  return Array.from(new Set(winners)).join(", ");
+}
+
+function getMysteryOutNote(draft) {
+  const mode = String(draft?.mysteryOut?.mode || "");
+  if (!mode) {
+    return "";
+  }
+  return `Mode: ${mode}`;
+}
+
+function formatTrackDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function getBracketRosterNames() {

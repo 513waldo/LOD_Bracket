@@ -547,6 +547,59 @@ h3 {
   color: var(--gold);
 }
 
+.tracker-panel {
+  margin-top: 20px;
+}
+
+.tracker-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.tracker-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 0;
+  border: 1px solid rgba(18, 33, 39, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.tracker-cell {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-right: 1px solid rgba(18, 33, 39, 0.12);
+}
+
+.tracker-cell:last-child {
+  border-right: 0;
+}
+
+.tracker-label {
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+.tracker-name {
+  font-family: Rockwell, "Roboto Slab", Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.tracker-input {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
+.tracker-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .share-panel {
   margin-top: 20px;
 }
@@ -590,6 +643,19 @@ h3 {
 
   .roster-meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tracker-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tracker-cell {
+    border-right: 0;
+    border-bottom: 1px solid rgba(18, 33, 39, 0.12);
+  }
+
+  .tracker-cell:last-child {
+    border-bottom: 0;
   }
 }
 
