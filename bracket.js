@@ -381,8 +381,24 @@ playersPerGroup.addEventListener("change", () => {
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
   shrinkTotalPlayersToEnteredNames();
+  saveCurrentRosterBackup();
   queueBracketDraftSave();
 });
+
+function saveCurrentRosterBackup() {
+  const count = Math.max(
+    Number(totalPlayers.value) || 0,
+    Number(nameList?.querySelectorAll("[data-player-number]").length || 0),
+  );
+  const names = getPlayerNameMap();
+
+  if (!count || !Object.keys(names).length) {
+    showMessage("Enter some player names before updating the roster.");
+    return;
+  }
+
+  savePlayerNameBackup(count, names, getBarName());
+}
 
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
