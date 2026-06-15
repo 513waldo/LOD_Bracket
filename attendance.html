@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=26">
+  <link rel="stylesheet" href="attendance.css?v=27">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -85,10 +85,6 @@
             <input id="totalWeeks" type="number" min="1" max="52" value="12">
           </label>
           <label>
-            Weeks required
-            <input id="requiredWeeks" type="number" min="1" max="52" value="6">
-          </label>
-          <label>
             First Saturday
             <input id="startSaturday" type="date">
           </label>
@@ -155,7 +151,13 @@
         <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
         <div class="roster-meta-band">
           <div class="roster-meta-label">Eligibility rule</div>
-          <div id="rosterMeta" class="roster-meta"></div>
+          <div class="roster-meta-grid">
+            <label class="roster-rule-field">
+              Weeks required
+              <input id="requiredWeeks" type="number" min="1" max="52" value="6">
+            </label>
+            <div id="rosterMeta" class="roster-meta"></div>
+          </div>
         </div>
       </section>
     </section>

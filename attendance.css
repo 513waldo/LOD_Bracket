@@ -519,6 +519,26 @@ h3 {
   line-height: 1.5;
 }
 
+.roster-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+.roster-rule-field {
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.roster-rule-field input {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
 .roster-meta-label {
   font-size: 0.76rem;
   font-weight: 900;
@@ -566,6 +586,10 @@ h3 {
   .section-note {
     text-align: left;
     max-width: none;
+  }
+
+  .roster-meta-grid {
+    grid-template-columns: 1fr;
   }
 }
 
