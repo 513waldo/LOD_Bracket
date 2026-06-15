@@ -343,6 +343,8 @@ h3 {
   gap: 0;
   overflow-x: auto;
   --week-col-width: 68px;
+  width: max-content;
+  min-width: 100%;
   border: 1px solid rgba(18, 33, 39, 0.14);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.96);
@@ -351,7 +353,7 @@ h3 {
 .table-head,
 .player-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), minmax(0, var(--week-col-width))) 88px;
+  grid-template-columns: minmax(180px, 1fr) 110px 110px repeat(var(--week-count), var(--week-col-width)) 88px;
   gap: 0;
   align-items: center;
 }
@@ -391,6 +393,8 @@ h3 {
   align-content: center;
   gap: 2px;
   min-height: 48px;
+  width: 100%;
+  overflow: hidden;
   white-space: normal;
   line-height: 1;
 }
