@@ -606,8 +606,8 @@ h3 {
   width: max-content;
   min-width: 100%;
   --tracker-game-col: 220px;
-  --tracker-date-col: 130px;
-  --tracker-result-col: 160px;
+  --tracker-date-col: 160px;
+  --tracker-result-col: 170px;
   --tracker-picked-col: 190px;
   --tracker-notes-col: 240px;
 }
@@ -637,6 +637,7 @@ h3 {
 .tracker-cell {
   display: grid;
   gap: 8px;
+  min-width: 0;
   padding: 14px 16px;
   border-right: 1px solid rgba(18, 33, 39, 0.12);
   border-bottom: 1px solid rgba(18, 33, 39, 0.12);
@@ -664,6 +665,11 @@ h3 {
 .tracker-input {
   min-height: 46px;
   border-radius: 14px;
+}
+
+.tracker-input[type="date"] {
+  min-width: 0;
+  width: 100%;
 }
 
 .tracker-note {
@@ -719,8 +725,8 @@ h3 {
 
   .tracker-grid {
     --tracker-game-col: 170px;
-    --tracker-date-col: 118px;
-    --tracker-result-col: 150px;
+    --tracker-date-col: 140px;
+    --tracker-result-col: 160px;
     --tracker-picked-col: 170px;
     --tracker-notes-col: 220px;
   }
@@ -774,8 +780,8 @@ h3 {
 
   .tracker-grid {
     --tracker-game-col: 150px;
-    --tracker-date-col: 110px;
-    --tracker-result-col: 130px;
+    --tracker-date-col: 128px;
+    --tracker-result-col: 142px;
     --tracker-picked-col: 150px;
     --tracker-notes-col: 200px;
   }
