@@ -7415,7 +7415,6 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
 
 if (nameList) {
   const persistStepOneDraft = () => {
-    saveCurrentRosterBackup({ silent: true });
     saveBracketDraft();
     savePortalSnapshotToLocalStorage();
   };
@@ -7477,18 +7476,7 @@ function renderNameBackupPreview(index = readNameBackupIndex()) {
   const recent = index.slice().reverse().slice(0, 2);
   if (!recent.length) {
     nameBackupPreview.className = "backup-preview-list empty";
-    nameBackupPreview.innerHTML = `
-      <article class="backup-preview-item backup-preview-current">
-        <div>
-          <strong>Current roster draft</strong>
-          <span>Save the names you just typed, then merge them from here.</span>
-          <small>No saved roster backups yet.</small>
-        </div>
-        <div class="backup-item-actions">
-          <button class="secondary" type="button" onclick="saveCurrentRosterBackup()">Save roster</button>
-        </div>
-      </article>
-    `;
+    nameBackupPreview.textContent = "No player name backups yet.";
     return;
   }
 
