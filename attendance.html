@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=29">
+  <link rel="stylesheet" href="attendance.css?v=30">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -166,23 +166,15 @@
             <div id="rosterMeta" class="roster-meta"></div>
           </div>
         </div>
-      </section>
-    </section>
-
-    <section class="panel tracker-panel" id="games">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Games</p>
-          <h2>Bullshoot and Mystery Out</h2>
+        <div class="sheet-footer-title">
+          <div class="roster-meta-label">Games</div>
+          <p>Track mystery out and bullshoot without leaving the sheet.</p>
         </div>
-        <p>Track the draw and the picked player for each game.</p>
-      </div>
-
-      <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
-
-      <div class="action-row">
-        <button id="syncBracketGamesButton" type="button" class="secondary">Sync game tracker</button>
-      </div>
+        <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
+        <div class="action-row sheet-footer-actions">
+          <button id="syncBracketGamesButton" type="button" class="secondary">Sync game tracker</button>
+        </div>
+      </section>
     </section>
 
     <section class="panel share-panel" id="share">
@@ -223,6 +215,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=17"></script>
+  <script src="attendance.js?v=18"></script>
 </body>
 </html>

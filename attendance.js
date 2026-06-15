@@ -473,23 +473,23 @@ function renderGameTracker() {
     </div>
     ${rows.map((row) => `
       <article class="tracker-row" data-tracker-id="${escapeHtml(row.id)}">
-      <div class="tracker-cell">
-        <div class="tracker-label">Game</div>
-        <div class="tracker-name">${escapeHtml(row.label)}</div>
-      </div>
-      <label class="tracker-cell">
-        <span class="tracker-label">Result</span>
-        <input class="tracker-input" type="text" data-tracker-field="result" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.result)}" placeholder="Score or ticket">
-      </label>
-      <label class="tracker-cell">
-        <span class="tracker-label">Picked</span>
-        <input class="tracker-input" type="text" data-tracker-field="picked" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.picked)}" placeholder="Player name">
-      </label>
-      <label class="tracker-cell">
-        <span class="tracker-label">Notes</span>
-        <input class="tracker-input" type="text" data-tracker-field="note" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.note)}" placeholder="Optional notes">
-      </label>
-    </article>
+        <div class="tracker-cell">
+          <div class="tracker-label">Game</div>
+          <div class="tracker-name">${escapeHtml(row.label)}</div>
+        </div>
+        <label class="tracker-cell">
+          <span class="tracker-label">Result</span>
+          <input class="tracker-input" type="text" data-tracker-field="result" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.result)}" placeholder="Score or ticket">
+        </label>
+        <label class="tracker-cell">
+          <span class="tracker-label">Picked</span>
+          <input class="tracker-input" type="text" data-tracker-field="picked" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.picked)}" placeholder="Player name">
+        </label>
+        <label class="tracker-cell">
+          <span class="tracker-label">Notes</span>
+          <input class="tracker-input" type="text" data-tracker-field="note" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.note)}" placeholder="Optional notes">
+        </label>
+      </article>
     `).join("")}
   `;
 }

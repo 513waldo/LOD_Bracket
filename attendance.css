@@ -559,10 +559,6 @@ h3 {
   color: var(--gold);
 }
 
-.tracker-panel {
-  margin-top: 20px;
-}
-
 .tracker-grid {
   display: grid;
   gap: 0;
@@ -629,6 +625,26 @@ h3 {
   border-bottom: 0;
 }
 
+.sheet-footer-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 12px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(18, 33, 39, 0.12);
+}
+
+.sheet-footer-title p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.sheet-footer-actions {
+  margin-top: 12px;
+}
+
 .share-panel {
   margin-top: 20px;
 }
@@ -674,6 +690,7 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .tracker-head,
   .tracker-row {
     grid-template-columns: 1fr;
   }
@@ -689,6 +706,11 @@ h3 {
 
   .tracker-cell:last-child {
     border-bottom: 0;
+  }
+
+  .sheet-footer-title {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
