@@ -601,7 +601,7 @@ h3 {
 .tracker-head,
 .tracker-row {
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  grid-template-columns: minmax(160px, 220px) 140px minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr);
   gap: 0;
 }
 

@@ -49,13 +49,14 @@ const downloadJsonButton = document.querySelector("#downloadJsonButton");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
 
 const DEFAULT_EVENT_TRACKER = [
-  { id: "mysteryOut", label: "Mystery Out", result: "", picked: "", note: "" },
-  { id: "bullshoot", label: "Bullshoot", result: "", picked: "", note: "" },
+  { id: "mysteryOut", label: "Mystery Out", date: "", result: "", picked: "", note: "" },
+  { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
 
 let sheet = loadSheet();
 syncVenueNameFromBracketDraft();
 syncRosterFromBracketDraft(true);
+syncEventTrackerFromBracketDraft(true);
 
 if (unlockAttendanceButton) {
   unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
@@ -204,6 +205,7 @@ function normalizeEventTracker(value) {
     return {
       id: fallbackRow.id,
       label: fallbackRow.label,
+      date: normalizeAnyDateInput(row.date || ""),
       result: String(row.result || ""),
       picked: String(row.picked || ""),
       note: String(row.note || ""),
@@ -467,6 +469,7 @@ function renderGameTracker() {
   gameTracker.innerHTML = `
     <div class="tracker-head">
       <div class="tracker-head-cell">Game</div>
+      <div class="tracker-head-cell">Date</div>
       <div class="tracker-head-cell">Result</div>
       <div class="tracker-head-cell">Picked</div>
       <div class="tracker-head-cell">Notes</div>
@@ -477,6 +480,10 @@ function renderGameTracker() {
           <div class="tracker-label">Game</div>
           <div class="tracker-name">${escapeHtml(row.label)}</div>
         </div>
+        <label class="tracker-cell">
+          <span class="tracker-label">Date</span>
+          <input class="tracker-input" type="date" data-tracker-field="date" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(normalizeAnyDateInput(row.date || ""))}">
+        </label>
         <label class="tracker-cell">
           <span class="tracker-label">Result</span>
           <input class="tracker-input" type="text" data-tracker-field="result" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.result)}" placeholder="Score or ticket">
@@ -865,7 +872,7 @@ window.addEventListener("storage", (event) => {
   if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
     syncVenueNameFromBracketDraft(true);
     syncRosterFromBracketDraft(true);
-    syncEventTrackerFromBracketDraft(false);
+    syncEventTrackerFromBracketDraft(true);
     if (hasAttendanceAccess()) {
       showAttendanceApp();
       render();
@@ -1019,7 +1026,6 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
 
   sheet.players = nextPlayers;
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
-  sheet.eventTracker = normalizeEventTracker(sheet.eventTracker);
   saveSheet();
   return addedCount;
 }
@@ -1040,8 +1046,10 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
 
     const mysteryOutRow = nextRows.find((row) => row.id === "mysteryOut");
     if (mysteryOutRow) {
-      mysteryOutRow.result = String(draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut.score || "" : draft?.mysteryOut || "");
+      const mysteryOutValue = draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut : null;
+      mysteryOutRow.result = String(mysteryOutValue ? mysteryOutValue.score || "" : draft?.mysteryOut || "");
       mysteryOutRow.picked = getMysteryOutPickedName(draft);
+      mysteryOutRow.date = normalizeAnyDateInput(mysteryOutValue?.drawnAt || mysteryOutRow.date);
       mysteryOutRow.note = getMysteryOutNote(draft);
     }
 
@@ -1050,6 +1058,7 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       const winner = draft?.bullseyeShoot?.winner && typeof draft.bullseyeShoot.winner === "object" ? draft.bullseyeShoot.winner : null;
       bullshootRow.result = winner?.ticketLabel || "";
       bullshootRow.picked = winner?.name || "";
+      bullshootRow.date = normalizeAnyDateInput(winner?.drawnAt || bullshootRow.date);
       bullshootRow.note = winner ? `Drawn ${winner.drawnAt ? formatTrackDate(winner.drawnAt) : "recently"}` : "";
     }
 
@@ -1102,6 +1111,16 @@ function formatTrackDate(value) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function normalizeAnyDateInput(value) {
+  const text = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text;
+  }
+
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? "" : formatDateInputValue(date);
 }
 
 function normalizeRosterName(value) {
