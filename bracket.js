@@ -11,6 +11,7 @@ const paperBackup = document.querySelector("#paperBackup");
 const redrawWarning = document.querySelector("#redrawWarning");
 const teamDrawWarning = document.querySelector("#teamDrawWarning");
 const nameBackupList = document.querySelector("#nameBackupList");
+const nameBackupPreview = document.querySelector("#nameBackupPreview");
 const outShotSheet = document.querySelector("#outShotSheet");
 const d20Canvas = document.querySelector("#d20Canvas");
 const d20Context = d20Canvas ? d20Canvas.getContext("2d") : null;
@@ -7373,6 +7374,7 @@ function renderNameBackups() {
   }
 
   const index = readNameBackupIndex();
+  renderNameBackupPreview(index);
 
   if (!index.length) {
     nameBackupList.className = "backup-list empty";
@@ -7398,6 +7400,39 @@ function renderNameBackups() {
       </article>
     `;
   }).join("");
+}
+
+function renderNameBackupPreview(index = readNameBackupIndex()) {
+  if (!nameBackupPreview) {
+    return;
+  }
+
+  if (!canUseLocalStorage()) {
+    nameBackupPreview.className = "backup-preview-list empty";
+    nameBackupPreview.textContent = "Player name backups need browser storage.";
+    return;
+  }
+
+  const recent = index.slice().reverse().slice(0, 2);
+  if (!recent.length) {
+    nameBackupPreview.className = "backup-preview-list empty";
+    nameBackupPreview.textContent = "No player name backups yet.";
+    return;
+  }
+
+  nameBackupPreview.className = "backup-preview-list";
+  nameBackupPreview.innerHTML = recent.map((backup) => `
+    <article class="backup-preview-item">
+      <div>
+        <strong>${escapeHtml(backup.barName || "Unlabeled bar")}</strong>
+        <span>${escapeHtml(formatBackupTime(backup.createdAt))}</span>
+        <small>${backup.nameCount} saved name${backup.nameCount === 1 ? "" : "s"} for ${backup.playerCount} player slots</small>
+      </div>
+      <div class="backup-item-actions">
+        <button class="secondary" type="button" onclick="mergePlayerNameBackup('${escapeAttribute(backup.id)}')">Merge names</button>
+      </div>
+    </article>
+  `).join("");
 }
 
 function mergePlayerNameBackup(id) {
