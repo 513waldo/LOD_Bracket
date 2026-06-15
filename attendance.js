@@ -20,6 +20,7 @@ const eventName = document.querySelector("#eventName");
 const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
 const startSaturday = document.querySelector("#startSaturday");
+const weekDateEditor = document.querySelector("#weekDateEditor");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
@@ -147,6 +148,7 @@ function normalizeSheet(value) {
     totalWeeks: total,
     requiredWeeks: required,
     startSaturday: normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput(),
+    weekDates: normalizeWeekDates(value?.weekDates, total, normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput()),
     authUsername: String(value?.authUsername || ""),
     authPassword: String(value?.authPassword || ""),
     players,
@@ -185,6 +187,25 @@ function saveSheet() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sheet));
 }
 
+function normalizeWeekDates(value, weekCount, fallbackStart) {
+  const dates = Array.isArray(value) ? value.slice(0, weekCount).map(normalizeSaturdayInput) : [];
+
+  while (dates.length < weekCount) {
+    dates.push("");
+  }
+
+  const start = parseDateInputValue(fallbackStart) || parseDateInputValue(getDefaultSaturdayInput());
+  if (!dates.some(Boolean) && start) {
+    return Array.from({ length: weekCount }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(date.getDate() + (index * 7));
+      return formatDateInputValue(date);
+    });
+  }
+
+  return dates;
+}
+
 function normalizeSaturdayInput(value) {
   const text = String(value || "").trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
@@ -215,13 +236,19 @@ function parseDateInputValue(value) {
 }
 
 function getWeekDates() {
+  const customDates = Array.isArray(sheet.weekDates) ? sheet.weekDates : [];
   const start = parseDateInputValue(sheet.startSaturday) || parseDateInputValue(getDefaultSaturdayInput());
-  if (!start) {
+  if (!start && !customDates.some(Boolean)) {
     return [];
   }
 
   return Array.from({ length: sheet.totalWeeks }, (_, index) => {
-    const date = new Date(start);
+    const custom = parseDateInputValue(customDates[index]);
+    if (custom) {
+      return custom;
+    }
+
+    const date = new Date(start || parseDateInputValue(getDefaultSaturdayInput()));
     date.setDate(date.getDate() + (index * 7));
     return date;
   });
@@ -371,8 +398,27 @@ function render() {
   requiredWeeks.max = String(sheet.totalWeeks);
 
   updateDerivedOutputs();
+  renderWeekDateEditor();
   attendanceTable.style.setProperty("--week-count", String(sheet.totalWeeks));
   attendanceTable.innerHTML = renderTable();
+}
+
+function renderWeekDateEditor() {
+  if (!weekDateEditor) {
+    return;
+  }
+
+  const weekDates = getWeekDates();
+  weekDateEditor.innerHTML = weekDates.map((date, index) => `
+    <label class="week-date-field">
+      <span>Week ${index + 1}</span>
+      <input
+        type="date"
+        data-week-date-index="${index}"
+        value="${escapeAttribute(formatDateInputValue(date))}"
+      >
+    </label>
+  `).join("");
 }
 
 function updateDerivedOutputs() {
@@ -510,6 +556,7 @@ function syncFromInputs() {
   sheet.venueName = venueName.value.trim();
   sheet.eventName = eventName.value.trim();
   sheet.startSaturday = normalizeSaturdayInput(startSaturday?.value || "") || getDefaultSaturdayInput();
+  sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
   updateDerivedOutputs();
 }
@@ -526,6 +573,7 @@ totalWeeks.addEventListener("change", () => {
     sheet.requiredWeeks = sheet.totalWeeks;
   }
   sheet.players = sheet.players.map((player, index) => normalizePlayer(player, sheet.totalWeeks, index));
+  sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
   render();
 });
@@ -591,6 +639,30 @@ attendanceTable.addEventListener("input", (event) => {
     player.name = event.target.value;
   }
 
+  saveSheet();
+  updateDerivedOutputs();
+});
+
+weekDateEditor?.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-week-date-index]");
+  if (!input) {
+    return;
+  }
+
+  const index = Number(input.dataset.weekDateIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= sheet.totalWeeks) {
+    return;
+  }
+
+  if (!Array.isArray(sheet.weekDates)) {
+    sheet.weekDates = [];
+  }
+
+  while (sheet.weekDates.length < sheet.totalWeeks) {
+    sheet.weekDates.push("");
+  }
+
+  sheet.weekDates[index] = normalizeSaturdayInput(input.value);
   saveSheet();
   updateDerivedOutputs();
 });
@@ -808,6 +880,7 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   }
 
   sheet.players = nextPlayers;
+  sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
   return addedCount;
 }
