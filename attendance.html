@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=32">
+  <link rel="stylesheet" href="attendance.css?v=33">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -140,6 +140,17 @@
       </section>
 
       <section class="panel roster-panel">
+        <div class="roster-meta-band roster-meta-band-top">
+          <div class="roster-meta-label">Eligibility rule</div>
+          <div class="roster-meta-grid">
+            <label class="roster-rule-field">
+              Weeks required
+              <input id="requiredWeeks" type="number" min="1" max="52" value="6">
+            </label>
+            <div id="rosterMeta" class="roster-meta"></div>
+          </div>
+        </div>
+
         <div class="section-heading">
           <div>
             <p class="eyebrow">Attendance</p>
@@ -157,16 +168,6 @@
         </div>
         <div class="attendance-table-viewport">
           <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
-        </div>
-        <div class="roster-meta-band">
-          <div class="roster-meta-label">Eligibility rule</div>
-          <div class="roster-meta-grid">
-            <label class="roster-rule-field">
-              Weeks required
-              <input id="requiredWeeks" type="number" min="1" max="52" value="6">
-            </label>
-            <div id="rosterMeta" class="roster-meta"></div>
-          </div>
         </div>
 
         <section class="tracker-section" aria-labelledby="trackerTitle">
