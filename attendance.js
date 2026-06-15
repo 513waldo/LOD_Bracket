@@ -38,6 +38,8 @@ const gateMessage = document.querySelector("#gateMessage");
 const attendancePasswordInput = document.querySelector("#attendancePasswordInput");
 const unlockAttendanceButton = document.querySelector("#unlockAttendanceButton");
 const attendanceTable = document.querySelector("#attendanceTable");
+const manualPlayerName = document.querySelector("#manualPlayerName");
+const addManualPlayerButton = document.querySelector("#addManualPlayerButton");
 const rosterMeta = document.querySelector("#rosterMeta");
 const gameTracker = document.querySelector("#gameTracker");
 const facebookPost = document.querySelector("#facebookPost");
@@ -615,6 +617,39 @@ function syncFromInputs() {
   updateDerivedOutputs();
 }
 
+function addManualPlayerFromInput() {
+  const name = normalizeRosterName(manualPlayerName?.value || "");
+  if (!name) {
+    setStatus("Enter a player name first.");
+    return;
+  }
+
+  const key = normalizeRosterKey(name);
+  const exists = sheet.players.some((player) => normalizeRosterKey(player.name) === key);
+  if (exists) {
+    setStatus(`${name} is already on the sheet.`);
+    if (manualPlayerName) {
+      manualPlayerName.value = "";
+      manualPlayerName.focus();
+    }
+    return;
+  }
+
+  sheet.players.push(normalizePlayer({
+    id: `p-${Date.now()}-${sheet.players.length}`,
+    name,
+    weeks: Array.from({ length: sheet.totalWeeks }, () => false),
+  }, sheet.totalWeeks, sheet.players.length));
+  saveSheet();
+  render();
+
+  if (manualPlayerName) {
+    manualPlayerName.value = "";
+    manualPlayerName.focus();
+  }
+  setStatus(`Added ${name} to the attendance sheet.`);
+}
+
 venueName.addEventListener("input", syncFromInputs);
 eventName.addEventListener("input", syncFromInputs);
 startSaturday?.addEventListener("change", () => {
@@ -647,6 +682,13 @@ if (syncBracketPlayersButton) {
     render();
   });
 }
+
+addManualPlayerButton?.addEventListener("click", addManualPlayerFromInput);
+manualPlayerName?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    addManualPlayerFromInput();
+  }
+});
 
 syncBracketGamesButton?.addEventListener("click", () => {
   const synced = syncEventTrackerFromBracketDraft(true);
@@ -1052,6 +1094,14 @@ function formatTrackDate(value) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function normalizeRosterName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function normalizeRosterKey(value) {
+  return normalizeRosterName(value).toLowerCase();
 }
 
 function getBracketRosterNames() {

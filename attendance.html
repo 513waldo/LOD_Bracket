@@ -148,6 +148,13 @@
           <p>Mark a week as present for each player.</p>
         </div>
         <p class="roster-note">Same names merge, case-insensitive.</p>
+        <div class="manual-player-bar">
+          <label>
+            Add player
+            <input id="manualPlayerName" type="text" placeholder="Player name">
+          </label>
+          <button id="addManualPlayerButton" type="button">Add player</button>
+        </div>
         <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
         <div class="roster-meta-band">
           <div class="roster-meta-label">Eligibility rule</div>
@@ -216,6 +223,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=15"></script>
+  <script src="attendance.js?v=16"></script>
 </body>
 </html>

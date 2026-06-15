@@ -338,6 +338,18 @@ h3 {
   line-height: 1.5;
 }
 
+.manual-player-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.manual-player-bar button {
+  min-height: 46px;
+}
+
 .attendance-table {
   display: grid;
   gap: 0;
