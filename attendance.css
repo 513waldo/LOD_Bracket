@@ -502,16 +502,29 @@ h3 {
   margin: 0;
   color: var(--teal-deep);
   font-weight: 800;
+  font-size: 1rem;
 }
 
 .roster-meta-band {
-  padding: 14px 16px;
-  border: 1px solid rgba(18, 33, 39, 0.14);
+  display: grid;
+  gap: 8px;
+  padding: 18px 18px 20px;
+  border: 1px solid rgba(18, 33, 39, 0.16);
   border-top: 0;
-  background: rgba(241, 237, 227, 0.94);
+  background:
+    linear-gradient(90deg, rgba(215, 164, 70, 0.16), transparent 34%),
+    rgba(241, 237, 227, 0.96);
   color: var(--teal-deep);
   letter-spacing: 0.02em;
   line-height: 1.5;
+}
+
+.roster-meta-label {
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
 }
 
 .share-panel {
