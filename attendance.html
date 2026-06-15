@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=24">
+  <link rel="stylesheet" href="attendance.css?v=25">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -152,9 +152,10 @@
           <p>Mark a week as present for each player.</p>
         </div>
         <p class="roster-note">Same names merge, case-insensitive.</p>
-
-        <div id="rosterMeta" class="roster-meta"></div>
         <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
+        <div class="roster-meta-band">
+          <div id="rosterMeta" class="roster-meta"></div>
+        </div>
       </section>
     </section>
 
@@ -196,6 +197,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=13"></script>
+  <script src="attendance.js?v=14"></script>
 </body>
 </html>

@@ -426,7 +426,9 @@ function updateDerivedOutputs() {
   const firstDate = weekDates[0] ? formatWeekDateLabel(weekDates[0]) : "";
   const lastDate = weekDates[weekDates.length - 1] ? formatWeekDateLabel(weekDates[weekDates.length - 1]) : "";
   const dateSpan = firstDate && lastDate ? `${firstDate} to ${lastDate}` : firstDate || lastDate || "Dates not set";
-  rosterMeta.textContent = `${sheet.venueName || "Venue"} · ${sheet.eventName || "Attendance Sheet"} · ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks required · ${dateSpan}`;
+  const eligibleCount = getEligiblePlayers().length;
+  const playerCount = sheet.players.length;
+  rosterMeta.textContent = `${eligibleCount} of ${playerCount} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks. Dates: ${dateSpan}.`;
   facebookPost.value = buildFacebookPost();
   updateVenueAccessStatus();
 }
