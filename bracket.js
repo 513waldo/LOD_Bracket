@@ -381,10 +381,15 @@ playersPerGroup.addEventListener("change", () => {
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
   shrinkTotalPlayersToEnteredNames();
+  saveCurrentRosterBackup();
   queueBracketDraftSave();
 });
 
 saveRosterBackupButton?.addEventListener("click", () => {
+  saveCurrentRosterBackup();
+});
+
+function saveCurrentRosterBackup() {
   const count = Math.max(
     Number(totalPlayers.value) || 0,
     Number(nameList?.querySelectorAll("[data-player-number]").length || 0),
@@ -398,7 +403,7 @@ saveRosterBackupButton?.addEventListener("click", () => {
 
   savePlayerNameBackup(count, names, getBarName());
   showMessage(`Saved a roster backup for ${getBarName() || "this bar"}.`);
-});
+}
 
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
