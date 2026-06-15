@@ -406,12 +406,15 @@ h3 {
   font-weight: 800;
 }
 
-.table-head .head-cell:nth-child(n + 3):not(:last-child),
 .player-row .player-cell:nth-child(n + 3):not(:last-child) {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px 4px;
+}
+
+.table-head .head-cell.week-head {
+  display: grid;
 }
 
 .player-row {
