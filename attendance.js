@@ -107,15 +107,25 @@ function syncVenueNameFromBracketDraft(saveChanges = false) {
 
     const draft = JSON.parse(raw);
     const barName = String(draft?.barName || "").trim();
-    if (!barName || sheet.venueName === barName) {
-      return false;
+    let changed = false;
+
+    if (barName && sheet.venueName !== barName) {
+      sheet.venueName = barName;
+      changed = true;
     }
 
-    sheet.venueName = barName;
-    if (saveChanges) {
+    if (typeof draft?.eventDate === "string") {
+      const nextEventDate = normalizeAnyDateInput(draft.eventDate);
+      if (sheet.eventDate !== nextEventDate) {
+        sheet.eventDate = nextEventDate;
+        changed = true;
+      }
+    }
+
+    if (changed && saveChanges) {
       saveSheet();
     }
-    return true;
+    return changed;
   } catch {
     return false;
   }
@@ -159,6 +169,7 @@ function normalizeSheet(value) {
   return {
     venueName: String(value?.venueName || DEMO.venueName),
     eventName: String(value?.eventName || DEMO.eventName),
+    eventDate: String(value?.eventDate || ""),
     totalWeeks: total,
     requiredWeeks: required,
     startSaturday: normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput(),
@@ -494,9 +505,10 @@ function updateDerivedOutputs() {
   const firstDate = weekDates[0] ? formatWeekDateLabel(weekDates[0]) : "";
   const lastDate = weekDates[weekDates.length - 1] ? formatWeekDateLabel(weekDates[weekDates.length - 1]) : "";
   const dateSpan = firstDate && lastDate ? `${firstDate} to ${lastDate}` : firstDate || lastDate || "Dates not set";
+  const eventDateText = sheet.eventDate ? formatDateDisplay(sheet.eventDate) : "";
   const eligibleCount = getEligiblePlayers().length;
   const playerCount = sheet.players.length;
-  rosterMeta.textContent = `${eligibleCount} of ${playerCount} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks. Dates: ${dateSpan}.`;
+  rosterMeta.textContent = `${eligibleCount} of ${playerCount} players currently meet the requirement of ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks. Dates: ${dateSpan}.${eventDateText ? ` Tournament date: ${eventDateText}.` : ""}`;
   facebookPost.value = buildFacebookPost();
   updateVenueAccessStatus();
 }
@@ -658,6 +670,9 @@ function buildFacebookPost(mode = getShareMode()) {
   lines.push(`${sheet.eventName || "Appreciation Tournament"}`);
   if (sheet.venueName) {
     lines.push(`Venue: ${sheet.venueName}`);
+  }
+  if (sheet.eventDate) {
+    lines.push(`Tournament date: ${formatDateDisplay(sheet.eventDate)}`);
   }
   lines.push(`Attendance rule: ${sheet.requiredWeeks} of ${sheet.totalWeeks} weeks`);
   const weekDates = getWeekDates();
@@ -1140,7 +1155,7 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       const mysteryOutValue = eventSource?.mysteryOut && typeof eventSource.mysteryOut === "object" ? eventSource.mysteryOut : null;
       mysteryOutRow.result = String(mysteryOutValue ? mysteryOutValue.score || "" : eventSource?.mysteryOut || "");
       mysteryOutRow.picked = getMysteryOutPickedName(eventSource);
-      mysteryOutRow.date = normalizeAnyDateInput(mysteryOutValue?.drawnAt || mysteryOutRow.date);
+      mysteryOutRow.date = normalizeAnyDateInput(mysteryOutValue?.drawnAt || eventSource?.eventDate || mysteryOutRow.date);
       mysteryOutRow.note = getMysteryOutNote(eventSource);
       pushTrackerHistoryEntry(historyEntries, mysteryOutRow);
     }
@@ -1150,7 +1165,7 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       const winner = eventSource?.bullseyeShoot?.winner && typeof eventSource.bullseyeShoot.winner === "object" ? eventSource.bullseyeShoot.winner : null;
       bullshootRow.result = getBullshootRollText(eventSource);
       bullshootRow.picked = winner?.name || "";
-      bullshootRow.date = normalizeAnyDateInput(winner?.drawnAt || bullshootRow.date);
+      bullshootRow.date = normalizeAnyDateInput(winner?.drawnAt || eventSource?.eventDate || bullshootRow.date);
       bullshootRow.note = winner?.ticketLabel ? `Ticket ${winner.ticketLabel}` : "";
       pushTrackerHistoryEntry(historyEntries, bullshootRow);
     }

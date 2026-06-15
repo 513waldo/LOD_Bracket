@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-186">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-187">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -54,6 +54,14 @@
               Bar name
               <input id="barName" type="text" autocomplete="organization" placeholder="">
             </label>
+
+            <div class="setup-date-row setup-full-span">
+              <label>
+                Tournament date
+                <input id="eventDate" type="date">
+              </label>
+              <button id="generateEventDate" class="secondary" type="button">Generate date</button>
+            </div>
           </div>
 
           <section class="name-editor" aria-labelledby="namesTitle">
@@ -61,6 +69,7 @@
               <h3 id="namesTitle">Player names</h3>
               <div class="name-editor-actions">
                 <button id="refreshNames" class="secondary" type="button">Update list</button>
+                <button id="saveRosterBackup" class="secondary" type="button">Save roster</button>
               </div>
             </div>
             <p class="name-dedupe-note">Same names merge, case-insensitive.</p>
@@ -491,6 +500,6 @@
   <script src="qr.js?v=11"></script>
   <script src="attendance-auth.js?v=2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-282"></script>
+  <script src="bracket.js?v=interactive-tools-283"></script>
 </body>
 </html>

@@ -62,6 +62,9 @@ const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet")
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const barNameInput = document.querySelector("#barName");
+const eventDateInput = document.querySelector("#eventDate");
+const generateEventDateButton = document.querySelector("#generateEventDate");
+const saveRosterBackupButton = document.querySelector("#saveRosterBackup");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
@@ -381,6 +384,22 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
   queueBracketDraftSave();
 });
 
+saveRosterBackupButton?.addEventListener("click", () => {
+  const count = Math.max(
+    Number(totalPlayers.value) || 0,
+    Number(nameList?.querySelectorAll("[data-player-number]").length || 0),
+  );
+  const names = getPlayerNameMap();
+
+  if (!count || !Object.keys(names).length) {
+    showMessage("Enter some player names before saving a roster backup.");
+    return;
+  }
+
+  savePlayerNameBackup(count, names, getBarName());
+  showMessage(`Saved a roster backup for ${getBarName() || "this bar"}.`);
+});
+
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
     renderPdfColumnMirror(Number(pdfLayoutSelect.value));
@@ -451,8 +470,22 @@ function generateNewPortalCode({ silent = false } = {}) {
   }
 }
 
+function generateTournamentDate() {
+  if (!eventDateInput) {
+    return;
+  }
+
+  eventDateInput.value = getGeneratedTournamentDateInput();
+  queueBracketDraftSave();
+  showMessage("Tournament date generated.");
+}
+
 newLodCodeButton?.addEventListener("click", generateNewPortalCode);
 window.generateNewPortalCode = generateNewPortalCode;
+
+generateEventDateButton?.addEventListener("click", generateTournamentDate);
+eventDateInput?.addEventListener("input", queueBracketDraftSave);
+eventDateInput?.addEventListener("change", queueBracketDraftSave);
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -5503,6 +5536,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
     barName: getBarName(),
+    eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
     playerList: playerList?.value || "",
     nameMap: getPlayerNameMap(),
     currentTeams,
@@ -5779,6 +5813,10 @@ function restoreBracketDraft() {
 
   if (typeof draft.playerList === "string") {
     playerList.value = draft.playerList;
+  }
+
+  if (typeof draft.eventDate === "string" && eventDateInput) {
+    eventDateInput.value = normalizeDateInputValue(draft.eventDate);
   }
 
   if (Array.isArray(draft.currentTeams) && draft.currentTeams.length) {
@@ -6103,6 +6141,7 @@ function buildBracketDraft() {
     totalPlayers: Number(totalPlayers.value) || 0,
     playersPerGroup: Number(playersPerGroup.value) || 0,
     barName: getBarName(),
+    eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
     playerList: playerList.value || "",
     nameMap: getPlayerNameMap(),
     currentTeams,
@@ -6878,6 +6917,7 @@ function normalizeAdminMirrorSnapshot(data) {
     totalPlayers: Math.max(0, Math.floor(Number(data.totalPlayers) || 0)),
     playersPerGroup: Math.max(0, Math.floor(Number(data.playersPerGroup) || 0)),
     barName: String(data.barName || ""),
+    eventDate: normalizeDateInputValue(data.eventDate || ""),
     playerList: String(data.playerList || ""),
     nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
     currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
@@ -6931,6 +6971,9 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
   if (snapshot.barName !== undefined && barNameInput) {
     barNameInput.value = String(snapshot.barName || "");
+  }
+  if (snapshot.eventDate !== undefined && eventDateInput) {
+    eventDateInput.value = normalizeDateInputValue(snapshot.eventDate);
   }
   renderNameInputs(Number(totalPlayers.value));
   lastSyncedPlayerCount = Number(totalPlayers.value) || 0;
@@ -7737,6 +7780,25 @@ function generateLodCode() {
   }
 
   return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}
+
+function getGeneratedTournamentDateInput() {
+  const today = new Date();
+  const offset = (6 - today.getDay() + 7) % 7;
+  const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset, 12, 0, 0, 0);
+  return formatDateInputValue(date);
+}
+
+function formatDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeDateInputValue(value) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
 }
 
 function normalizeLodCode(value) {
