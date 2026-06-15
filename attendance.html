@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=30">
+  <link rel="stylesheet" href="attendance.css?v=31">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -155,7 +155,9 @@
           </label>
           <button id="addManualPlayerButton" type="button">Add player</button>
         </div>
-        <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
+        <div class="attendance-table-viewport">
+          <div id="attendanceTable" class="attendance-table" aria-live="polite"></div>
+        </div>
         <div class="roster-meta-band">
           <div class="roster-meta-label">Eligibility rule</div>
           <div class="roster-meta-grid">
@@ -165,14 +167,6 @@
             </label>
             <div id="rosterMeta" class="roster-meta"></div>
           </div>
-        </div>
-        <div class="sheet-footer-title">
-          <div class="roster-meta-label">Games</div>
-          <p>Track mystery out and bullshoot without leaving the sheet.</p>
-        </div>
-        <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
-        <div class="action-row sheet-footer-actions">
-          <button id="syncBracketGamesButton" type="button" class="secondary">Sync game tracker</button>
         </div>
       </section>
     </section>
