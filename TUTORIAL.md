@@ -4,9 +4,9 @@ This is the practical, high-level way to use the site.
 
 ## What The Pages Do
 
-- `bracket.html` is the director/admin portal.
-- `portal.html` is the player-facing portal opened from the QR code.
-- `attendance.html` is the director-only attendance sheet.
+- Admin portal: `https://513waldo.github.io/LOD_Bracket/bracket.html`
+- Player portal: `portal.html` opened from the QR code
+- Attendance sheet: `attendance.html` for directors only
 
 ## Start A Tournament
 
