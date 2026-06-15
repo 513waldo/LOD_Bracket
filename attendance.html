@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=36">
+  <link rel="stylesheet" href="attendance.css?v=37">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -178,7 +178,9 @@
             </div>
             <p>Dates fill in automatically when the draw stops. You can still edit them manually.</p>
           </div>
-          <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
+          <div class="tracker-viewport">
+            <div id="gameTracker" class="tracker-grid" aria-live="polite"></div>
+          </div>
           <div class="action-row sheet-footer-actions">
             <button id="syncBracketGamesButton" type="button" class="secondary">Sync from bracket data</button>
           </div>
