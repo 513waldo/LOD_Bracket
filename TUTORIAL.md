@@ -14,6 +14,7 @@ This is the practical, high-level way to use the site.
 - Enter the total player count.
 - Enter the players per group.
 - Fill in the player names in Step 1.
+- Use the actual number of players that are playing, then click `Update list` when the names are entered.
 - Enter the bar name.
 - Set or generate the tournament date.
 - Click `Update list` if you want the current roster backup saved.
