@@ -591,6 +591,14 @@ h3 {
   margin-top: 12px;
 }
 
+.tracker-history-title {
+  margin-top: 18px;
+}
+
+.tracker-history-viewport {
+  margin-top: 12px;
+}
+
 .tracker-viewport {
   overflow-x: auto;
   overflow-y: hidden;
@@ -670,6 +678,22 @@ h3 {
 .tracker-input[type="date"] {
   min-width: 0;
   width: 100%;
+}
+
+.tracker-history-grid {
+  --tracker-game-col: 220px;
+  --tracker-date-col: 140px;
+  --tracker-result-col: 170px;
+  --tracker-picked-col: 190px;
+  --tracker-notes-col: 240px;
+}
+
+.tracker-history-value {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .tracker-note {

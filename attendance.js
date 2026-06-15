@@ -42,6 +42,7 @@ const manualPlayerName = document.querySelector("#manualPlayerName");
 const addManualPlayerButton = document.querySelector("#addManualPlayerButton");
 const rosterMeta = document.querySelector("#rosterMeta");
 const gameTracker = document.querySelector("#gameTracker");
+const gameHistory = document.querySelector("#gameHistory");
 const facebookPost = document.querySelector("#facebookPost");
 const copyPostButton = document.querySelector("#copyPostButton");
 const openFacebookButton = document.querySelector("#openFacebookButton");
@@ -52,6 +53,7 @@ const DEFAULT_EVENT_TRACKER = [
   { id: "mysteryOut", label: "Mystery Out", date: "", result: "", picked: "", note: "" },
   { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
+const DEFAULT_EVENT_HISTORY = [];
 
 let sheet = loadSheet();
 syncVenueNameFromBracketDraft();
@@ -162,6 +164,7 @@ function normalizeSheet(value) {
     authUsername: String(value?.authUsername || ""),
     authPassword: String(value?.authPassword || ""),
     eventTracker: normalizeEventTracker(value?.eventTracker),
+    eventHistory: normalizeEventHistory(value?.eventHistory),
     players,
   };
 }
@@ -211,6 +214,41 @@ function normalizeEventTracker(value) {
       note: String(row.note || ""),
     };
   });
+}
+
+function normalizeEventHistory(value) {
+  const sourceRows = Array.isArray(value) ? value : DEFAULT_EVENT_HISTORY;
+  return sourceRows
+    .map((row) => normalizeTrackerHistoryRow(row))
+    .filter(Boolean);
+}
+
+function normalizeTrackerHistoryRow(row) {
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+
+  const label = String(row.label || row.game || "").trim();
+  const date = normalizeAnyDateInput(row.date || "");
+  const result = String(row.result || "");
+  const picked = String(row.picked || "");
+  const note = String(row.note || "");
+  const recordedAt = normalizeIsoDateTimeInput(row.recordedAt || row.createdAt || row.stamp || "");
+  const id = String(row.id || row.eventId || `${label}-${date || recordedAt || Date.now()}`).trim();
+
+  if (!label && !date && !result && !picked && !note) {
+    return null;
+  }
+
+  return {
+    id,
+    label,
+    date,
+    result,
+    picked,
+    note,
+    recordedAt,
+  };
 }
 
 function normalizeWeekDates(value, weekCount, fallbackStart) {
@@ -428,6 +466,7 @@ function render() {
   attendanceTable.style.setProperty("--week-count", String(sheet.totalWeeks));
   attendanceTable.innerHTML = renderTable();
   renderGameTracker();
+  renderGameHistory();
 }
 
 function renderWeekDateEditor() {
@@ -496,6 +535,52 @@ function renderGameTracker() {
           <span class="tracker-label">Notes</span>
           <input class="tracker-input" type="text" data-tracker-field="note" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.note)}" placeholder="Optional notes">
         </label>
+      </article>
+    `).join("")}
+  `;
+}
+
+function renderGameHistory() {
+  if (!gameHistory) {
+    return;
+  }
+
+  const rows = Array.isArray(sheet.eventHistory) ? [...sheet.eventHistory].reverse() : normalizeEventHistory().reverse();
+  if (!rows.length) {
+    gameHistory.innerHTML = `<p class="empty-state">No draw history yet.</p>`;
+    return;
+  }
+
+  gameHistory.innerHTML = `
+    <div class="tracker-head">
+      <div class="tracker-head-cell">Game</div>
+      <div class="tracker-head-cell">Date</div>
+      <div class="tracker-head-cell">Result</div>
+      <div class="tracker-head-cell">Picked</div>
+      <div class="tracker-head-cell">Notes</div>
+    </div>
+    ${rows.map((row) => `
+      <article class="tracker-row tracker-history-row">
+        <div class="tracker-cell">
+          <div class="tracker-label">Game</div>
+          <div class="tracker-name">${escapeHtml(row.label)}</div>
+        </div>
+        <div class="tracker-cell">
+          <div class="tracker-label">Date</div>
+          <div class="tracker-history-value">${escapeHtml(formatDateDisplay(row.date || row.recordedAt))}</div>
+        </div>
+        <div class="tracker-cell">
+          <div class="tracker-label">Result</div>
+          <div class="tracker-history-value">${escapeHtml(row.result || "")}</div>
+        </div>
+        <div class="tracker-cell">
+          <div class="tracker-label">Picked</div>
+          <div class="tracker-history-value">${escapeHtml(row.picked || "")}</div>
+        </div>
+        <div class="tracker-cell">
+          <div class="tracker-label">Notes</div>
+          <div class="tracker-history-value">${escapeHtml(row.note || "")}</div>
+        </div>
       </article>
     `).join("")}
   `;
@@ -1044,6 +1129,8 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
 
     const nextRows = normalizeEventTracker(sheet.eventTracker);
 
+    const historyEntries = [];
+
     const mysteryOutRow = nextRows.find((row) => row.id === "mysteryOut");
     if (mysteryOutRow) {
       const mysteryOutValue = draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut : null;
@@ -1051,6 +1138,7 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       mysteryOutRow.picked = getMysteryOutPickedName(draft);
       mysteryOutRow.date = normalizeAnyDateInput(mysteryOutValue?.drawnAt || mysteryOutRow.date);
       mysteryOutRow.note = getMysteryOutNote(draft);
+      pushTrackerHistoryEntry(historyEntries, mysteryOutRow);
     }
 
     const bullshootRow = nextRows.find((row) => row.id === "bullshoot");
@@ -1060,9 +1148,13 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       bullshootRow.picked = winner?.name || "";
       bullshootRow.date = normalizeAnyDateInput(winner?.drawnAt || bullshootRow.date);
       bullshootRow.note = winner ? `Drawn ${winner.drawnAt ? formatTrackDate(winner.drawnAt) : "recently"}` : "";
+      pushTrackerHistoryEntry(historyEntries, bullshootRow);
     }
 
     sheet.eventTracker = nextRows;
+    if (historyEntries.length) {
+      appendTrackerHistory(historyEntries);
+    }
     if (saveChanges) {
       saveSheet();
     }
@@ -1099,6 +1191,50 @@ function getMysteryOutNote(draft) {
   return `Mode: ${mode}`;
 }
 
+function pushTrackerHistoryEntry(target, row) {
+  if (!row) {
+    return;
+  }
+
+  const date = normalizeAnyDateInput(row.date || "");
+  const result = String(row.result || "").trim();
+  const picked = String(row.picked || "").trim();
+  const note = String(row.note || "").trim();
+  if (!date && !result && !picked && !note) {
+    return;
+  }
+
+  target.push({
+    id: `${row.id || row.label || "entry"}-${date || Date.now()}`,
+    label: String(row.label || row.id || "Tracker"),
+    date,
+    result,
+    picked,
+    note,
+    recordedAt: new Date().toISOString(),
+  });
+}
+
+function appendTrackerHistory(entries) {
+  const history = Array.isArray(sheet.eventHistory) ? sheet.eventHistory.slice() : [];
+  entries.forEach((entry) => {
+    const normalized = normalizeTrackerHistoryRow(entry);
+    if (!normalized) {
+      return;
+    }
+
+    const key = getTrackerHistorySignature(normalized);
+    const lastEntry = [...history].reverse().find((row) => row.label === normalized.label);
+    if (lastEntry && getTrackerHistorySignature(lastEntry) === key) {
+      return;
+    }
+
+    history.push(normalized);
+  });
+
+  sheet.eventHistory = history;
+}
+
 function formatTrackDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -1113,6 +1249,29 @@ function formatTrackDate(value) {
   }).format(date);
 }
 
+function formatDateDisplay(value) {
+  const text = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const date = parseDateInputValue(text);
+    return date ? new Intl.DateTimeFormat("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+    }).format(date) : "";
+  }
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 function normalizeAnyDateInput(value) {
   const text = String(value || "").trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
@@ -1121,6 +1280,26 @@ function normalizeAnyDateInput(value) {
 
   const date = new Date(text);
   return Number.isNaN(date.getTime()) ? "" : formatDateInputValue(date);
+}
+
+function normalizeIsoDateTimeInput(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
+function getTrackerHistorySignature(row) {
+  return [
+    String(row.label || ""),
+    String(row.date || ""),
+    String(row.result || ""),
+    String(row.picked || ""),
+    String(row.note || ""),
+  ].join("|");
 }
 
 function normalizeRosterName(value) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=38">
+  <link rel="stylesheet" href="attendance.css?v=39">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -184,6 +184,13 @@
           <div class="action-row sheet-footer-actions">
             <button id="syncBracketGamesButton" type="button" class="secondary">Sync from bracket data</button>
           </div>
+          <div class="sheet-footer-title tracker-history-title">
+            <div class="roster-meta-label">Tracker history</div>
+            <p>Recent draws stay here so past Mystery Out and Bullshoot results are easy to review.</p>
+          </div>
+          <div class="tracker-viewport tracker-history-viewport">
+            <div id="gameHistory" class="tracker-grid tracker-history-grid" aria-live="polite"></div>
+          </div>
         </section>
       </section>
     </section>
@@ -226,6 +233,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=19"></script>
+  <script src="attendance.js?v=20"></script>
 </body>
 </html>
