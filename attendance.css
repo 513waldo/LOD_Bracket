@@ -355,7 +355,7 @@ h3 {
   --status-col-width: 110px;
   --remove-col-width: 88px;
   --week-col-width: 68px;
-  --visible-week-count: 5;
+  --visible-week-count: 12;
   overflow-x: auto;
   overflow-y: hidden;
   width: min(
