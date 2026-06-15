@@ -2,6 +2,7 @@
 
 Tournament bracket builder, player portal, out shots, and tools.
 
+For a how-to guide, see [TUTORIAL.md](TUTORIAL.md).
 For a high-level history of how the site evolved, see [REVISION_HISTORY.md](REVISION_HISTORY.md).
 
 ## GitHub Pages
