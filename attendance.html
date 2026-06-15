@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=39">
+  <link rel="stylesheet" href="attendance.css?v=40">
 </head>
 <body>
   <div id="attendanceGate" class="attendance-gate">
@@ -36,6 +36,7 @@
         <h1 id="attendanceTitle">Attendance Sheet</h1>
         <p class="hero-text">Track attendance, set the venue rule, and publish the roster when needed.</p>
         <p class="hero-note">Director portal only. Pull the player list straight from the bracket portal when needed.</p>
+        <p class="hero-note">Tournament date is shared from the bracket portal so Mystery Out and Bullshoot stay in sync.</p>
         <div class="hero-actions">
           <a class="button-link" href="#sheet">Open sheet</a>
           <a class="button-link secondary-link" href="#share">Facebook post</a>
@@ -159,6 +160,7 @@
           <p>Mark a week as present for each player.</p>
         </div>
         <p class="roster-note">Same names merge, case-insensitive.</p>
+        <p class="roster-note roster-note-tight">Roster backups are shared across this tournament code.</p>
         <div class="manual-player-bar">
           <label>
             Add player
@@ -233,6 +235,6 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance.js?v=24"></script>
+  <script src="attendance.js?v=25"></script>
 </body>
 </html>

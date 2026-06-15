@@ -338,6 +338,13 @@ h3 {
   line-height: 1.5;
 }
 
+.roster-note-tight {
+  margin-top: -10px;
+  margin-bottom: 16px;
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
 .manual-player-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -348,6 +355,21 @@ h3 {
 
 .manual-player-bar button {
   min-height: 46px;
+}
+
+.name-backup-preview,
+.name-backup-history {
+  border-radius: 12px;
+}
+
+.name-backup-preview {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.name-backup-history {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(18, 33, 39, 0.10);
 }
 
 .attendance-table-viewport {

@@ -63,6 +63,7 @@ const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const barNameInput = document.querySelector("#barName");
 const eventDateInput = document.querySelector("#eventDate");
+const eventDateStatus = document.querySelector("#eventDateStatus");
 const generateEventDateButton = document.querySelector("#generateEventDate");
 const saveRosterBackupButton = document.querySelector("#saveRosterBackup");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
@@ -481,6 +482,7 @@ function generateTournamentDate() {
   }
 
   eventDateInput.value = getGeneratedTournamentDateInput();
+  updateEventDateStatus();
   queueBracketDraftSave();
   showMessage("Tournament date generated.");
 }
@@ -489,8 +491,14 @@ newLodCodeButton?.addEventListener("click", generateNewPortalCode);
 window.generateNewPortalCode = generateNewPortalCode;
 
 generateEventDateButton?.addEventListener("click", generateTournamentDate);
-eventDateInput?.addEventListener("input", queueBracketDraftSave);
-eventDateInput?.addEventListener("change", queueBracketDraftSave);
+eventDateInput?.addEventListener("input", () => {
+  updateEventDateStatus();
+  queueBracketDraftSave();
+});
+eventDateInput?.addEventListener("change", () => {
+  updateEventDateStatus();
+  queueBracketDraftSave();
+});
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -5822,6 +5830,7 @@ function restoreBracketDraft() {
 
   if (typeof draft.eventDate === "string" && eventDateInput) {
     eventDateInput.value = normalizeDateInputValue(draft.eventDate);
+    updateEventDateStatus();
   }
 
   if (Array.isArray(draft.currentTeams) && draft.currentTeams.length) {
@@ -6979,6 +6988,7 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
   if (snapshot.eventDate !== undefined && eventDateInput) {
     eventDateInput.value = normalizeDateInputValue(snapshot.eventDate);
+    updateEventDateStatus();
   }
   renderNameInputs(Number(totalPlayers.value));
   lastSyncedPlayerCount = Number(totalPlayers.value) || 0;
@@ -7804,6 +7814,17 @@ function formatDateInputValue(date) {
 function normalizeDateInputValue(value) {
   const text = String(value || "").trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
+function updateEventDateStatus() {
+  if (!eventDateStatus) {
+    return;
+  }
+
+  const value = normalizeDateInputValue(eventDateInput?.value || "");
+  eventDateStatus.textContent = value
+    ? `Tournament date set to ${value}. This is shared with the attendance sheet.`
+    : "No tournament date set yet.";
 }
 
 function normalizeLodCode(value) {
