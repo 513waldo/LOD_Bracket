@@ -342,7 +342,7 @@ h3 {
   display: grid;
   gap: 0;
   overflow-x: auto;
-  --week-col-width: 56px;
+  --week-col-width: 68px;
   border: 1px solid rgba(18, 33, 39, 0.14);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.96);
@@ -390,7 +390,7 @@ h3 {
   justify-items: center;
   align-content: center;
   gap: 2px;
-  min-height: 42px;
+  min-height: 48px;
   white-space: normal;
   line-height: 1;
 }
@@ -435,11 +435,11 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
-  min-width: 38px;
-  flex: 0 0 38px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  min-width: 32px;
+  flex: 0 0 32px;
   border-radius: 8px;
   border: 1px solid rgba(18, 33, 39, 0.14);
   background: #fff;
@@ -561,11 +561,11 @@ h3 {
 
   .table-head,
   .player-row {
-    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 48px) 72px;
+    grid-template-columns: minmax(150px, 1fr) 92px 92px repeat(var(--week-count), 60px) 72px;
   }
 
   .week-head {
-    min-height: 44px;
+    min-height: 46px;
     gap: 1px;
   }
 
@@ -578,10 +578,10 @@ h3 {
   }
 
   .week-toggle {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
-    flex-basis: 34px;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    flex-basis: 30px;
   }
 }
