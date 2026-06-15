@@ -390,7 +390,7 @@ saveRosterBackupButton?.addEventListener("click", () => {
   saveCurrentRosterBackup();
 });
 
-function saveCurrentRosterBackup() {
+function saveCurrentRosterBackup({ silent = false } = {}) {
   const count = Math.max(
     Number(totalPlayers.value) || 0,
     Number(nameList?.querySelectorAll("[data-player-number]").length || 0),
@@ -403,7 +403,9 @@ function saveCurrentRosterBackup() {
   }
 
   savePlayerNameBackup(count, names, getBarName());
-  showMessage(`Saved a roster backup for ${getBarName() || "this bar"}.`);
+  if (!silent) {
+    showMessage(`Saved a roster backup for ${getBarName() || "this bar"}.`);
+  }
 }
 
 if (pdfLayoutSelect) {
@@ -7413,6 +7415,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
 
 if (nameList) {
   const persistStepOneDraft = () => {
+    saveCurrentRosterBackup({ silent: true });
     saveBracketDraft();
     savePortalSnapshotToLocalStorage();
   };
@@ -7474,7 +7477,18 @@ function renderNameBackupPreview(index = readNameBackupIndex()) {
   const recent = index.slice().reverse().slice(0, 2);
   if (!recent.length) {
     nameBackupPreview.className = "backup-preview-list empty";
-    nameBackupPreview.textContent = "No player name backups yet.";
+    nameBackupPreview.innerHTML = `
+      <article class="backup-preview-item backup-preview-current">
+        <div>
+          <strong>Current roster draft</strong>
+          <span>Save the names you just typed, then merge them from here.</span>
+          <small>No saved roster backups yet.</small>
+        </div>
+        <div class="backup-item-actions">
+          <button class="secondary" type="button" onclick="saveCurrentRosterBackup()">Save roster</button>
+        </div>
+      </article>
+    `;
     return;
   }
 

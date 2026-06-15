@@ -2372,6 +2372,15 @@ body.dice-roller-maximized .setup-stack > * {
   display: block;
 }
 
+.backup-preview-current {
+  border-color: rgba(11, 122, 67, 0.26);
+  background: rgba(231, 243, 236, 0.92);
+}
+
+.backup-preview-current strong {
+  color: var(--primary-dark);
+}
+
 .backup-preview-item strong {
   color: var(--ink);
 }
@@ -2424,6 +2433,34 @@ body.dice-roller-maximized .setup-stack > * {
   height: 214px;
   overflow: auto;
   padding-right: 4px;
+}
+
+@media (max-width: 720px) {
+  .name-editor-actions {
+    justify-content: stretch;
+  }
+
+  .name-editor-actions button {
+    flex: 1 1 140px;
+  }
+
+  .name-backup-preview,
+  .name-backup-history {
+    padding: 12px;
+  }
+
+  .name-backup-preview-header h4 {
+    font-size: 1.05rem;
+  }
+
+  .backup-preview-item,
+  .backup-item {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-item-actions {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .backup-actions {
