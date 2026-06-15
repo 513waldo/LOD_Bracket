@@ -2844,38 +2844,47 @@ function generateMysteryOut() {
     return;
   }
 
-  stopMysteryOutDrawAnimation();
-  mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
-    values,
-    durationMs: 20000,
-    onFrame: (value) => {
-      if (mysteryOutValue) {
-        mysteryOutValue.textContent = String(value);
-      }
-    },
-    onComplete: (finalValue) => {
-      mysteryOut = {
-        mode,
-        score: Number(finalValue) || 0,
-        drawnAt: new Date().toISOString(),
-      };
-      mysteryOutDrawAnimation = null;
-      savePortalSnapshotToLocalStorage();
-      renderMysteryOut();
-      queueBracketDraftSave();
-    },
-  });
+  const finalizeMysteryOut = (finalValue) => {
+    mysteryOut = {
+      mode,
+      score: Number(finalValue) || 0,
+      drawnAt: new Date().toISOString(),
+    };
+    mysteryOutDrawAnimation = null;
+    savePortalSnapshotToLocalStorage();
+    renderMysteryOut();
+    queueBracketDraftSave();
+    showMessage(`Mystery out generated: ${finalValue}.`);
+  };
+
+  try {
+    stopMysteryOutDrawAnimation();
+    if (mysteryOutValue) {
+      mysteryOutValue.textContent = "--";
+    }
+    if (resetMysteryOutButton) {
+      resetMysteryOutButton.hidden = false;
+    }
+
+    mysteryOutDrawAnimation = startMysteryOutDrawAnimation({
+      values,
+      durationMs: 20000,
+      onFrame: (value) => {
+        if (mysteryOutValue) {
+          mysteryOutValue.textContent = String(value);
+        }
+      },
+      onComplete: (finalValue) => {
+        finalizeMysteryOut(finalValue);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    mysteryOutDrawAnimation = null;
+  }
 
   if (!mysteryOutDrawAnimation) {
-    showMessage("Mystery out could not start.");
-    return;
-  }
-
-  if (mysteryOutValue) {
-    mysteryOutValue.textContent = "--";
-  }
-  if (resetMysteryOutButton) {
-    resetMysteryOutButton.hidden = false;
+    finalizeMysteryOut(values[getRandomIndex(values.length)]);
   }
 }
 
