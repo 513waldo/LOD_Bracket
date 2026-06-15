@@ -233,7 +233,6 @@ function formatWeekDateLabel(date) {
   }
 
   return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
     month: "numeric",
     day: "numeric",
   }).format(date);

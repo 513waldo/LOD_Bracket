@@ -344,6 +344,14 @@ h3 {
   padding-bottom: 12px;
 }
 
+.table-head .head-cell:nth-child(n + 3):not(:last-child) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
 .player-row {
   background: rgba(255, 255, 255, 0.86);
 }
