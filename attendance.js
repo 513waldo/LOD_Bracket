@@ -58,6 +58,8 @@ const DEFAULT_EVENT_TRACKER = [
 const DEFAULT_EVENT_HISTORY = [];
 
 let sheet = loadSheet();
+clearAttendanceAccessSession();
+clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
 syncRosterFromBracketDraft(true);
 syncEventTrackerFromBracketDraft(true);
