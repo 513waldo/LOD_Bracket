@@ -1,5 +1,7 @@
 const STORAGE_KEY = "dartsTournamentAttendanceSheet:v1";
 const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
+const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
+const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const DEMO = {
   venueName: "Bullseye Taproom",
@@ -1127,27 +1129,29 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
       return false;
     }
 
+    const portalSnapshot = readPortalSnapshotForDraft(draft);
+    const eventSource = portalSnapshot || draft;
     const nextRows = normalizeEventTracker(sheet.eventTracker);
 
     const historyEntries = [];
 
     const mysteryOutRow = nextRows.find((row) => row.id === "mysteryOut");
     if (mysteryOutRow) {
-      const mysteryOutValue = draft?.mysteryOut && typeof draft.mysteryOut === "object" ? draft.mysteryOut : null;
-      mysteryOutRow.result = String(mysteryOutValue ? mysteryOutValue.score || "" : draft?.mysteryOut || "");
-      mysteryOutRow.picked = getMysteryOutPickedName(draft);
+      const mysteryOutValue = eventSource?.mysteryOut && typeof eventSource.mysteryOut === "object" ? eventSource.mysteryOut : null;
+      mysteryOutRow.result = String(mysteryOutValue ? mysteryOutValue.score || "" : eventSource?.mysteryOut || "");
+      mysteryOutRow.picked = getMysteryOutPickedName(eventSource);
       mysteryOutRow.date = normalizeAnyDateInput(mysteryOutValue?.drawnAt || mysteryOutRow.date);
-      mysteryOutRow.note = getMysteryOutNote(draft);
+      mysteryOutRow.note = getMysteryOutNote(eventSource);
       pushTrackerHistoryEntry(historyEntries, mysteryOutRow);
     }
 
     const bullshootRow = nextRows.find((row) => row.id === "bullshoot");
     if (bullshootRow) {
-      const winner = draft?.bullseyeShoot?.winner && typeof draft.bullseyeShoot.winner === "object" ? draft.bullseyeShoot.winner : null;
-      bullshootRow.result = winner?.ticketLabel || "";
+      const winner = eventSource?.bullseyeShoot?.winner && typeof eventSource.bullseyeShoot.winner === "object" ? eventSource.bullseyeShoot.winner : null;
+      bullshootRow.result = getBullshootRollText(eventSource);
       bullshootRow.picked = winner?.name || "";
       bullshootRow.date = normalizeAnyDateInput(winner?.drawnAt || bullshootRow.date);
-      bullshootRow.note = winner ? `Drawn ${winner.drawnAt ? formatTrackDate(winner.drawnAt) : "recently"}` : "";
+      bullshootRow.note = winner?.ticketLabel ? `Ticket ${winner.ticketLabel}` : "";
       pushTrackerHistoryEntry(historyEntries, bullshootRow);
     }
 
@@ -1189,6 +1193,104 @@ function getMysteryOutNote(draft) {
     return "";
   }
   return `Mode: ${mode}`;
+}
+
+function readPortalSnapshotForDraft(draft) {
+  try {
+    const draftCode = normalizeLodCodeForAttendance(draft?.lodCode || "");
+    const storedCode = getStoredLodCodeForAttendance();
+    const preferredCodes = [draftCode, storedCode].filter(Boolean);
+
+    for (const code of preferredCodes) {
+      const raw = localStorage.getItem(`${PORTAL_SNAPSHOT_STORAGE_KEY}:${code}`);
+      const snapshot = parsePortalSnapshot(raw);
+      if (snapshot) {
+        return snapshot;
+      }
+    }
+
+    const snapshots = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!key.startsWith(`${PORTAL_SNAPSHOT_STORAGE_KEY}:`)) {
+        continue;
+      }
+
+      const snapshot = parsePortalSnapshot(localStorage.getItem(key));
+      if (!snapshot) {
+        continue;
+      }
+
+      if (draftCode && normalizeLodCodeForAttendance(snapshot.lodCode) === draftCode) {
+        return snapshot;
+      }
+      if (storedCode && normalizeLodCodeForAttendance(snapshot.lodCode) === storedCode) {
+        return snapshot;
+      }
+      snapshots.push(snapshot);
+    }
+
+    if (snapshots.length === 1) {
+      return snapshots[0];
+    }
+
+    snapshots.sort((left, right) => String(right.exportedAt || "").localeCompare(String(left.exportedAt || "")));
+    return snapshots[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function parsePortalSnapshot(raw) {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const snapshot = JSON.parse(raw);
+    if (!snapshot || typeof snapshot !== "object") {
+      return null;
+    }
+    return snapshot;
+  } catch {
+    return null;
+  }
+}
+
+function getStoredLodCodeForAttendance() {
+  try {
+    const raw = localStorage.getItem(LOD_CODE_STORAGE_KEY);
+    if (raw === null) {
+      return "";
+    }
+    return normalizeLodCodeForAttendance(raw);
+  } catch {
+    return "";
+  }
+}
+
+function normalizeLodCodeForAttendance(value) {
+  return String(value || "")
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase()
+    .slice(0, 12);
+}
+
+function getBullshootRollText(source) {
+  const triple = Number(Array.isArray(source?.diceValues) ? source.diceValues[0] : NaN);
+  const double = Number(Array.isArray(source?.diceValues) ? source.diceValues[1] : NaN);
+
+  if (Number.isFinite(triple) && Number.isFinite(double)) {
+    return `T ${triple} / D ${double}`;
+  }
+
+  const message = String(source?.portalBullshootNotice || "");
+  const match = message.match(/Triple\s+(\d+),\s+Double\s+(\d+)/i);
+  if (match) {
+    return `T ${match[1]} / D ${match[2]}`;
+  }
+
+  return "";
 }
 
 function pushTrackerHistoryEntry(target, row) {
