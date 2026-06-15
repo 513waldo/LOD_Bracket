@@ -415,7 +415,7 @@ function renderWeekDateEditor() {
       <input
         type="date"
         data-week-date-index="${index}"
-        value="${escapeAttribute(formatDateInputValue(date))}"
+        value="${escapeHtml(formatDateInputValue(date))}"
       >
     </label>
   `).join("");
