@@ -65,7 +65,6 @@ const barNameInput = document.querySelector("#barName");
 const eventDateInput = document.querySelector("#eventDate");
 const eventDateStatus = document.querySelector("#eventDateStatus");
 const generateEventDateButton = document.querySelector("#generateEventDate");
-const saveRosterBackupButton = document.querySelector("#saveRosterBackup");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
@@ -382,31 +381,8 @@ playersPerGroup.addEventListener("change", () => {
 
 document.querySelector("#refreshNames").addEventListener("click", () => {
   shrinkTotalPlayersToEnteredNames();
-  saveCurrentRosterBackup();
   queueBracketDraftSave();
 });
-
-saveRosterBackupButton?.addEventListener("click", () => {
-  saveCurrentRosterBackup();
-});
-
-function saveCurrentRosterBackup({ silent = false } = {}) {
-  const count = Math.max(
-    Number(totalPlayers.value) || 0,
-    Number(nameList?.querySelectorAll("[data-player-number]").length || 0),
-  );
-  const names = getPlayerNameMap();
-
-  if (!count || !Object.keys(names).length) {
-    showMessage("Enter some player names before saving a roster backup.");
-    return;
-  }
-
-  savePlayerNameBackup(count, names, getBarName());
-  if (!silent) {
-    showMessage(`Saved a roster backup for ${getBarName() || "this bar"}.`);
-  }
-}
 
 if (pdfLayoutSelect) {
   pdfLayoutSelect.addEventListener("change", () => {
