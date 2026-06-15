@@ -464,8 +464,15 @@ function renderGameTracker() {
   }
 
   const rows = Array.isArray(sheet.eventTracker) ? sheet.eventTracker : normalizeEventTracker();
-  gameTracker.innerHTML = rows.map((row) => `
-    <article class="tracker-row" data-tracker-id="${escapeHtml(row.id)}">
+  gameTracker.innerHTML = `
+    <div class="tracker-head">
+      <div class="tracker-head-cell">Game</div>
+      <div class="tracker-head-cell">Result</div>
+      <div class="tracker-head-cell">Picked</div>
+      <div class="tracker-head-cell">Notes</div>
+    </div>
+    ${rows.map((row) => `
+      <article class="tracker-row" data-tracker-id="${escapeHtml(row.id)}">
       <div class="tracker-cell">
         <div class="tracker-label">Game</div>
         <div class="tracker-name">${escapeHtml(row.label)}</div>
@@ -483,7 +490,8 @@ function renderGameTracker() {
         <input class="tracker-input" type="text" data-tracker-field="note" data-tracker-id="${escapeHtml(row.id)}" value="${escapeHtml(row.note)}" placeholder="Optional notes">
       </label>
     </article>
-  `).join("");
+    `).join("")}
+  `;
 }
 
 function renderTable() {

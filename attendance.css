@@ -565,24 +565,37 @@ h3 {
 
 .tracker-grid {
   display: grid;
-  gap: 12px;
-}
-
-.tracker-row {
-  display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(180px, 1fr) minmax(180px, 1fr);
   gap: 0;
   border: 1px solid rgba(18, 33, 39, 0.14);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
 }
 
+.tracker-head,
+.tracker-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 0;
+}
+
+.tracker-head {
+  background: rgba(241, 237, 227, 0.98);
+  border-bottom: 1px solid rgba(18, 33, 39, 0.14);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.tracker-head-cell,
 .tracker-cell {
   display: grid;
   gap: 8px;
   padding: 14px 16px;
   border-right: 1px solid rgba(18, 33, 39, 0.12);
+  border-bottom: 1px solid rgba(18, 33, 39, 0.12);
 }
 
+.tracker-head-cell:last-child,
 .tracker-cell:last-child {
   border-right: 0;
 }
@@ -610,6 +623,10 @@ h3 {
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.45;
+}
+
+.tracker-row:last-child .tracker-cell {
+  border-bottom: 0;
 }
 
 .share-panel {
@@ -659,6 +676,10 @@ h3 {
 
   .tracker-row {
     grid-template-columns: 1fr;
+  }
+
+  .tracker-head {
+    display: none;
   }
 
   .tracker-cell {
