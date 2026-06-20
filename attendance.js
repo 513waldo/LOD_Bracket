@@ -1136,7 +1136,10 @@ function syncRosterFromBracketDraft(overwriteExisting = false, markAddedPlayers 
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
   if (markAddedPlayers && addedNames.length) {
-    markAttendanceForBracketEventDate(sheet.eventDate, addedNames);
+    const markedCount = markAttendanceForBracketEventDate(sheet.eventDate, addedNames);
+    if (!markedCount) {
+      markAttendanceForBracketWeek(0, addedNames);
+    }
   }
   return addedCount;
 }
@@ -1169,6 +1172,38 @@ function markAttendanceForBracketEventDate(eventDateValue = sheet.eventDate, pla
 
     if (!player.weeks[matchingWeekIndex]) {
       player.weeks[matchingWeekIndex] = true;
+      changedCount += 1;
+    }
+  });
+
+  if (changedCount) {
+    saveSheet();
+  }
+
+  return changedCount;
+}
+
+function markAttendanceForBracketWeek(weekIndex, playerNames = null) {
+  if (!Number.isInteger(weekIndex) || weekIndex < 0 || weekIndex >= sheet.totalWeeks) {
+    return 0;
+  }
+
+  const targetNames = Array.isArray(playerNames) && playerNames.length
+    ? new Set(playerNames.map((name) => normalizeRosterKey(name)).filter(Boolean))
+    : null;
+
+  let changedCount = 0;
+  sheet.players.forEach((player) => {
+    if (!Array.isArray(player.weeks) || weekIndex >= player.weeks.length) {
+      return;
+    }
+
+    if (targetNames && !targetNames.has(normalizeRosterKey(player.name))) {
+      return;
+    }
+
+    if (!player.weeks[weekIndex]) {
+      player.weeks[weekIndex] = true;
       changedCount += 1;
     }
   });
