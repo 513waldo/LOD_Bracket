@@ -796,7 +796,7 @@ if (syncBracketPlayersButton) {
   syncBracketPlayersButton.addEventListener("click", () => {
     const syncedCount = syncRosterFromBracketDraft(true, true);
     const syncMessage = syncedCount
-      ? `Synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster.`
+      ? `Synced ${syncedCount} new player${syncedCount === 1 ? "" : "s"} from the bracket roster and checked them present for the tournament date.`
       : "Bracket roster already matches the sheet.";
     setStatus(syncMessage);
     render();
@@ -1048,7 +1048,7 @@ function saveVenueAccessCredentials() {
   const syncedCount = importedNames.length ? syncRosterFromBracketDraft(true, true) : 0;
   if (importedNames.length) {
     render();
-    setStatus(`Saved the bar login and synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster for ${sheet.venueName || "this venue"}.`);
+    setStatus(`Saved the bar login and synced ${syncedCount} new player${syncedCount === 1 ? "" : "s"} from the bracket roster for ${sheet.venueName || "this venue"} and checked them present for the tournament date.`);
     return;
   }
 
