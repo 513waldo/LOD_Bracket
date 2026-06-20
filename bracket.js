@@ -7403,6 +7403,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
   renderNameBackups();
   savePortalSnapshotToLocalStorage();
   void publishGlobalNameBackups();
+  showMessage(`Saved roster backup at ${formatBackupTime(createdAt)}${backup.barName ? ` for ${backup.barName}` : ""}.`);
 }
 
 if (nameList) {
