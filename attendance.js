@@ -25,6 +25,7 @@ const startSaturday = document.querySelector("#startSaturday");
 const weekDateEditor = document.querySelector("#weekDateEditor");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const syncBracketGamesButton = document.querySelector("#syncBracketGamesButton");
+const clearBracketGamesButton = document.querySelector("#clearBracketGamesButton");
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
 const attendanceUsernameInput = document.querySelector("#attendanceUsernameInput");
@@ -817,6 +818,20 @@ syncBracketGamesButton?.addEventListener("click", () => {
     ? `Synced mystery out and bullshoot from the bracket portal.${markedCount ? ` Marked ${markedCount} player${markedCount === 1 ? "" : "s"} present for the tournament date.` : ""}`
     : "No mystery out or bullshoot data found to sync.");
   render();
+});
+
+clearBracketGamesButton?.addEventListener("click", () => {
+  const confirmed = window.confirm("Clear Mystery Out, Bullshoot, and tracker history on the attendance sheet?");
+  if (!confirmed) {
+    setStatus("Game data clear cancelled.");
+    return;
+  }
+
+  sheet.eventTracker = normalizeEventTracker(DEFAULT_EVENT_TRACKER);
+  sheet.eventHistory = [];
+  saveSheet();
+  render();
+  setStatus("Mystery Out, Bullshoot, and tracker history cleared.");
 });
 
 saveVenueAccessCredentialsButton?.addEventListener("click", saveVenueAccessCredentials);
