@@ -795,9 +795,10 @@ requiredWeeks.addEventListener("change", () => {
 if (syncBracketPlayersButton) {
   syncBracketPlayersButton.addEventListener("click", () => {
     const syncedCount = syncRosterFromBracketDraft(true);
-    setStatus(syncedCount
+    const syncMessage = syncedCount
       ? `Synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster.`
-      : "Bracket roster already matches the sheet.");
+      : "Bracket roster already matches the sheet.";
+    setStatus(syncMessage);
     render();
   });
 }
@@ -811,8 +812,9 @@ manualPlayerName?.addEventListener("keydown", (event) => {
 
 syncBracketGamesButton?.addEventListener("click", () => {
   const synced = syncEventTrackerFromBracketDraft(true);
+  const markedCount = synced ? markAttendanceForBracketEventDate() : 0;
   setStatus(synced
-    ? "Synced mystery out and bullshoot from the bracket portal."
+    ? `Synced mystery out and bullshoot from the bracket portal.${markedCount ? ` Marked ${markedCount} player${markedCount === 1 ? "" : "s"} present for the tournament date.` : ""}`
     : "No mystery out or bullshoot data found to sync.");
   render();
 });
@@ -1132,6 +1134,37 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
   return addedCount;
+}
+
+function markAttendanceForBracketEventDate() {
+  const eventDate = normalizeAnyDateInput(sheet.eventDate || "");
+  if (!eventDate) {
+    return 0;
+  }
+
+  const weekDates = getWeekDates();
+  const matchingWeekIndex = weekDates.findIndex((weekDate) => normalizeAnyDateInput(formatDateInputValue(weekDate)) === eventDate);
+  if (matchingWeekIndex < 0) {
+    return 0;
+  }
+
+  let changedCount = 0;
+  sheet.players.forEach((player) => {
+    if (!Array.isArray(player.weeks) || matchingWeekIndex >= player.weeks.length) {
+      return;
+    }
+
+    if (!player.weeks[matchingWeekIndex]) {
+      player.weeks[matchingWeekIndex] = true;
+      changedCount += 1;
+    }
+  });
+
+  if (changedCount) {
+    saveSheet();
+  }
+
+  return changedCount;
 }
 
 function syncEventTrackerFromBracketDraft(saveChanges = false) {
