@@ -7389,6 +7389,7 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
     barName: String(barName || "").trim(),
     names,
   };
+  const nameCount = Object.keys(names).length;
   const index = readNameBackupIndex();
 
   localStorage.setItem(`${nameBackupKeyPrefix}${id}`, JSON.stringify(backup));
@@ -7397,13 +7398,13 @@ function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName =
     createdAt,
     playerCount,
     barName: backup.barName,
-    nameCount: Object.keys(names).length,
+    nameCount,
   });
   localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
   renderNameBackups();
   savePortalSnapshotToLocalStorage();
   void publishGlobalNameBackups();
-  showMessage(`Saved roster backup at ${formatBackupTime(createdAt)}${backup.barName ? ` for ${backup.barName}` : ""}.`);
+  showMessage(`Saved roster backup at ${formatBackupTime(createdAt)} with ${nameCount} saved name${nameCount === 1 ? "" : "s"}${backup.barName ? ` for ${backup.barName}` : ""}.`);
 }
 
 if (nameList) {
