@@ -812,7 +812,7 @@ manualPlayerName?.addEventListener("keydown", (event) => {
 
 syncBracketGamesButton?.addEventListener("click", () => {
   const synced = syncEventTrackerFromBracketDraft(true);
-  const markedCount = synced ? markAttendanceForBracketEventDate() : 0;
+  const markedCount = synced ? markAttendanceForBracketEventDate(sheet.eventDate) : 0;
   setStatus(synced
     ? `Synced mystery out and bullshoot from the bracket portal.${markedCount ? ` Marked ${markedCount} player${markedCount === 1 ? "" : "s"} present for the tournament date.` : ""}`
     : "No mystery out or bullshoot data found to sync.");
@@ -1136,8 +1136,8 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   return addedCount;
 }
 
-function markAttendanceForBracketEventDate() {
-  const eventDate = normalizeAnyDateInput(sheet.eventDate || "");
+function markAttendanceForBracketEventDate(eventDateValue = sheet.eventDate) {
+  const eventDate = normalizeAnyDateInput(eventDateValue || "");
   if (!eventDate) {
     return 0;
   }
@@ -1181,9 +1181,16 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
 
     const portalSnapshot = readPortalSnapshotForDraft(draft);
     const eventSource = portalSnapshot || draft;
+    const eventDate = normalizeAnyDateInput(eventSource?.eventDate || "");
     const nextRows = normalizeEventTracker(sheet.eventTracker);
 
     const historyEntries = [];
+    let changed = false;
+
+    if (eventDate && sheet.eventDate !== eventDate) {
+      sheet.eventDate = eventDate;
+      changed = true;
+    }
 
     const mysteryOutRow = nextRows.find((row) => row.id === "mysteryOut");
     if (mysteryOutRow) {
@@ -1209,7 +1216,7 @@ function syncEventTrackerFromBracketDraft(saveChanges = false) {
     if (historyEntries.length) {
       appendTrackerHistory(historyEntries);
     }
-    if (saveChanges) {
+    if (saveChanges && (historyEntries.length || changed)) {
       saveSheet();
     }
     return true;
