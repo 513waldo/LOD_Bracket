@@ -7585,16 +7585,32 @@ function syncNameBackupsToLocalStorage(backups) {
         .filter(Boolean)
     : [];
 
-  const index = normalized.map((backup) => ({
-    id: backup.id,
-    createdAt: backup.createdAt,
-    playerCount: backup.playerCount,
-    barName: backup.barName || "",
-    nameCount: Object.keys(backup.names || {}).length,
-  }));
-
   try {
+    const existingIndex = readNameBackupIndex();
+    const merged = new Map();
+
+    existingIndex.forEach((backup) => {
+      const localBackup = readNameBackup(backup.id);
+      if (localBackup && typeof localBackup === "object" && localBackup.id) {
+        merged.set(localBackup.id, normalizeNameBackup(localBackup));
+      }
+    });
+
     normalized.forEach((backup) => {
+      merged.set(backup.id, backup);
+    });
+
+    const index = Array.from(merged.values())
+      .sort((left, right) => String(left.createdAt || "").localeCompare(String(right.createdAt || "")))
+      .map((backup) => ({
+        id: backup.id,
+        createdAt: backup.createdAt,
+        playerCount: backup.playerCount,
+        barName: backup.barName || "",
+        nameCount: Object.keys(backup.names || {}).length,
+      }));
+
+    merged.forEach((backup) => {
       localStorage.setItem(`${nameBackupKeyPrefix}${backup.id}`, JSON.stringify(backup));
     });
     localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
