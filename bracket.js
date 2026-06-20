@@ -120,6 +120,7 @@ const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword"
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
 const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
 const productionAssistantAdminPassword = decodePasswordCodes([53, 49, 51, 56, 53, 57, 68, 97, 114, 116, 115, 33]);
+const maxNameBackups = 25;
 const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
 const outShotSlotCount = 100;
 const splitPotFirstTicketNumber = 100;
@@ -6402,8 +6403,8 @@ async function deleteAllActiveLods() {
     }
   }
 
-  const { registry } = await fetchActiveLodRegistry();
-  const codes = Array.from(new Set((registry?.codes || []).filter(Boolean))).sort();
+  const registries = await fetchAllActiveLodRegistries();
+  const codes = Array.from(new Set(registries.flatMap(({ registry }) => registry?.codes || []).filter(Boolean))).sort();
 
   const confirmLabel = codes.length
     ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
@@ -6467,6 +6468,32 @@ async function deleteAllActiveLods() {
   updateAssistantAdminControls();
   showMessage("All active LODs and their messages were deleted.");
   return true;
+}
+
+async function fetchAllActiveLodRegistries() {
+  const results = [];
+
+  for (const baseUrl of API_BASE_URLS.length ? API_BASE_URLS : [""]) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(getRegistryUrl(baseUrl), { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      results.push({
+        baseUrl,
+        registry: normalizeRegistry(await response.json()),
+      });
+    } catch {
+      // Try the next host.
+    }
+  }
+
+  return results;
 }
 
 function getRegistryUrl(baseUrl) {
@@ -7377,34 +7404,39 @@ function deleteAllBackups() {
 
 function savePlayerNameBackup(playerCount, names = getPlayerNameMap(), barName = getBarName()) {
   if (!canUseLocalStorage()) {
+    showMessage("Could not save roster backup. Browser storage is not available.");
     return;
   }
 
-  const createdAt = new Date().toISOString();
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const backup = {
-    id,
-    createdAt,
-    playerCount,
-    barName: String(barName || "").trim(),
-    names,
-  };
-  const nameCount = Object.keys(names).length;
-  const index = readNameBackupIndex();
+  try {
+    const createdAt = new Date().toISOString();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const backup = {
+      id,
+      createdAt,
+      playerCount,
+      barName: String(barName || "").trim(),
+      names,
+    };
+    const nameCount = Object.keys(names).length;
+    const index = pruneNameBackups(readNameBackupIndex(), maxNameBackups - 1);
 
-  localStorage.setItem(`${nameBackupKeyPrefix}${id}`, JSON.stringify(backup));
-  index.push({
-    id,
-    createdAt,
-    playerCount,
-    barName: backup.barName,
-    nameCount,
-  });
-  localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
-  renderNameBackups();
-  savePortalSnapshotToLocalStorage();
-  void publishGlobalNameBackups();
-  showMessage(`Saved roster backup at ${formatBackupTime(createdAt)} with ${nameCount} saved name${nameCount === 1 ? "" : "s"}${backup.barName ? ` for ${backup.barName}` : ""}.`);
+    localStorage.setItem(`${nameBackupKeyPrefix}${id}`, JSON.stringify(backup));
+    index.push({
+      id,
+      createdAt,
+      playerCount,
+      barName: backup.barName,
+      nameCount,
+    });
+    localStorage.setItem(nameBackupIndexKey, JSON.stringify(pruneNameBackups(index)));
+    renderNameBackups();
+    savePortalSnapshotToLocalStorage();
+    void publishGlobalNameBackups();
+    showMessage(`Saved roster backup at ${formatBackupTime(createdAt)} with ${nameCount} saved name${nameCount === 1 ? "" : "s"}${backup.barName ? ` for ${backup.barName}` : ""}.`);
+  } catch {
+    showMessage("Could not save roster backup. Browser storage may be full or blocked.");
+  }
 }
 
 if (nameList) {
@@ -7558,7 +7590,7 @@ function readNameBackupIndex() {
   }
 
   try {
-    return JSON.parse(localStorage.getItem(nameBackupIndexKey)) || [];
+    return pruneNameBackups(JSON.parse(localStorage.getItem(nameBackupIndexKey)) || []);
   } catch {
     return [];
   }
@@ -7611,11 +7643,12 @@ function syncNameBackupsToLocalStorage(backups) {
         barName: backup.barName || "",
         nameCount: Object.keys(backup.names || {}).length,
       }));
+    const cleanedIndex = pruneNameBackups(index);
 
     merged.forEach((backup) => {
       localStorage.setItem(`${nameBackupKeyPrefix}${backup.id}`, JSON.stringify(backup));
     });
-    localStorage.setItem(nameBackupIndexKey, JSON.stringify(index));
+    localStorage.setItem(nameBackupIndexKey, JSON.stringify(cleanedIndex));
   } catch {
     // Ignore storage failures; the in-memory snapshot still renders.
   }
@@ -7714,6 +7747,33 @@ function normalizeNameBackup(backup) {
     barName: String(backup.barName || ""),
     names,
   };
+}
+
+function pruneNameBackups(index, keepCount = maxNameBackups) {
+  if (!Array.isArray(index)) {
+    return [];
+  }
+
+  const cleaned = index
+    .filter((backup) => backup && typeof backup === "object" && backup.id)
+    .map((backup) => ({
+      id: String(backup.id),
+      createdAt: String(backup.createdAt || ""),
+      playerCount: Math.max(0, Math.floor(Number(backup.playerCount) || 0)),
+      barName: String(backup.barName || ""),
+      nameCount: Math.max(0, Math.floor(Number(backup.nameCount) || 0)),
+    }));
+
+  const removeCount = Math.max(0, cleaned.length - Math.max(0, keepCount));
+  if (removeCount && canUseLocalStorage()) {
+    cleaned.splice(0, removeCount).forEach((backup) => {
+      localStorage.removeItem(`${nameBackupKeyPrefix}${backup.id}`);
+    });
+  } else if (removeCount) {
+    cleaned.splice(0, removeCount);
+  }
+
+  return cleaned;
 }
 
 function clearSharedNameBackupRefreshTimer() {
