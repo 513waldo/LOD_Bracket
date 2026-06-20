@@ -7507,7 +7507,7 @@ function mergePlayerNameBackup(id) {
   }
 
   applyPlayerNameMap(backup.names, false);
-  queueBracketDraftSave();
+  flushBracketDraftSave();
   savePortalSnapshotToLocalStorage();
   showMessage(`Player names merged${backup.barName ? ` from ${backup.barName}` : ""}. Existing typed names were kept.`);
 }
