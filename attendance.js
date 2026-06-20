@@ -48,6 +48,7 @@ const gameTracker = document.querySelector("#gameTracker");
 const gameHistory = document.querySelector("#gameHistory");
 const facebookPost = document.querySelector("#facebookPost");
 const copyPostButton = document.querySelector("#copyPostButton");
+const clearPostButton = document.querySelector("#clearPostButton");
 const openFacebookButton = document.querySelector("#openFacebookButton");
 const downloadJsonButton = document.querySelector("#downloadJsonButton");
 const shareModeInputs = Array.from(document.querySelectorAll('input[name="shareMode"]'));
@@ -946,6 +947,17 @@ copyPostButton.addEventListener("click", async () => {
   } catch {
     setStatus("Could not copy to clipboard.");
   }
+});
+
+clearPostButton?.addEventListener("click", () => {
+  const confirmed = window.confirm("Clear the Facebook post text?");
+  if (!confirmed) {
+    setStatus("Facebook post clear cancelled.");
+    return;
+  }
+
+  facebookPost.value = "";
+  setStatus("Facebook post text cleared.");
 });
 
 openFacebookButton.addEventListener("click", () => {
