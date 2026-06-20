@@ -794,7 +794,7 @@ requiredWeeks.addEventListener("change", () => {
 
 if (syncBracketPlayersButton) {
   syncBracketPlayersButton.addEventListener("click", () => {
-    const syncedCount = syncRosterFromBracketDraft(true);
+    const syncedCount = syncRosterFromBracketDraft(true, true);
     const syncMessage = syncedCount
       ? `Synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster.`
       : "Bracket roster already matches the sheet.";
@@ -1045,7 +1045,7 @@ function saveVenueAccessCredentials() {
   }
   updateVenueAccessStatus();
   const importedNames = getBracketRosterNames();
-  const syncedCount = importedNames.length ? syncRosterFromBracketDraft(true) : 0;
+  const syncedCount = importedNames.length ? syncRosterFromBracketDraft(true, true) : 0;
   if (importedNames.length) {
     render();
     setStatus(`Saved the bar login and synced ${syncedCount} player${syncedCount === 1 ? "" : "s"} from the bracket roster for ${sheet.venueName || "this venue"}.`);
@@ -1077,7 +1077,7 @@ function clearVenueAccessCredentials() {
   setStatus("Bar login cleared.");
 }
 
-function syncRosterFromBracketDraft(overwriteExisting = false) {
+function syncRosterFromBracketDraft(overwriteExisting = false, markAddedPlayers = false) {
   const importedNames = getBracketRosterNames();
   if (!importedNames.length) {
     return 0;
@@ -1096,6 +1096,7 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   const nextPlayers = [];
   const seen = new Set();
   let addedCount = 0;
+  const addedNames = [];
 
   importedNames.forEach((name, index) => {
     const key = normalizeRosterKey(name);
@@ -1111,6 +1112,7 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
     }
 
     addedCount += 1;
+    addedNames.push(name);
     nextPlayers.push(normalizePlayer({
       id: `p-${Date.now()}-${index}`,
       name,
@@ -1133,10 +1135,13 @@ function syncRosterFromBracketDraft(overwriteExisting = false) {
   sheet.players = nextPlayers;
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   saveSheet();
+  if (markAddedPlayers && addedNames.length) {
+    markAttendanceForBracketEventDate(sheet.eventDate, addedNames);
+  }
   return addedCount;
 }
 
-function markAttendanceForBracketEventDate(eventDateValue = sheet.eventDate) {
+function markAttendanceForBracketEventDate(eventDateValue = sheet.eventDate, playerNames = null) {
   const eventDate = normalizeAnyDateInput(eventDateValue || "");
   if (!eventDate) {
     return 0;
@@ -1148,9 +1153,17 @@ function markAttendanceForBracketEventDate(eventDateValue = sheet.eventDate) {
     return 0;
   }
 
+  const targetNames = Array.isArray(playerNames) && playerNames.length
+    ? new Set(playerNames.map((name) => normalizeRosterKey(name)).filter(Boolean))
+    : null;
+
   let changedCount = 0;
   sheet.players.forEach((player) => {
     if (!Array.isArray(player.weeks) || matchingWeekIndex >= player.weeks.length) {
+      return;
+    }
+
+    if (targetNames && !targetNames.has(normalizeRosterKey(player.name))) {
       return;
     }
 
