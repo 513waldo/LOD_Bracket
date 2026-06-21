@@ -148,7 +148,7 @@ textarea:focus {
   position: fixed;
   inset: 0;
   z-index: 4000;
-  display: grid;
+  display: none;
   place-items: center;
   width: 100vw;
   height: 100vh;
@@ -158,6 +158,10 @@ textarea:focus {
   background: transparent;
   max-width: none;
   max-height: none;
+}
+
+.password-modal[open] {
+  display: grid;
 }
 
 .password-modal::backdrop {
