@@ -2031,13 +2031,30 @@ function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, lose
   return doubleDipFinal;
 }
 
+function isFinalSeriesMatch(match) {
+  return match?.type === "final" ||
+    match?.type === "resetFinal" ||
+    match?.type === "doubleDipFinal";
+}
+
 function resetMatchResult(matchId) {
   if (!state?.matchesById) {
     return;
   }
 
+  const targetMatch = state.matchesById[matchId];
   const manualResults = state.matches
-    .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
+    .filter((match) => {
+      if (!match.winner || match.autoAdvanced || match.id === matchId) {
+        return false;
+      }
+
+      if (targetMatch && isFinalSeriesMatch(targetMatch) && isFinalSeriesMatch(match)) {
+        return false;
+      }
+
+      return true;
+    })
     .map((match) => ({ id: match.id, winner: match.winner }));
 
   state = createBracketGraph(state.originalPlayers);
@@ -2453,8 +2470,19 @@ function resetMatchResultLegacy(type, roundIndex, matchIndex) {
   }
 
   const targetId = `${type}-${roundIndex}-${matchIndex}`;
+  const targetMatch = getMatch(type, roundIndex, matchIndex);
   const manualResults = getAllMatches(state)
-    .filter((match) => match.winner && !match.autoAdvanced && match.id !== targetId)
+    .filter((match) => {
+      if (!match.winner || match.autoAdvanced || match.id === targetId) {
+        return false;
+      }
+
+      if (targetMatch && isFinalSeriesMatch(targetMatch) && isFinalSeriesMatch(match)) {
+        return false;
+      }
+
+      return true;
+    })
     .map((match) => ({
       type: match.type,
       roundIndex: match.roundIndex,
