@@ -1117,6 +1117,12 @@ textarea {
   margin-bottom: 8px;
 }
 
+.final-section .match-header,
+.pdf-visual-section .match-header {
+  position: relative;
+  z-index: 2;
+}
+
 .board-assignment-select {
   min-width: 92px;
   min-height: 40px;
@@ -1619,6 +1625,8 @@ textarea {
 }
 
 .reset-match {
+  position: relative;
+  z-index: 3;
   min-height: 32px;
   border: 1px solid var(--line);
   background: var(--blue-surface-strong);
