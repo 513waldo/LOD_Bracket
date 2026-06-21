@@ -5719,6 +5719,7 @@ async function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
 
 function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
   const cleanupCode = normalizeLodCode(code || lodCode);
+  const previousSuppressPortalSnapshotPublish = suppressPortalSnapshotPublish;
 
   if (portalPublishTimer) {
     clearTimeout(portalPublishTimer);
@@ -5788,7 +5789,12 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   paperBackup.textContent = "Build a bracket to create a paper backup.";
   mysteryOut = "";
   renderMysteryOut();
-  savePortalSnapshotToLocalStorage();
+  suppressPortalSnapshotPublish = true;
+  try {
+    savePortalSnapshotToLocalStorage();
+  } finally {
+    suppressPortalSnapshotPublish = previousSuppressPortalSnapshotPublish;
+  }
   hideTeamDrawWarning();
   clearPlayerNames();
 
