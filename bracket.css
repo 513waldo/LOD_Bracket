@@ -144,6 +144,60 @@ textarea:focus {
   outline-offset: 2px;
 }
 
+.password-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 10, 9, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.password-modal-card {
+  width: min(100%, 420px);
+  border: 1px solid rgba(18, 18, 18, 0.16);
+  border-radius: 14px;
+  background: #fdfcf8;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+  padding: 18px;
+}
+
+.password-modal-card h2 {
+  margin: 0 0 8px;
+  color: var(--primary-dark);
+  font-size: 1.1rem;
+}
+
+.password-modal-card p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.password-modal-field {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.password-modal-field input {
+  min-height: 46px;
+  border: 1px solid rgba(18, 18, 18, 0.16);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fff;
+}
+
+.password-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 .app {
   width: 100%;
   margin: 0;

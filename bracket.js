@@ -86,6 +86,11 @@ const clearPendingAdminMessagesButton = document.querySelector("#clearPendingAdm
 const clearAllSentMessagesButton = document.querySelector("#clearAllSentMessages");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
+const assistantAdminPasswordModal = document.querySelector("#assistantAdminPasswordModal");
+const assistantAdminPasswordInput = document.querySelector("#assistantAdminPasswordInput");
+const assistantAdminPasswordContinue = document.querySelector("#assistantAdminPasswordContinue");
+const assistantAdminPasswordCancel = document.querySelector("#assistantAdminPasswordCancel");
+const assistantAdminPasswordMessage = document.querySelector("#assistantAdminPasswordMessage");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const attendanceRootStatus = document.querySelector("#attendanceRootStatus");
 const attendanceRootCurrentPassword = document.querySelector("#attendanceRootCurrentPassword");
@@ -293,6 +298,7 @@ let totalPlayersSyncTimer = null;
 let suppressPortalSnapshotPublish = false;
 let diceRollerFullscreenRequested = false;
 let diceRollerMaximizeMode = "";
+let assistantAdminPasswordPromptResolver = null;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -827,6 +833,31 @@ clearPendingAdminMessagesButton?.addEventListener("click", () => {
 
 clearAllSentMessagesButton?.addEventListener("click", () => {
   clearAllSentMessages();
+});
+
+assistantAdminPasswordContinue?.addEventListener("click", () => {
+  resolveAssistantAdminPasswordPrompt(assistantAdminPasswordInput?.value || "");
+});
+
+assistantAdminPasswordCancel?.addEventListener("click", () => {
+  resolveAssistantAdminPasswordPrompt(null);
+});
+
+assistantAdminPasswordModal?.addEventListener("click", (event) => {
+  if (event.target === assistantAdminPasswordModal) {
+    resolveAssistantAdminPasswordPrompt(null);
+  }
+});
+
+assistantAdminPasswordInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    resolveAssistantAdminPasswordPrompt(assistantAdminPasswordInput?.value || "");
+  }
+  if (event.key === "Escape") {
+    event.preventDefault();
+    resolveAssistantAdminPasswordPrompt(null);
+  }
 });
 
 window.clearPendingAdminMessages = clearPendingAdminMessages;
@@ -6414,7 +6445,7 @@ async function deleteAllActiveLods() {
   const loadedCode = normalizeLodCode(lodCode);
   const storedPassword = getAssistantAdminPassword();
   if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
-    const entered = window.prompt("Enter the assistant admin password to delete all active LODs.", "");
+    const entered = await promptForAssistantAdminPassword("Enter the assistant admin password to delete all active LODs.");
     if (!entered) {
       showMessage("Assistant admin access was cancelled.");
       return false;
@@ -6586,6 +6617,41 @@ function getAssistantAdminPassword() {
     return localStorage.getItem(assistantAdminPasswordStorageKey) || "";
   } catch {
     return "";
+  }
+}
+
+function promptForAssistantAdminPassword(message) {
+  if (!assistantAdminPasswordModal || !assistantAdminPasswordInput) {
+    showMessage("Assistant admin password dialog is unavailable.");
+    return Promise.resolve("");
+  }
+
+  if (assistantAdminPasswordMessage) {
+    assistantAdminPasswordMessage.textContent = message;
+  }
+
+  assistantAdminPasswordInput.value = "";
+  assistantAdminPasswordModal.hidden = false;
+  assistantAdminPasswordModal.setAttribute("aria-hidden", "false");
+  assistantAdminPasswordInput.focus();
+
+  return new Promise((resolve) => {
+    assistantAdminPasswordPromptResolver = resolve;
+  });
+}
+
+function resolveAssistantAdminPasswordPrompt(value) {
+  if (!assistantAdminPasswordModal || !assistantAdminPasswordInput) {
+    return;
+  }
+
+  const resolver = assistantAdminPasswordPromptResolver;
+  assistantAdminPasswordPromptResolver = null;
+  assistantAdminPasswordModal.hidden = true;
+  assistantAdminPasswordModal.setAttribute("aria-hidden", "true");
+  assistantAdminPasswordInput.value = "";
+  if (resolver) {
+    resolver(value);
   }
 }
 
