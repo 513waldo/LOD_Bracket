@@ -87,6 +87,7 @@ const clearAllSentMessagesButton = document.querySelector("#clearAllSentMessages
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
 const assistantAdminPasswordModal = document.querySelector("#assistantAdminPasswordModal");
+const assistantAdminPasswordForm = document.querySelector("#assistantAdminPasswordModal form");
 const assistantAdminPasswordInput = document.querySelector("#assistantAdminPasswordInput");
 const assistantAdminPasswordContinue = document.querySelector("#assistantAdminPasswordContinue");
 const assistantAdminPasswordCancel = document.querySelector("#assistantAdminPasswordCancel");
@@ -835,29 +836,28 @@ clearAllSentMessagesButton?.addEventListener("click", () => {
   clearAllSentMessages();
 });
 
-assistantAdminPasswordContinue?.addEventListener("click", () => {
-  resolveAssistantAdminPasswordPrompt(assistantAdminPasswordInput?.value || "");
-});
-
-assistantAdminPasswordCancel?.addEventListener("click", () => {
-  resolveAssistantAdminPasswordPrompt(null);
-});
-
 assistantAdminPasswordModal?.addEventListener("click", (event) => {
   if (event.target === assistantAdminPasswordModal) {
     resolveAssistantAdminPasswordPrompt(null);
   }
 });
 
-assistantAdminPasswordInput?.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
+assistantAdminPasswordModal?.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  resolveAssistantAdminPasswordPrompt(null);
+});
+
+assistantAdminPasswordForm?.addEventListener("submit", (event) => {
+  const submitter = event.submitter || assistantAdminPasswordContinue;
+  const action = String(submitter?.value || submitter?.id || "");
+  if (action === "continue") {
     event.preventDefault();
     resolveAssistantAdminPasswordPrompt(assistantAdminPasswordInput?.value || "");
+    return;
   }
-  if (event.key === "Escape") {
-    event.preventDefault();
-    resolveAssistantAdminPasswordPrompt(null);
-  }
+
+  event.preventDefault();
+  resolveAssistantAdminPasswordPrompt(null);
 });
 
 window.clearPendingAdminMessages = clearPendingAdminMessages;
@@ -6638,8 +6638,12 @@ function promptForAssistantAdminPassword(message) {
   }
 
   assistantAdminPasswordInput.value = "";
-  assistantAdminPasswordModal.hidden = false;
-  assistantAdminPasswordModal.setAttribute("aria-hidden", "false");
+  if (typeof assistantAdminPasswordModal.showModal === "function") {
+    assistantAdminPasswordModal.showModal();
+  } else {
+    assistantAdminPasswordModal.hidden = false;
+    assistantAdminPasswordModal.setAttribute("aria-hidden", "false");
+  }
   assistantAdminPasswordInput.focus();
 
   return new Promise((resolve) => {
@@ -6654,8 +6658,12 @@ function resolveAssistantAdminPasswordPrompt(value) {
 
   const resolver = assistantAdminPasswordPromptResolver;
   assistantAdminPasswordPromptResolver = null;
-  assistantAdminPasswordModal.hidden = true;
-  assistantAdminPasswordModal.setAttribute("aria-hidden", "true");
+  if (assistantAdminPasswordModal.open) {
+    assistantAdminPasswordModal.close();
+  } else {
+    assistantAdminPasswordModal.hidden = true;
+    assistantAdminPasswordModal.setAttribute("aria-hidden", "true");
+  }
   assistantAdminPasswordInput.value = "";
   if (resolver) {
     resolver(value);

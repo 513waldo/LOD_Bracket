@@ -496,8 +496,8 @@
     </details>
   </main>
 
-  <div id="assistantAdminPasswordModal" class="password-modal" hidden aria-hidden="true">
-    <div class="password-modal-card" role="dialog" aria-modal="true" aria-labelledby="assistantAdminPasswordTitle" aria-describedby="assistantAdminPasswordMessage">
+  <dialog id="assistantAdminPasswordModal" class="password-modal" aria-labelledby="assistantAdminPasswordTitle" aria-describedby="assistantAdminPasswordMessage">
+    <form class="password-modal-card" method="dialog">
       <h2 id="assistantAdminPasswordTitle">Assistant admin password</h2>
       <p id="assistantAdminPasswordMessage">Enter the assistant admin password to delete all active LODs.</p>
       <label class="password-modal-field">
@@ -505,16 +505,16 @@
         <input id="assistantAdminPasswordInput" type="password" autocomplete="current-password" placeholder="Password">
       </label>
       <div class="password-modal-actions">
-        <button id="assistantAdminPasswordCancel" class="secondary" type="button">Cancel</button>
-        <button id="assistantAdminPasswordContinue" type="button">Continue</button>
+        <button id="assistantAdminPasswordCancel" class="secondary" type="submit" value="cancel">Cancel</button>
+        <button id="assistantAdminPasswordContinue" type="submit" value="continue">Continue</button>
       </div>
-    </div>
-  </div>
+    </form>
+  </dialog>
 
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=11"></script>
   <script src="attendance-auth.js?v=2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-300"></script>
+  <script src="bracket.js?v=interactive-tools-301"></script>
 </body>
 </html>
