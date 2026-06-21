@@ -6441,92 +6441,99 @@ async function fetchActiveLodRegistry() {
 }
 
 async function deleteAllActiveLods() {
-  const activeSessionCode = getAssistantAdminSessionCode();
-  const loadedCode = normalizeLodCode(lodCode);
-  const storedPassword = getAssistantAdminPassword();
-  if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
-    const entered = await promptForAssistantAdminPassword("Enter the assistant admin password to delete all active LODs.");
-    if (!entered) {
-      showMessage("Assistant admin access was cancelled.");
+  try {
+    const activeSessionCode = getAssistantAdminSessionCode();
+    const loadedCode = normalizeLodCode(lodCode);
+    const storedPassword = getAssistantAdminPassword();
+    if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
+      const entered = await promptForAssistantAdminPassword("Enter the assistant admin password to delete all active LODs.");
+      if (!entered) {
+        showMessage("Assistant admin access was cancelled.");
+        return false;
+      }
+
+      if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
+        showMessage("Incorrect assistant admin password.");
+        return false;
+      }
+
+      saveAssistantAdminPassword(productionAssistantAdminPassword);
+      if (loadedCode) {
+        saveAssistantAdminSessionCode(loadedCode);
+      }
+    }
+
+    showMessage("Assistant admin password accepted. Checking active LODs...");
+    const registries = await fetchAllActiveLodRegistries();
+    const codes = Array.from(new Set(registries.flatMap(({ registry }) => registry?.codes || []).filter(Boolean))).sort();
+
+    const confirmLabel = codes.length
+      ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
+      : "Delete all active LODs and clear their messages?";
+    if (!window.confirm(confirmLabel)) {
+      showMessage("Delete all active LODs cancelled.");
       return false;
     }
 
-    if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
-      showMessage("Incorrect assistant admin password.");
-      return false;
+    const cleanupCode = normalizeLodCode(lodCode);
+    const deletedCodes = new Set(codes);
+
+    for (const code of deletedCodes) {
+      clearBracketCleanupStorage(code);
+      for (const baseUrl of API_BASE_URLS) {
+        if (!baseUrl) {
+          continue;
+        }
+
+        try {
+          await fetch(getApiSnapshotUrl(baseUrl, code), { method: "DELETE" });
+        } catch {
+          // Keep deleting other codes even if one host fails.
+        }
+      }
+      if (canUseLocalStorage()) {
+        try {
+          localStorage.removeItem(`${portalSnapshotStorageKey}:${code}`);
+        } catch {
+          // Ignore local cache cleanup failures.
+        }
+      }
     }
 
-    saveAssistantAdminPassword(productionAssistantAdminPassword);
-    if (loadedCode) {
-      saveAssistantAdminSessionCode(loadedCode);
-    }
-  }
-
-  const registries = await fetchAllActiveLodRegistries();
-  const codes = Array.from(new Set(registries.flatMap(({ registry }) => registry?.codes || []).filter(Boolean))).sort();
-
-  const confirmLabel = codes.length
-    ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
-    : "Delete all active LODs and clear their messages?";
-  if (!window.confirm(confirmLabel)) {
-    showMessage("Delete all active LODs cancelled.");
-    return false;
-  }
-
-  const cleanupCode = normalizeLodCode(lodCode);
-  const deletedCodes = new Set(codes);
-
-  for (const code of deletedCodes) {
-    clearBracketCleanupStorage(code);
     for (const baseUrl of API_BASE_URLS) {
       if (!baseUrl) {
         continue;
       }
 
       try {
-        await fetch(getApiSnapshotUrl(baseUrl, code), { method: "DELETE" });
+        await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
       } catch {
-        // Keep deleting other codes even if one host fails.
+        // Keep going so every configured host gets a delete attempt.
       }
     }
-    if (canUseLocalStorage()) {
-      try {
-        localStorage.removeItem(`${portalSnapshotStorageKey}:${code}`);
-      } catch {
-        // Ignore local cache cleanup failures.
-      }
-    }
-  }
 
-  for (const baseUrl of API_BASE_URLS) {
-    if (!baseUrl) {
-      continue;
+    if (!deletedCodes.size && cleanupCode) {
+      clearPortalSnapshotStorage(cleanupCode);
+      clearBracketCleanupStorage(cleanupCode);
     }
 
-    try {
-      await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
-    } catch {
-      // Keep going so every configured host gets a delete attempt.
+    if (cleanupCode) {
+      clearTournamentState({ preserveLodCode: false, clearDraft: true, code: cleanupCode });
+    } else {
+      clearTournamentState({ preserveLodCode: false, clearDraft: true, code: "" });
     }
-  }
 
-  if (!deletedCodes.size && cleanupCode) {
-    clearPortalSnapshotStorage(cleanupCode);
-    clearBracketCleanupStorage(cleanupCode);
+    clearAssistantAdminSessionCode();
+    clearAllPortalMessages({ publish: false });
+    queueActiveLodCodesRefresh();
+    updateAssistantAdminControls();
+    showMessage("All active LODs and their messages were deleted.");
+    return true;
+  } catch (error) {
+    console.error("Delete active LODs failed:", error);
+    showMessage("Delete all active LODs failed. Try again.");
+    return false;
   }
-
-  if (cleanupCode) {
-    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: cleanupCode });
-  } else {
-    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: "" });
-  }
-
-  clearAssistantAdminSessionCode();
-  clearAllPortalMessages({ publish: false });
-  queueActiveLodCodesRefresh();
-  updateAssistantAdminControls();
-  showMessage("All active LODs and their messages were deleted.");
-  return true;
 }
 
 async function fetchAllActiveLodRegistries() {
