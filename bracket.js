@@ -8334,9 +8334,10 @@ function renderFinalMatchBlock(match, title) {
         <div class="match-header">
           <p class="match-title">${match.title}</p>
           ${match.winner && !match.autoAdvanced ? `
-            <button
+          <button
               class="reset-match"
               type="button"
+              onclick="window.handleBracketResetClick(this)"
               data-reset-match="${escapeAttribute(match.id)}"
               data-match-id="${match.id}"
               data-match-type="${escapeAttribute(match.type)}"
