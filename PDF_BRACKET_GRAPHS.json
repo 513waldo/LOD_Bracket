@@ -1201,8 +1201,8 @@
           }
         ],
         "winnerTo": {
-          "game": 14,
-          "slot": 1
+          "game": 11,
+          "slot": 0
         },
         "loserTo": null
       },
@@ -1653,7 +1653,7 @@
         ],
         "winnerTo": {
           "game": 11,
-          "slot": 0
+          "slot": 1
         },
         "loserTo": {
           "game": 9,
@@ -2167,8 +2167,8 @@
           }
         ],
         "winnerTo": {
-          "game": 11,
-          "slot": 1
+          "game": 12,
+          "slot": 0
         },
         "loserTo": null
       },
@@ -2197,7 +2197,7 @@
         "inputs": [
           {
             "kind": "winner",
-            "game": 9
+            "game": 7
           },
           {
             "kind": "winner",
