@@ -6336,6 +6336,9 @@ function restoreGraphStateFromDraft(draftState) {
       openingRound.forEach((match) => {
         match.players[0] = restoredState.originalPlayers[seedIndex] || "";
         match.players[1] = restoredState.originalPlayers[seedIndex + 1] || "";
+        match.winner = "";
+        match.loser = "";
+        match.autoAdvanced = false;
         seedIndex += 2;
       });
     }
