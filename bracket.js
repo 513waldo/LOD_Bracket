@@ -5858,6 +5858,12 @@ function flushBracketDraftSave() {
 }
 
 function restoreBracketDraft() {
+  const portalSnapshot = readPortalSnapshot();
+  if (portalSnapshot) {
+    applyRemoteAdminSnapshot(portalSnapshot, "local-storage");
+    return true;
+  }
+
   const draft = readBracketDraft();
   if (!draft) {
     return false;
@@ -6073,6 +6079,23 @@ function restoreBracketDraft() {
 
   queueBracketDraftSave();
   return true;
+}
+
+function readPortalSnapshot() {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(getPortalSnapshotStorageKey());
+    if (!raw) {
+      return null;
+    }
+
+    return normalizeAdminMirrorSnapshot(JSON.parse(raw));
+  } catch {
+    return null;
+  }
 }
 
 function readBracketDraft() {
