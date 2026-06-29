@@ -1178,7 +1178,7 @@ function handleBracketWinnerClick(button) {
     return;
   }
 
-  const matchId = button.dataset.matchId;
+  const matchId = Number(button.dataset.matchId);
   const player = button.dataset.player;
   if (!player) {
     return;
@@ -1219,7 +1219,7 @@ function handleBracketResetClick(button) {
     return;
   }
 
-  const matchId = button.dataset.matchId;
+  const matchId = Number(button.dataset.matchId);
 
   saveBracketBackup({
     resetMatch: button.dataset.resetMatch,
