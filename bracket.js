@@ -6291,33 +6291,21 @@ function restoreGraphStateFromDraft(draftState) {
     return draftState;
   }
 
-  const originalPlayers = Array.isArray(draftState.originalPlayers) ? [...draftState.originalPlayers] : [];
-  const restoredState = createBracketGraph(originalPlayers);
-  const boardAssignments = new Map(
-    Array.isArray(draftState.matches)
-      ? draftState.matches.map((match) => [match.id, match.boardAssignment ?? null])
-      : [],
-  );
-  const manualResults = Array.isArray(draftState.matches)
-    ? draftState.matches
-      .filter((match) => match && match.winner && !match.autoAdvanced)
-      .sort((a, b) => a.id - b.id)
-    : [];
-
-  restoredState.matches.forEach((match) => {
-    if (boardAssignments.has(match.id)) {
-      match.boardAssignment = boardAssignments.get(match.id);
-    }
-  });
+  const restoredState = draftState;
+  if (Array.isArray(restoredState.matches)) {
+    restoredState.matches.forEach((match) => {
+      if (!Array.isArray(match.players)) {
+        match.players = ["", ""];
+      }
+      if (!Array.isArray(match.slotSources)) {
+        match.slotSources = ["", ""];
+      }
+    });
+  }
 
   state = restoredState;
-  manualResults.forEach((result) => {
-    const match = state.matchesById?.[result.id];
-    if (match?.players.includes(result.winner) && !match.winner) {
-      chooseWinner(result.id, result.winner);
-    }
-  });
-
+  rebuildGraphMatchIndex(state);
+  settleGraphByesAndSources(state);
   return state;
 }
 
