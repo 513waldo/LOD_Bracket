@@ -5851,7 +5851,7 @@ function flushBracketDraftSave() {
 
 function restoreBracketDraft() {
   const portalSnapshot = readPortalSnapshot();
-  if (portalSnapshot) {
+  if (portalSnapshot && portalSnapshot.state && typeof portalSnapshot.state === "object") {
     applyRemoteAdminSnapshot(portalSnapshot, "local-storage");
     return true;
   }
