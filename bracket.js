@@ -5532,7 +5532,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     version: 1,
     exportedAt,
     lodCode,
-    expiresAt: getOrCreateBracketCleanupAt(lodCode) || "",
+    expiresAt: refreshBracketCleanupAt(lodCode) || getOrCreateBracketCleanupAt(lodCode) || "",
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
     barName: getBarName(),
@@ -5856,9 +5856,9 @@ function restoreBracketDraft() {
         clearCompletedBracketCode(lodCode);
       }
     } else {
-      const cleanupAt = Number.isFinite(savedExpiry) && savedExpiry > 0
+      const cleanupAt = refreshBracketCleanupAt(lodCode) || (Number.isFinite(savedExpiry) && savedExpiry > 0
         ? savedExpiry
-        : getOrCreateBracketCleanupAt(lodCode);
+        : getOrCreateBracketCleanupAt(lodCode));
 
       if (cleanupAt && cleanupAt <= Date.now()) {
         expireBracketSession(lodCode);
@@ -6153,9 +6153,11 @@ function restoreBracketDraftObject(draft) {
   }
 
   if (draft.state && typeof draft.state === "object") {
+    const restoredState = restoreGraphStateFromDraft(draft.state);
     draft = {
       ...draft,
-      state: restoreGraphStateFromDraft(draft.state),
+      state: restoredState,
+      expiresAt: restoredState?.champion ? (draft.expiresAt || "") : (refreshBracketCleanupAt(lodCode) || draft.expiresAt || ""),
     };
   }
 
@@ -6225,7 +6227,7 @@ function buildBracketDraft() {
     },
     pdfLayoutValue: pdfLayoutSelect?.value || "",
     lodCode,
-    expiresAt: getOrCreateBracketCleanupAt(lodCode) || "",
+    expiresAt: refreshBracketCleanupAt(lodCode) || getOrCreateBracketCleanupAt(lodCode) || "",
     portalNotice,
     portalNoticeDraft,
     portalSupportNoticeAt,
@@ -6328,6 +6330,21 @@ function getOrCreateBracketCleanupAt(code = lodCode) {
       return 0;
     }
 
+    const expiresAt = Date.now() + bracketCleanupDurationMs;
+    localStorage.setItem(getBracketCleanupStorageKey(normalizedCode), String(expiresAt));
+    return expiresAt;
+  } catch {
+    return 0;
+  }
+}
+
+function refreshBracketCleanupAt(code = lodCode) {
+  const normalizedCode = normalizeLodCode(code);
+  if (!normalizedCode || !canUseLocalStorage() || !state || state.champion) {
+    return 0;
+  }
+
+  try {
     const expiresAt = Date.now() + bracketCleanupDurationMs;
     localStorage.setItem(getBracketCleanupStorageKey(normalizedCode), String(expiresAt));
     return expiresAt;
@@ -7096,6 +7113,12 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
       refreshGraphSources(state);
     } else {
       refreshGameNumbersAndSources(state);
+    }
+    if (!state.champion) {
+      const refreshedExpiry = refreshBracketCleanupAt(lodCode);
+      if (refreshedExpiry) {
+        saveBracketCleanupAt(lodCode, refreshedExpiry);
+      }
     }
     renderBracket();
     syncPdfLayoutToTeamCount(state.originalPlayers?.length || Number(totalPlayers.value) || 0);
