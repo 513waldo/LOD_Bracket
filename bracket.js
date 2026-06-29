@@ -1164,15 +1164,7 @@ bracketOutput.addEventListener("click", (event) => {
       resetMatch: resetButton.dataset.resetMatch,
       selectedWinner: "",
     });
-    if (state?.matchesById) {
-      resetMatchResult(Number(resetButton.dataset.matchId));
-    } else {
-      resetMatchResultLegacy(
-        resetButton.dataset.matchType,
-        Number(resetButton.dataset.roundIndex),
-        Number(resetButton.dataset.matchIndex),
-      );
-    }
+    handleBracketResetClick(resetButton);
     return;
   }
 
@@ -1237,6 +1229,17 @@ function handleBracketResetClick(button) {
   if (!button || !button.dataset) {
     return;
   }
+
+  if (button.dataset.resetHandled === "true") {
+    return;
+  }
+
+  button.dataset.resetHandled = "true";
+  window.setTimeout(() => {
+    if (button?.dataset) {
+      delete button.dataset.resetHandled;
+    }
+  }, 0);
 
   const matchId = Number(button.dataset.matchId);
   if (!Number.isFinite(matchId)) {
@@ -8360,12 +8363,13 @@ function renderFinalMatchBlock(match, title) {
           <button
             class="reset-match"
             type="button"
+            onclick="window.handleBracketResetClick(this)"
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
             data-round-index="${match.roundIndex}"
-              data-match-index="${match.matchIndex}"
-            >Fix</button>
+            data-match-index="${match.matchIndex}"
+          >Fix</button>
           ` : ""}
         </div>
         <div class="match-tools">
@@ -8458,12 +8462,13 @@ function renderMatch(match) {
           <button
             class="reset-match"
             type="button"
+            onclick="window.handleBracketResetClick(this)"
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
             data-round-index="${match.roundIndex}"
             data-match-index="${match.matchIndex}"
-        >Fix</button>
+          >Fix</button>
         ` : ""}
       </div>
       <div class="match-tools">
