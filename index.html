@@ -13,6 +13,7 @@
         <p class="eyebrow">Darts tournament portal</p>
         <h1 id="landingTitle">Player Access</h1>
         <p class="landing-note">Scan the QR code to open the view-only bracket portal for this LOD.</p>
+        <p id="landingCode" class="landing-note" aria-live="polite">LOD: ------</p>
         <p class="landing-note"><a href="scoresheet.html">Open the tablet scoresheet</a> for league night scoring.</p>
       </div>
 
@@ -24,15 +25,56 @@
   <script src="qr.js?v=4"></script>
   <script>
     (function () {
-      const code = new URLSearchParams(window.location.search).get("lod") || "";
+      const sharedLodCodeStorageKey = "dartsTournamentPortalLodCode";
+      const fallbackLodCodeStorageKey = "dartsTournamentLodCode";
+      const codeLabel = document.getElementById("landingCode");
       const portalUrl = new URL("portal.html", window.location.href);
+      const qr = document.getElementById("landingQrCode");
 
-      if (code) {
-        portalUrl.searchParams.set("lod", code);
+      function normalizeLodCode(value) {
+        return String(value || "")
+          .replace(/[^A-Z0-9]/gi, "")
+          .toUpperCase()
+          .slice(0, 12);
       }
 
-      const qr = document.getElementById("landingQrCode");
-      qr.src = createPortalQrDataUrl(portalUrl.toString(), 500);
+      function getStoredLodCode() {
+        try {
+          const primary = localStorage.getItem(sharedLodCodeStorageKey);
+          const raw = primary === null ? localStorage.getItem(fallbackLodCodeStorageKey) : primary;
+          if (raw === null || raw === "__CLEARED__") {
+            return "";
+          }
+          return normalizeLodCode(raw);
+        } catch {
+          return "";
+        }
+      }
+
+      function renderLandingCode() {
+        const code = normalizeLodCode(new URLSearchParams(window.location.search).get("lod") || "") || getStoredLodCode();
+
+        if (code) {
+          portalUrl.searchParams.set("lod", code);
+        } else {
+          portalUrl.searchParams.delete("lod");
+        }
+
+        if (codeLabel) {
+          codeLabel.textContent = `LOD: ${code || "------"}`;
+        }
+
+        qr.src = createPortalQrDataUrl(portalUrl.toString(), 500);
+      }
+
+      window.addEventListener("storage", (event) => {
+        if (event.key !== sharedLodCodeStorageKey && event.key !== fallbackLodCodeStorageKey) {
+          return;
+        }
+        renderLandingCode();
+      });
+
+      renderLandingCode();
     }());
   </script>
 </body>

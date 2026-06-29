@@ -115,6 +115,7 @@ const bracketDraftWindowNamePrefix = "dartsTournamentBracketDraftWindow:";
 const bracketDraftHistoryStateKey = "bracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
 const lodCodeStorageKey = "dartsTournamentLodCode";
+const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
@@ -8090,7 +8091,9 @@ function saveStoredLodCode(code) {
     return;
   }
 
-  localStorage.setItem(lodCodeStorageKey, code || lodCodeClearedValue);
+  const value = code || lodCodeClearedValue;
+  localStorage.setItem(lodCodeStorageKey, value);
+  localStorage.setItem(portalLodCodeStorageKey, value);
 }
 
 function generateLodCode() {
