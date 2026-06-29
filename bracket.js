@@ -8335,13 +8335,12 @@ function renderFinalMatchBlock(match, title) {
           <p class="match-title">${match.title}</p>
           ${match.winner && !match.autoAdvanced ? `
           <button
-              class="reset-match"
-              type="button"
-              onclick="window.handleBracketResetClick(this)"
-              data-reset-match="${escapeAttribute(match.id)}"
-              data-match-id="${match.id}"
-              data-match-type="${escapeAttribute(match.type)}"
-              data-round-index="${match.roundIndex}"
+            class="reset-match"
+            type="button"
+            data-reset-match="${escapeAttribute(match.id)}"
+            data-match-id="${match.id}"
+            data-match-type="${escapeAttribute(match.type)}"
+            data-round-index="${match.roundIndex}"
               data-match-index="${match.matchIndex}"
             >Fix</button>
           ` : ""}
@@ -8436,7 +8435,6 @@ function renderMatch(match) {
           <button
             class="reset-match"
             type="button"
-            onclick="window.handleBracketResetClick(this)"
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
