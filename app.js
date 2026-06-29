@@ -2139,23 +2139,23 @@ function resetGraphMatchCascade(matchId) {
 
 function getGraphResetCascadeIds(bracketState, matchId) {
   const affected = new Set([matchId]);
-  let changed = true;
+  const queue = [matchId];
 
-  while (changed) {
-    changed = false;
-    bracketState.matches.forEach((match) => {
-      if (affected.has(match.id)) {
+  while (queue.length) {
+    const currentId = queue.shift();
+    const currentMatch = bracketState.matchesById?.[currentId];
+    if (!currentMatch) {
+      continue;
+    }
+
+    [currentMatch.winnerTo, currentMatch.loserTo].forEach((destination) => {
+      const destinationId = destination?.matchId;
+      if (!destinationId || affected.has(destinationId)) {
         return;
       }
 
-      const dependsOnAffected =
-        affected.has(match.winnerTo?.matchId) ||
-        affected.has(match.loserTo?.matchId);
-
-      if (dependsOnAffected) {
-        affected.add(match.id);
-        changed = true;
-      }
+      affected.add(destinationId);
+      queue.push(destinationId);
     });
   }
 
