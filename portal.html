@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Players Portal</title>
-  <link rel="stylesheet" href="portal.css?v=28">
+  <link rel="stylesheet" href="portal.css?v=29">
 </head>
 <body>
   <main class="app">
@@ -25,6 +25,11 @@
           <button id="loadLodCode" class="secondary" type="button">Load code</button>
           <button id="clearLodCode" class="secondary" type="button">Clear code</button>
         </div>
+      </div>
+
+      <div class="portal-qr-card" aria-label="Portal QR code">
+        <img id="portalQrCode" class="portal-qr" alt="QR code for the player portal" src="" width="240" height="240">
+        <p class="portal-qr-caption">Scan to open this player portal on another device.</p>
       </div>
 
     </header>
@@ -86,7 +91,8 @@
   </main>
 
   <script src="config.js?v=3"></script>
+  <script src="qr.js?v=4"></script>
   <script src="attendance-auth.js?v=1"></script>
-  <script src="portal.js?v=54"></script>
+  <script src="portal.js?v=55"></script>
 </body>
 </html>
