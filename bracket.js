@@ -1180,7 +1180,7 @@ function handleBracketWinnerClick(button) {
 
   const matchId = Number(button.dataset.matchId);
   const player = button.dataset.player;
-  if (!Number.isFinite(matchId) || !player) {
+  if (!player) {
     return;
   }
 
@@ -1198,6 +1198,9 @@ function handleBracketWinnerClick(button) {
   });
 
   if (state?.matchesById) {
+    if (!Number.isFinite(matchId)) {
+      return;
+    }
     chooseWinner(matchId, player);
   } else {
     chooseWinnerLegacy(
@@ -1220,9 +1223,6 @@ function handleBracketResetClick(button) {
   }
 
   const matchId = Number(button.dataset.matchId);
-  if (!Number.isFinite(matchId)) {
-    return;
-  }
 
   saveBracketBackup({
     resetMatch: button.dataset.resetMatch,
@@ -1230,6 +1230,9 @@ function handleBracketResetClick(button) {
   });
 
   if (state?.matchesById) {
+    if (!Number.isFinite(matchId)) {
+      return;
+    }
     resetMatchResult(matchId);
   } else {
     resetMatchResultLegacy(
