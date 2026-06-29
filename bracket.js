@@ -6292,16 +6292,49 @@ function restoreGraphStateFromDraft(draftState) {
   }
 
   const restoredState = draftState;
-  if (Array.isArray(restoredState.matches)) {
-    restoredState.matches.forEach((match) => {
-      if (!Array.isArray(match.players)) {
-        match.players = ["", ""];
+  const matches = Array.isArray(restoredState.matches) ? restoredState.matches : [];
+  const matchesById = {};
+  const rounds = { winner: [], loser: [] };
+
+  matches.forEach((match) => {
+    if (!match || typeof match !== "object") {
+      return;
+    }
+
+    if (!Array.isArray(match.players)) {
+      match.players = ["", ""];
+    }
+    if (!Array.isArray(match.slotSources)) {
+      match.slotSources = ["", ""];
+    }
+
+    matchesById[match.id] = match;
+
+    if (match.type === "winner") {
+      if (!rounds.winner[match.roundIndex]) {
+        rounds.winner[match.roundIndex] = [];
       }
-      if (!Array.isArray(match.slotSources)) {
-        match.slotSources = ["", ""];
+      rounds.winner[match.roundIndex].push(match);
+    }
+
+    if (match.type === "loser") {
+      if (!rounds.loser[match.roundIndex]) {
+        rounds.loser[match.roundIndex] = [];
       }
-    });
-  }
+      rounds.loser[match.roundIndex].push(match);
+    }
+  });
+
+  rounds.winner = rounds.winner.filter(Boolean);
+  rounds.loser = rounds.loser.filter(Boolean);
+  rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+  rounds.loser.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
+
+  restoredState.matchesById = matchesById;
+  restoredState.rounds = rounds;
+  restoredState.final = matchesById[restoredState.final?.id] || matches.find((match) => match.type === "final") || restoredState.final || null;
+  restoredState.resetFinal = matchesById[restoredState.resetFinal?.id] || matches.find((match) => match.type === "resetFinal") || restoredState.resetFinal || null;
+  restoredState.doubleDipFinal = matchesById[restoredState.doubleDipFinal?.id] || matches.find((match) => match.type === "doubleDipFinal") || null;
 
   state = restoredState;
   rebuildGraphMatchIndex(state);
