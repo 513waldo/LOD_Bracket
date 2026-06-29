@@ -6325,6 +6325,22 @@ function restoreGraphStateFromDraft(draftState) {
     }
   });
 
+  if ((restoredState.originalPlayers || []).length === 8) {
+    const openingRound = matches
+      .filter((match) => match.type === "winner" && match.roundIndex === 0)
+      .sort((a, b) => a.id - b.id);
+    const roundHasPlayers = openingRound.some((match) => match.players.some((player) => player && player !== "BYE"));
+
+    if (!roundHasPlayers) {
+      let seedIndex = 0;
+      openingRound.forEach((match) => {
+        match.players[0] = restoredState.originalPlayers[seedIndex] || "";
+        match.players[1] = restoredState.originalPlayers[seedIndex + 1] || "";
+        seedIndex += 2;
+      });
+    }
+  }
+
   rounds.winner = rounds.winner.filter(Boolean);
   rounds.loser = rounds.loser.filter(Boolean);
   rounds.winner.forEach((round) => round.sort((a, b) => a.matchIndex - b.matchIndex));
