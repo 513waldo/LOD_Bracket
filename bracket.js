@@ -4758,31 +4758,110 @@ function resetMatchResult(matchId) {
     return;
   }
 
+  if (state.mode === "graph") {
+    resetGraphMatchCascade(matchId);
+  } else {
+    const boardAssignments = new Map(
+      state.matches.map((match) => [match.id, match.boardAssignment ?? null])
+    );
+    const manualResults = state.matches
+      .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
+      .map((match) => ({ id: match.id, winner: match.winner }));
+
+    state = createBracketGraph(state.originalPlayers);
+    state.matches.forEach((match) => {
+      if (boardAssignments.has(match.id)) {
+        match.boardAssignment = boardAssignments.get(match.id);
+      }
+    });
+
+    manualResults.forEach((result) => {
+      const match = state.matchesById[result.id];
+      if (match?.players.includes(result.winner) && !match.winner) {
+        chooseWinner(result.id, result.winner);
+      }
+    });
+  }
+
+  renderBracket();
+  clearAllPortalMessages({ publish: true });
+  queueActiveLodCodesRefresh();
+  showMessage("Match result cleared. Pick the correct winner.");
+}
+
+function resetGraphMatchCascade(matchId) {
+  const affectedIds = getGraphResetCascadeIds(state, matchId);
+  const affectedSet = new Set(affectedIds);
   const boardAssignments = new Map(
     state.matches.map((match) => [match.id, match.boardAssignment ?? null])
   );
-  const manualResults = state.matches
-    .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
-    .map((match) => ({ id: match.id, winner: match.winner }));
 
-  state = createBracketGraph(state.originalPlayers);
+  affectedIds.forEach((id) => {
+    const match = state.matchesById[id];
+    if (!match) {
+      return;
+    }
+
+    match.winner = "";
+    match.loser = "";
+    match.autoAdvanced = false;
+
+    if (id !== matchId) {
+      match.players = ["", ""];
+      match.slotSources = ["", ""];
+    }
+  });
+
   state.matches.forEach((match) => {
     if (boardAssignments.has(match.id)) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
 
-  manualResults.forEach((result) => {
-    const match = state.matchesById[result.id];
-    if (match?.players.includes(result.winner) && !match.winner) {
-      chooseWinner(result.id, result.winner);
+  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
+    state.champion = "";
+    if (state.resetFinal) {
+      state.resetFinal.players = ["", ""];
+      state.resetFinal.slotSources = ["", ""];
+      state.resetFinal.winner = "";
+      state.resetFinal.loser = "";
+      state.resetFinal.autoAdvanced = false;
     }
-  });
+    if (state.doubleDipFinal) {
+      state.doubleDipFinal.players = ["", ""];
+      state.doubleDipFinal.slotSources = ["", ""];
+      state.doubleDipFinal.winner = "";
+      state.doubleDipFinal.loser = "";
+      state.doubleDipFinal.autoAdvanced = false;
+    }
+  }
 
-  renderBracket();
-  clearAllPortalMessages({ publish: true });
-  queueActiveLodCodesRefresh();
-  showMessage("Match result cleared. Pick the correct winner.");
+  settleGraphByesAndSources(state);
+}
+
+function getGraphResetCascadeIds(bracketState, matchId) {
+  const affected = new Set([matchId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    bracketState.matches.forEach((match) => {
+      if (affected.has(match.id)) {
+        return;
+      }
+
+      const dependsOnAffected =
+        affected.has(match.winnerTo?.matchId) ||
+        affected.has(match.loserTo?.matchId);
+
+      if (dependsOnAffected) {
+        affected.add(match.id);
+        changed = true;
+      }
+    });
+  }
+
+  return Array.from(affected);
 }
 
 function placeGraphPlayer(bracketState, destination, player) {
