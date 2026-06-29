@@ -374,6 +374,8 @@ backupList.addEventListener("click", (event) => {
     refreshGameNumbersAndSources(state);
   }
   renderBracket();
+  savePortalSnapshotToLocalStorage();
+  saveBracketDraft();
   showMessage(`Restored backup from ${formatBackupTime(backup.createdAt)}.`);
 });
 

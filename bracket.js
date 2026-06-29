@@ -1310,6 +1310,8 @@ function restoreBracketBackup(id) {
     refreshGameNumbersAndSources(state);
   }
   renderBracket();
+  savePortalSnapshotToLocalStorage();
+  saveBracketDraft();
   queueActiveLodCodesRefresh();
   restoredBackupId = id;
   renderBackups();
