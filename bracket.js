@@ -86,12 +86,6 @@ const clearPendingAdminMessagesButton = document.querySelector("#clearPendingAdm
 const clearAllSentMessagesButton = document.querySelector("#clearAllSentMessages");
 const sendPortalNoticeButton = document.querySelector("#sendPortalNotice");
 const clearPortalNoticeButton = document.querySelector("#clearPortalNotice");
-const assistantAdminPasswordModal = document.querySelector("#assistantAdminPasswordModal");
-const assistantAdminPasswordForm = document.querySelector("#assistantAdminPasswordModal form");
-const assistantAdminPasswordInput = document.querySelector("#assistantAdminPasswordInput");
-const assistantAdminPasswordContinue = document.querySelector("#assistantAdminPasswordContinue");
-const assistantAdminPasswordCancel = document.querySelector("#assistantAdminPasswordCancel");
-const assistantAdminPasswordMessage = document.querySelector("#assistantAdminPasswordMessage");
 const portalNoticeStatus = document.querySelector("#portalNoticeStatus");
 const attendanceRootStatus = document.querySelector("#attendanceRootStatus");
 const attendanceRootCurrentPassword = document.querySelector("#attendanceRootCurrentPassword");
@@ -299,7 +293,6 @@ let totalPlayersSyncTimer = null;
 let suppressPortalSnapshotPublish = false;
 let diceRollerFullscreenRequested = false;
 let diceRollerMaximizeMode = "";
-let assistantAdminPasswordPromptResolver = null;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -834,30 +827,6 @@ clearPendingAdminMessagesButton?.addEventListener("click", () => {
 
 clearAllSentMessagesButton?.addEventListener("click", () => {
   clearAllSentMessages();
-});
-
-assistantAdminPasswordModal?.addEventListener("click", (event) => {
-  if (event.target === assistantAdminPasswordModal) {
-    resolveAssistantAdminPasswordPrompt(null);
-  }
-});
-
-assistantAdminPasswordModal?.addEventListener("cancel", (event) => {
-  event.preventDefault();
-  resolveAssistantAdminPasswordPrompt(null);
-});
-
-assistantAdminPasswordForm?.addEventListener("submit", (event) => {
-  const submitter = event.submitter || assistantAdminPasswordContinue;
-  const action = String(submitter?.value || submitter?.id || "");
-  if (action === "continue") {
-    event.preventDefault();
-    resolveAssistantAdminPasswordPrompt(assistantAdminPasswordInput?.value || "");
-    return;
-  }
-
-  event.preventDefault();
-  resolveAssistantAdminPasswordPrompt(null);
 });
 
 window.clearPendingAdminMessages = clearPendingAdminMessages;
@@ -4784,53 +4753,115 @@ function ensureDoubleDipFinal(bracketState, sourceMatch, winnersSidePlayer, lose
   return doubleDipFinal;
 }
 
-function isFinalSeriesMatch(match) {
-  return match?.type === "final" ||
-    match?.type === "resetFinal" ||
-    match?.type === "doubleDipFinal";
-}
-
 function resetMatchResult(matchId) {
   if (!state?.matchesById) {
     return;
   }
 
-  const targetMatch = state.matchesById[matchId];
+  if (state.mode === "graph") {
+    resetGraphMatchCascade(matchId);
+  } else {
+    const boardAssignments = new Map(
+      state.matches.map((match) => [match.id, match.boardAssignment ?? null])
+    );
+    const manualResults = state.matches
+      .filter((match) => match.winner && !match.autoAdvanced && match.id !== matchId)
+      .map((match) => ({ id: match.id, winner: match.winner }));
+
+    state = createBracketGraph(state.originalPlayers);
+    state.matches.forEach((match) => {
+      if (boardAssignments.has(match.id)) {
+        match.boardAssignment = boardAssignments.get(match.id);
+      }
+    });
+
+    manualResults.forEach((result) => {
+      const match = state.matchesById[result.id];
+      if (match?.players.includes(result.winner) && !match.winner) {
+        chooseWinner(result.id, result.winner);
+      }
+    });
+  }
+
+  renderBracket();
+  clearAllPortalMessages({ publish: true });
+  queueActiveLodCodesRefresh();
+  showMessage("Match result cleared. Pick the correct winner.");
+}
+
+function resetGraphMatchCascade(matchId) {
+  const affectedIds = getGraphResetCascadeIds(state, matchId);
+  const affectedSet = new Set(affectedIds);
   const boardAssignments = new Map(
     state.matches.map((match) => [match.id, match.boardAssignment ?? null])
   );
-  const manualResults = state.matches
-    .filter((match) => {
-      if (!match.winner || match.autoAdvanced || match.id === matchId) {
-        return false;
-      }
 
-      if (targetMatch && isFinalSeriesMatch(targetMatch) && isFinalSeriesMatch(match)) {
-        return false;
-      }
+  affectedIds.forEach((id) => {
+    const match = state.matchesById[id];
+    if (!match) {
+      return;
+    }
 
-      return true;
-    })
-    .map((match) => ({ id: match.id, winner: match.winner }));
+    match.winner = "";
+    match.loser = "";
+    match.autoAdvanced = false;
 
-  state = createBracketGraph(state.originalPlayers);
+    if (id !== matchId) {
+      match.players = ["", ""];
+      match.slotSources = ["", ""];
+    }
+  });
+
   state.matches.forEach((match) => {
     if (boardAssignments.has(match.id)) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
 
-  manualResults.forEach((result) => {
-    const match = state.matchesById[result.id];
-    if (match?.players.includes(result.winner) && !match.winner) {
-      chooseWinner(result.id, result.winner);
+  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
+    state.champion = "";
+    if (state.resetFinal) {
+      state.resetFinal.players = ["", ""];
+      state.resetFinal.slotSources = ["", ""];
+      state.resetFinal.winner = "";
+      state.resetFinal.loser = "";
+      state.resetFinal.autoAdvanced = false;
     }
-  });
+    if (state.doubleDipFinal) {
+      state.doubleDipFinal.players = ["", ""];
+      state.doubleDipFinal.slotSources = ["", ""];
+      state.doubleDipFinal.winner = "";
+      state.doubleDipFinal.loser = "";
+      state.doubleDipFinal.autoAdvanced = false;
+    }
+  }
 
-  renderBracket();
-  clearAllPortalMessages({ publish: true });
-  queueActiveLodCodesRefresh();
-  showMessage("Match result cleared. Pick the correct winner.");
+  settleGraphByesAndSources(state);
+}
+
+function getGraphResetCascadeIds(bracketState, matchId) {
+  const affected = new Set([matchId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    bracketState.matches.forEach((match) => {
+      if (affected.has(match.id)) {
+        return;
+      }
+
+      const dependsOnAffected =
+        affected.has(match.winnerTo?.matchId) ||
+        affected.has(match.loserTo?.matchId);
+
+      if (dependsOnAffected) {
+        affected.add(match.id);
+        changed = true;
+      }
+    });
+  }
+
+  return Array.from(affected);
 }
 
 function placeGraphPlayer(bracketState, destination, player) {
@@ -5269,22 +5300,11 @@ function resetMatchResultLegacy(type, roundIndex, matchIndex) {
   }
 
   const targetId = `${type}-${roundIndex}-${matchIndex}`;
-  const targetMatch = getMatch(type, roundIndex, matchIndex);
   const boardAssignments = new Map(
     getAllMatches(state).map((match) => [match.id, match.boardAssignment ?? null])
   );
   const manualResults = getAllMatches(state)
-    .filter((match) => {
-      if (!match.winner || match.autoAdvanced || match.id === targetId) {
-        return false;
-      }
-
-      if (targetMatch && isFinalSeriesMatch(targetMatch) && isFinalSeriesMatch(match)) {
-        return false;
-      }
-
-      return true;
-    })
+    .filter((match) => match.winner && !match.autoAdvanced && match.id !== targetId)
     .map((match) => ({
       type: match.type,
       roundIndex: match.roundIndex,
@@ -5711,7 +5731,6 @@ async function flushPortalSnapshotPublish(snapshot = buildPortalSnapshot()) {
 
 function clearTournamentState({ preserveLodCode = true, clearDraft = true, code = lodCode } = {}) {
   const cleanupCode = normalizeLodCode(code || lodCode);
-  const previousSuppressPortalSnapshotPublish = suppressPortalSnapshotPublish;
 
   if (portalPublishTimer) {
     clearTimeout(portalPublishTimer);
@@ -5781,12 +5800,7 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   paperBackup.textContent = "Build a bracket to create a paper backup.";
   mysteryOut = "";
   renderMysteryOut();
-  suppressPortalSnapshotPublish = true;
-  try {
-    savePortalSnapshotToLocalStorage();
-  } finally {
-    suppressPortalSnapshotPublish = previousSuppressPortalSnapshotPublish;
-  }
+  savePortalSnapshotToLocalStorage();
   hideTeamDrawWarning();
   clearPlayerNames();
 
@@ -6521,99 +6535,92 @@ async function fetchActiveLodRegistry() {
 }
 
 async function deleteAllActiveLods() {
-  try {
-    const activeSessionCode = getAssistantAdminSessionCode();
-    const loadedCode = normalizeLodCode(lodCode);
-    const storedPassword = getAssistantAdminPassword();
-    if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
-      const entered = await promptForAssistantAdminPassword("Enter the assistant admin password to delete all active LODs.");
-      if (!entered) {
-        showMessage("Assistant admin access was cancelled.");
-        return false;
-      }
-
-      if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
-        showMessage("Incorrect assistant admin password.");
-        return false;
-      }
-
-      saveAssistantAdminPassword(productionAssistantAdminPassword);
-      if (loadedCode) {
-        saveAssistantAdminSessionCode(loadedCode);
-      }
-    }
-
-    showMessage("Assistant admin password accepted. Checking active LODs...");
-    const registries = await fetchAllActiveLodRegistries();
-    const codes = Array.from(new Set(registries.flatMap(({ registry }) => registry?.codes || []).filter(Boolean))).sort();
-
-    const confirmLabel = codes.length
-      ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
-      : "Delete all active LODs and clear their messages?";
-    if (!window.confirm(confirmLabel)) {
-      showMessage("Delete all active LODs cancelled.");
+  const activeSessionCode = getAssistantAdminSessionCode();
+  const loadedCode = normalizeLodCode(lodCode);
+  const storedPassword = getAssistantAdminPassword();
+  if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
+    const entered = window.prompt("Enter the assistant admin password to delete all active LODs.", "");
+    if (!entered) {
+      showMessage("Assistant admin access was cancelled.");
       return false;
     }
 
-    const cleanupCode = normalizeLodCode(lodCode);
-    const deletedCodes = new Set(codes);
-
-    for (const code of deletedCodes) {
-      clearBracketCleanupStorage(code);
-      for (const baseUrl of API_BASE_URLS) {
-        if (!baseUrl) {
-          continue;
-        }
-
-        try {
-          await fetch(getApiSnapshotUrl(baseUrl, code), { method: "DELETE" });
-        } catch {
-          // Keep deleting other codes even if one host fails.
-        }
-      }
-      if (canUseLocalStorage()) {
-        try {
-          localStorage.removeItem(`${portalSnapshotStorageKey}:${code}`);
-        } catch {
-          // Ignore local cache cleanup failures.
-        }
-      }
+    if (entered !== productionAssistantAdminPassword && entered !== storedPassword) {
+      showMessage("Incorrect assistant admin password.");
+      return false;
     }
 
+    saveAssistantAdminPassword(productionAssistantAdminPassword);
+    if (loadedCode) {
+      saveAssistantAdminSessionCode(loadedCode);
+    }
+  }
+
+  const registries = await fetchAllActiveLodRegistries();
+  const codes = Array.from(new Set(registries.flatMap(({ registry }) => registry?.codes || []).filter(Boolean))).sort();
+
+  const confirmLabel = codes.length
+    ? `Delete all ${codes.length} active LOD${codes.length === 1 ? "" : "s"} and clear their messages?`
+    : "Delete all active LODs and clear their messages?";
+  if (!window.confirm(confirmLabel)) {
+    showMessage("Delete all active LODs cancelled.");
+    return false;
+  }
+
+  const cleanupCode = normalizeLodCode(lodCode);
+  const deletedCodes = new Set(codes);
+
+  for (const code of deletedCodes) {
+    clearBracketCleanupStorage(code);
     for (const baseUrl of API_BASE_URLS) {
       if (!baseUrl) {
         continue;
       }
 
       try {
-        await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
+        await fetch(getApiSnapshotUrl(baseUrl, code), { method: "DELETE" });
       } catch {
-        // Keep going so every configured host gets a delete attempt.
+        // Keep deleting other codes even if one host fails.
       }
     }
-
-    if (!deletedCodes.size && cleanupCode) {
-      clearPortalSnapshotStorage(cleanupCode);
-      clearBracketCleanupStorage(cleanupCode);
+    if (canUseLocalStorage()) {
+      try {
+        localStorage.removeItem(`${portalSnapshotStorageKey}:${code}`);
+      } catch {
+        // Ignore local cache cleanup failures.
+      }
     }
-
-    if (cleanupCode) {
-      clearTournamentState({ preserveLodCode: false, clearDraft: true, code: cleanupCode });
-    } else {
-      clearTournamentState({ preserveLodCode: false, clearDraft: true, code: "" });
-    }
-
-    clearAssistantAdminSessionCode();
-    clearAllPortalMessages({ publish: false });
-    queueActiveLodCodesRefresh();
-    updateAssistantAdminControls();
-    showMessage("All active LODs and their messages were deleted.");
-    return true;
-  } catch (error) {
-    console.error("Delete active LODs failed:", error);
-    showMessage("Delete all active LODs failed. Try again.");
-    return false;
   }
+
+  for (const baseUrl of API_BASE_URLS) {
+    if (!baseUrl) {
+      continue;
+    }
+
+    try {
+      await fetch(getRegistryUrl(baseUrl), { method: "DELETE" });
+    } catch {
+      // Keep going so every configured host gets a delete attempt.
+    }
+  }
+
+  if (!deletedCodes.size && cleanupCode) {
+    clearPortalSnapshotStorage(cleanupCode);
+    clearBracketCleanupStorage(cleanupCode);
+  }
+
+  if (cleanupCode) {
+    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: cleanupCode });
+  } else {
+    clearTournamentState({ preserveLodCode: false, clearDraft: true, code: "" });
+  }
+
+  clearAssistantAdminSessionCode();
+  clearAllPortalMessages({ publish: false });
+  queueActiveLodCodesRefresh();
+  updateAssistantAdminControls();
+  showMessage("All active LODs and their messages were deleted.");
+  return true;
 }
 
 async function fetchAllActiveLodRegistries() {
@@ -6704,49 +6711,6 @@ function getAssistantAdminPassword() {
     return localStorage.getItem(assistantAdminPasswordStorageKey) || "";
   } catch {
     return "";
-  }
-}
-
-function promptForAssistantAdminPassword(message) {
-  if (!assistantAdminPasswordModal || !assistantAdminPasswordInput) {
-    showMessage("Assistant admin password dialog is unavailable.");
-    return Promise.resolve("");
-  }
-
-  if (assistantAdminPasswordMessage) {
-    assistantAdminPasswordMessage.textContent = message;
-  }
-
-  assistantAdminPasswordInput.value = "";
-  if (typeof assistantAdminPasswordModal.showModal === "function") {
-    assistantAdminPasswordModal.showModal();
-  } else {
-    assistantAdminPasswordModal.hidden = false;
-    assistantAdminPasswordModal.setAttribute("aria-hidden", "false");
-  }
-  assistantAdminPasswordInput.focus();
-
-  return new Promise((resolve) => {
-    assistantAdminPasswordPromptResolver = resolve;
-  });
-}
-
-function resolveAssistantAdminPasswordPrompt(value) {
-  if (!assistantAdminPasswordModal || !assistantAdminPasswordInput) {
-    return;
-  }
-
-  const resolver = assistantAdminPasswordPromptResolver;
-  assistantAdminPasswordPromptResolver = null;
-  if (assistantAdminPasswordModal.open) {
-    assistantAdminPasswordModal.close();
-  } else {
-    assistantAdminPasswordModal.hidden = true;
-    assistantAdminPasswordModal.setAttribute("aria-hidden", "true");
-  }
-  assistantAdminPasswordInput.value = "";
-  if (resolver) {
-    resolver(value);
   }
 }
 
