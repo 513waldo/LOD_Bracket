@@ -1310,6 +1310,8 @@ function restoreBracketBackup(id) {
     refreshGameNumbersAndSources(state);
   }
   renderBracket();
+  savePortalSnapshotToLocalStorage();
+  saveBracketDraft();
   queueActiveLodCodesRefresh();
   restoredBackupId = id;
   renderBackups();
@@ -3825,7 +3827,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-28", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-31", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
@@ -3833,7 +3835,7 @@ function loadPdfBracketGraphs() {
         return response.json();
       })
       .then((graphs) => {
-        learnedPdfGraphs = graphs;
+        learnedPdfGraphs = normalizeLearnedPdfGraphs(graphs);
         return learnedPdfGraphs;
       })
       .catch(() => {
@@ -3843,6 +3845,46 @@ function loadPdfBracketGraphs() {
   }
 
   return learnedPdfGraphsPromise;
+}
+
+function normalizeLearnedPdfGraphs(graphs) {
+  if (!graphs || typeof graphs !== "object") {
+    return graphs;
+  }
+
+  const graph = graphs[8];
+  if (!graph || !Array.isArray(graph.matches)) {
+    return graphs;
+  }
+
+  const updateMatch = (id, patch) => {
+    const match = graph.matches.find((item) => item?.id === id);
+    if (match) {
+      Object.assign(match, patch);
+    }
+  };
+
+  updateMatch(8, {
+    winnerTo: { game: 11, slot: 1 },
+  });
+  updateMatch(11, {
+    inputs: [
+      { kind: "winner", game: 7 },
+      { kind: "winner", game: 8 },
+    ],
+    winnerTo: { game: 14, slot: 0 },
+    loserTo: { game: 13, slot: 0, ifFirstLoss: false },
+  });
+  updateMatch(13, {
+    inputs: [
+      { kind: "loser", game: 11, ifFirstLoss: false },
+      { kind: "winner", game: 12 },
+    ],
+    winnerTo: { game: 14, slot: 1 },
+    loserTo: null,
+  });
+
+  return graphs;
 }
 
 function createBracketGraph(players) {
@@ -4806,10 +4848,8 @@ function resetGraphMatchCascade(matchId) {
     match.loser = "";
     match.autoAdvanced = false;
 
-    if (id !== matchId) {
-      match.players = ["", ""];
-      match.slotSources = ["", ""];
-    }
+    match.players = ["", ""];
+    match.slotSources = ["", ""];
   });
 
   state.matches.forEach((match) => {
