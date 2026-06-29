@@ -3825,7 +3825,7 @@ function loadPdfBracketGraphs() {
   }
 
   if (!learnedPdfGraphsPromise) {
-    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-26", { cache: "no-store" })
+    learnedPdfGraphsPromise = fetch("PDF_BRACKET_GRAPHS.json?v=pdf-21-28", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load learned PDF bracket graphs: ${response.status}`);
@@ -5834,7 +5834,7 @@ function restoreBracketDraft() {
   }
 
   if (draft.state && typeof draft.state === "object") {
-    state = draft.state;
+    state = restoreGraphStateFromDraft(draft.state);
     mysteryOut = draft.mysteryOut || "";
 
     if (state.mode === "graph") {
@@ -6152,10 +6152,52 @@ function restoreBracketDraftObject(draft) {
     return;
   }
 
+  if (draft.state && typeof draft.state === "object") {
+    draft = {
+      ...draft,
+      state: restoreGraphStateFromDraft(draft.state),
+    };
+  }
+
   persistBracketDraft(draft);
   if (typeof draft.lodCode === "string") {
     saveStoredLodCode(normalizeLodCode(draft.lodCode));
   }
+}
+
+function restoreGraphStateFromDraft(draftState) {
+  if (!draftState || typeof draftState !== "object" || draftState.mode !== "graph") {
+    return draftState;
+  }
+
+  const originalPlayers = Array.isArray(draftState.originalPlayers) ? [...draftState.originalPlayers] : [];
+  const restoredState = createBracketGraph(originalPlayers);
+  const boardAssignments = new Map(
+    Array.isArray(draftState.matches)
+      ? draftState.matches.map((match) => [match.id, match.boardAssignment ?? null])
+      : [],
+  );
+  const manualResults = Array.isArray(draftState.matches)
+    ? draftState.matches
+      .filter((match) => match && match.winner && !match.autoAdvanced)
+      .sort((a, b) => a.id - b.id)
+    : [];
+
+  restoredState.matches.forEach((match) => {
+    if (boardAssignments.has(match.id)) {
+      match.boardAssignment = boardAssignments.get(match.id);
+    }
+  });
+
+  state = restoredState;
+  manualResults.forEach((result) => {
+    const match = state.matchesById?.[result.id];
+    if (match?.players.includes(result.winner) && !match.winner) {
+      chooseWinner(result.id, result.winner);
+    }
+  });
+
+  return state;
 }
 
 function buildBracketDraft() {
@@ -7047,7 +7089,7 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
 
   if (snapshot.state && typeof snapshot.state === "object") {
-    state = snapshot.state;
+    state = restoreGraphStateFromDraft(snapshot.state);
     mysteryOut = snapshot.mysteryOut || "";
     if (state.mode === "graph") {
       rebuildGraphMatchIndex(state);
