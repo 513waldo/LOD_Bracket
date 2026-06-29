@@ -1191,10 +1191,6 @@ bracketOutput.addEventListener("click", (event) => {
   const resetButton = event.target.closest("[data-reset-match]");
 
   if (resetButton) {
-    saveBracketBackup({
-      resetMatch: resetButton.dataset.resetMatch,
-      selectedWinner: "",
-    });
     handleBracketResetClick(resetButton);
     return;
   }
@@ -1205,22 +1201,7 @@ bracketOutput.addEventListener("click", (event) => {
     return;
   }
 
-  saveBracketBackup({
-    matchId: Number(button.dataset.matchId),
-    selectedWinner: button.dataset.player,
-  });
-
-  if (state?.matchesById) {
-    chooseWinner(Number(button.dataset.matchId), button.dataset.player);
-  } else {
-    chooseWinnerLegacy(
-      button.dataset.matchType,
-      Number(button.dataset.roundIndex),
-      Number(button.dataset.matchIndex),
-      button.dataset.player,
-    );
-  }
-  queueActiveLodCodesRefresh();
+  handleBracketWinnerClick(button);
 });
 
 function handleBracketWinnerClick(button) {
@@ -1235,6 +1216,10 @@ function handleBracketWinnerClick(button) {
   }
 
   if (button.disabled) {
+    return;
+  }
+
+  if (!claimBracketButtonClick(button, "winnerHandled")) {
     return;
   }
 
@@ -1261,16 +1246,9 @@ function handleBracketResetClick(button) {
     return;
   }
 
-  if (button.dataset.resetHandled === "true") {
+  if (!claimBracketButtonClick(button, "resetHandled")) {
     return;
   }
-
-  button.dataset.resetHandled = "true";
-  window.setTimeout(() => {
-    if (button?.dataset) {
-      delete button.dataset.resetHandled;
-    }
-  }, 0);
 
   const matchId = Number(button.dataset.matchId);
   if (!Number.isFinite(matchId)) {
@@ -1291,6 +1269,20 @@ function handleBracketResetClick(button) {
       Number(button.dataset.matchIndex),
     );
   }
+}
+
+function claimBracketButtonClick(button, handledKey) {
+  if (button.dataset[handledKey] === "true") {
+    return false;
+  }
+
+  button.dataset[handledKey] = "true";
+  window.setTimeout(() => {
+    if (button?.dataset) {
+      delete button.dataset[handledKey];
+    }
+  }, 0);
+  return true;
 }
 
 bracketOutput.addEventListener("change", (event) => {
