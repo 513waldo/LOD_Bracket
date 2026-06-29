@@ -2112,11 +2112,8 @@ function resetGraphMatchCascade(matchId) {
     match.winner = "";
     match.loser = "";
     match.autoAdvanced = false;
-
-    if (id !== matchId) {
-      match.players = ["", ""];
-      match.slotSources = ["", ""];
-    }
+    match.players = ["", ""];
+    match.slotSources = ["", ""];
   });
 
   if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {

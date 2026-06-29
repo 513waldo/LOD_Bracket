@@ -4848,10 +4848,8 @@ function resetGraphMatchCascade(matchId) {
     match.loser = "";
     match.autoAdvanced = false;
 
-    if (id !== matchId) {
-      match.players = ["", ""];
-      match.slotSources = ["", ""];
-    }
+    match.players = ["", ""];
+    match.slotSources = ["", ""];
   });
 
   state.matches.forEach((match) => {
