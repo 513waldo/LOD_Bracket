@@ -73,6 +73,25 @@
           </div>
         </div>
 
+        <section id="attendanceSheetManager" class="attendance-sheet-manager" hidden aria-labelledby="attendanceSheetsTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Root only</p>
+              <h3 id="attendanceSheetsTitle">Attendance lists</h3>
+            </div>
+            <p>Switch between separate bar accounts and create a fresh list when needed.</p>
+          </div>
+          <div class="field-grid sheet-manager-grid">
+            <label>
+              Current list
+              <select id="attendanceSheetSelect"></select>
+            </label>
+            <div class="sheet-manager-actions">
+              <button id="createAttendanceSheetButton" type="button" class="secondary">New list</button>
+            </div>
+          </div>
+        </section>
+
         <div class="field-grid">
           <label>
             Venue / bar
@@ -239,6 +258,6 @@
 
   <script src="attendance-auth.js?v=2"></script>
   <script src="attendance-workbook-seed.js?v=1"></script>
-  <script src="attendance.js?v=39"></script>
+  <script src="attendance.js?v=41"></script>
 </body>
 </html>
