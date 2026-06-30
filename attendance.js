@@ -64,6 +64,8 @@ let sheet = loadSheet();
 clearAttendanceAccessSession();
 clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
+syncRosterFromBracketDraft(false, true);
+syncEventTrackerFromBracketDraft(true);
 
 if (unlockAttendanceButton) {
   unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
@@ -1091,6 +1093,7 @@ window.addEventListener("storage", (event) => {
   }
   if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
     syncVenueNameFromBracketDraft(true);
+    syncRosterFromBracketDraft(false, true);
     syncEventTrackerFromBracketDraft(true);
     if (hasAttendanceAccess()) {
       showAttendanceApp();
