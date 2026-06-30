@@ -441,6 +441,15 @@ function getVisibleAttendanceSheetKeys() {
   return [activeSheetKey].filter(Boolean);
 }
 
+function getBarSheetKeys(username) {
+  const target = normalizeAttendanceRootPassword(username || "");
+  if (!target) {
+    return [];
+  }
+
+  return attendanceCollection.order.filter((key) => normalizeAttendanceRootPassword(attendanceCollection.sheets[key]?.authUsername || "") === target);
+}
+
 function findAttendanceSheetKeyForCredentials(username, password) {
   const targetUsername = normalizeAttendanceRootPassword(username);
   const targetPassword = normalizeAttendanceRootPassword(password);
@@ -458,6 +467,15 @@ function findAttendanceSheetKeyForCredentials(username, password) {
       && normalizeAttendanceRootPassword(candidate.authPassword || "") === targetPassword) {
       return key;
     }
+  }
+
+  const fallback = attendanceCollection.order.find((key) => normalizeAttendanceRootPassword(attendanceCollection.sheets[key]?.authUsername || "") === targetUsername);
+  if (fallback) {
+    const candidate = attendanceCollection.sheets[fallback];
+    candidate.authUsername = targetUsername;
+    candidate.authPassword = targetPassword;
+    saveAttendanceCollection(attendanceCollection);
+    return fallback;
   }
 
   return "";
@@ -768,8 +786,9 @@ function unlockAttendanceSheet() {
   } else {
     const matchingSheetKey = findAttendanceSheetKeyForCredentials(enteredUsername, enteredPassword);
     if (!matchingSheetKey) {
-      showAttendanceGate(sheet.authUsername
-        ? `Incorrect login for ${sheet.authUsername}.`
+      const barSheets = getBarSheetKeys(enteredUsername);
+      showAttendanceGate(barSheets.length
+        ? `Incorrect password for ${enteredUsername}.`
         : "Incorrect bar login.");
       return;
     }
@@ -839,6 +858,7 @@ function renderAttendanceSheetManager() {
 
   if (createAttendanceSheetButton) {
     createAttendanceSheetButton.hidden = accessKind === "";
+    createAttendanceSheetButton.textContent = accessKind === "root" ? "New list" : "New day";
   }
 }
 
@@ -1486,6 +1506,16 @@ function saveVenueAccessCredentials() {
     attendanceCollection.order.push(baseSheet.id);
     setActiveSheetKey(baseSheet.id);
     sheet = baseSheet;
+  }
+
+  if (!attendanceCollection.order.some((key) => normalizeAttendanceRootPassword(attendanceCollection.sheets[key]?.authUsername || "") === nextUsername)) {
+    const boundSheet = cloneSheet(sheet);
+    boundSheet.authUsername = nextUsername;
+    boundSheet.authPassword = nextPassword;
+    attendanceCollection.sheets[boundSheet.id] = boundSheet;
+    if (!attendanceCollection.order.includes(boundSheet.id)) {
+      attendanceCollection.order.push(boundSheet.id);
+    }
   }
   saveSheet();
   if (venueAccessUsername) {
