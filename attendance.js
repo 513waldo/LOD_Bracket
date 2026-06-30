@@ -25,6 +25,7 @@ const eventName = document.querySelector("#eventName");
 const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
 const startSaturday = document.querySelector("#startSaturday");
+const weekDateSummary = document.querySelector("#weekDateSummary");
 const weekDateEditor = document.querySelector("#weekDateEditor");
 const attendanceSheetManager = document.querySelector("#attendanceSheetManager");
 const attendanceSheetSelect = document.querySelector("#attendanceSheetSelect");
@@ -1169,6 +1170,12 @@ function updateDerivedOutputs() {
   const firstDate = weekDates[0] ? formatWeekDateLabel(weekDates[0]) : "";
   const lastDate = weekDates[weekDates.length - 1] ? formatWeekDateLabel(weekDates[weekDates.length - 1]) : "";
   const dateSpan = firstDate && lastDate ? `${firstDate} to ${lastDate}` : firstDate || lastDate || "Dates not set";
+  if (weekDateSummary) {
+    const startDate = sheet.startSaturday ? formatDateDisplay(sheet.startSaturday) : "";
+    weekDateSummary.textContent = startDate
+      ? `Week 1 begins on ${startDate}. Week dates currently run ${dateSpan}.`
+      : `Week dates currently run ${dateSpan}.`;
+  }
   const eventDateText = sheet.eventDate ? formatDateDisplay(sheet.eventDate) : "";
   const eligibleCount = getEligiblePlayers().length;
   const playerCount = sheet.players.length;

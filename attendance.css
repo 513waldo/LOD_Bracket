@@ -204,6 +204,12 @@ h3 {
   font-size: 0.9rem;
 }
 
+.week-date-summary {
+  max-width: none;
+  text-align: left;
+  margin: 0 0 12px;
+}
+
 .status-text {
   font-size: 0.76rem;
 }
