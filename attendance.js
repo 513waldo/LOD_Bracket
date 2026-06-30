@@ -1466,6 +1466,13 @@ function saveVenueAccessCredentials() {
 
   if (sheetKey) {
     setActiveSheetKey(sheetKey);
+    attendanceCollection.order.forEach((key) => {
+      const candidate = attendanceCollection.sheets[key];
+      if (normalizeAttendanceRootPassword(candidate?.authUsername || "") === nextUsername) {
+        candidate.authUsername = nextUsername;
+        candidate.authPassword = nextPassword;
+      }
+    });
     sheet.authUsername = nextUsername;
     sheet.authPassword = nextPassword;
   } else {
@@ -1508,6 +1515,14 @@ function clearVenueAccessCredentials() {
     return;
   }
 
+  const currentUsername = normalizeAttendanceRootPassword(sheet.authUsername || "");
+  attendanceCollection.order.forEach((key) => {
+    const candidate = attendanceCollection.sheets[key];
+    if (normalizeAttendanceRootPassword(candidate?.authUsername || "") === currentUsername) {
+      candidate.authUsername = "";
+      candidate.authPassword = "";
+    }
+  });
   sheet.authUsername = "";
   sheet.authPassword = "";
   saveSheet();
