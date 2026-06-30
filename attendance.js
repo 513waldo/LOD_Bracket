@@ -1612,11 +1612,36 @@ weekDateEditor?.addEventListener("input", (event) => {
 });
 
 clearDemoButton.addEventListener("click", () => {
-  sheet = cloneSheet(getDefaultSheetSeed());
-  sheet.id = activeSheetKey || sheet.id;
+  const confirmed = window.confirm("Clear the active weekly sheet roster, checkmarks, tracker data, and history?");
+  if (!confirmed) {
+    setStatus("Clear sheet cancelled.");
+    return;
+  }
+
+  const preserve = {
+    id: sheet.id || activeSheetKey || `sheet-${Date.now()}`,
+    venueName: sheet.venueName,
+    eventName: sheet.eventName,
+    eventDate: sheet.eventDate,
+    totalWeeks: sheet.totalWeeks,
+    requiredWeeks: sheet.requiredWeeks,
+    startSaturday: sheet.startSaturday,
+    weekDates: Array.isArray(sheet.weekDates) ? sheet.weekDates.slice() : [],
+    weekLabels: Array.isArray(sheet.weekLabels) ? sheet.weekLabels.slice() : [],
+    authUsername: sheet.authUsername,
+    authPassword: sheet.authPassword,
+  };
+
+  sheet = normalizeSheet({
+    ...getDefaultSheetSeed(),
+    ...preserve,
+    players: [],
+    eventTracker: normalizeEventTracker(DEFAULT_EVENT_TRACKER),
+    eventHistory: [],
+  });
   saveSheet();
   render();
-  setStatus("Workbook attendance restored.");
+  setStatus("Active weekly sheet cleared.");
 });
 
 attendanceSheetSelect?.addEventListener("change", () => {
