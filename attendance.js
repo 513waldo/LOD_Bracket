@@ -1,4 +1,5 @@
-const STORAGE_KEY = "dartsTournamentAttendanceSheet:v1";
+const STORAGE_KEY = "dartsTournamentAttendanceSheets:v2";
+const LEGACY_STORAGE_KEY = "dartsTournamentAttendanceSheet:v1";
 const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
 const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
 const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
@@ -24,6 +25,9 @@ const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
 const startSaturday = document.querySelector("#startSaturday");
 const weekDateEditor = document.querySelector("#weekDateEditor");
+const attendanceSheetManager = document.querySelector("#attendanceSheetManager");
+const attendanceSheetSelect = document.querySelector("#attendanceSheetSelect");
+const createAttendanceSheetButton = document.querySelector("#createAttendanceSheetButton");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const syncBracketGamesButton = document.querySelector("#syncBracketGamesButton");
 const clearBracketGamesButton = document.querySelector("#clearBracketGamesButton");
@@ -60,7 +64,9 @@ const DEFAULT_EVENT_TRACKER = [
 ];
 const DEFAULT_EVENT_HISTORY = [];
 
-let sheet = loadSheet();
+let attendanceCollection = loadAttendanceCollection();
+let activeSheetKey = attendanceCollection.activeKey;
+let sheet = getActiveSheet();
 clearAttendanceAccessSession();
 clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
@@ -90,17 +96,129 @@ if (hasAttendanceAccess()) {
 }
 
 function loadSheet() {
+  return getActiveSheet();
+}
+
+function loadAttendanceCollection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return cloneSheet(getDefaultSheetSeed());
+    if (raw) {
+      return normalizeAttendanceCollection(JSON.parse(raw));
     }
 
-    const parsed = JSON.parse(raw);
-    return normalizeSheet(mergeSheetWithSeed(parsed, getDefaultSheetSeed()));
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacyRaw) {
+      const legacySheet = normalizeSheet(mergeSheetWithSeed(JSON.parse(legacyRaw), getDefaultSheetSeed()));
+      const collection = createAttendanceCollectionFromSheets([legacySheet]);
+      saveAttendanceCollection(collection);
+      return collection;
+    }
+
+    return createAttendanceCollectionFromSheets([cloneSheet(getDefaultSheetSeed())]);
   } catch {
-    return cloneSheet(getDefaultSheetSeed());
+    return createAttendanceCollectionFromSheets([cloneSheet(getDefaultSheetSeed())]);
   }
+}
+
+function normalizeAttendanceCollection(value) {
+  if (value && typeof value === "object" && Array.isArray(value.players) && !value.sheets) {
+    const legacySheet = normalizeSheet(mergeSheetWithSeed(value, getDefaultSheetSeed()));
+    return createAttendanceCollectionFromSheets([legacySheet]);
+  }
+
+  const sourceSheets = value && typeof value === "object" && value.sheets && typeof value.sheets === "object"
+    ? value.sheets
+    : {};
+  const order = Array.isArray(value?.order) ? value.order.map(String).filter(Boolean) : [];
+  const sheets = {};
+  const seen = new Set();
+
+  order.forEach((key, index) => {
+    const sheetValue = sourceSheets[key];
+    if (!sheetValue) {
+      return;
+    }
+    sheets[key] = normalizeSheet(sheetValue, index);
+    seen.add(key);
+  });
+
+  Object.keys(sourceSheets).forEach((key, index) => {
+    if (seen.has(key)) {
+      return;
+    }
+    sheets[key] = normalizeSheet(sourceSheets[key], index);
+    order.push(key);
+  });
+
+  if (!order.length) {
+    return createAttendanceCollectionFromSheets([cloneSheet(getDefaultSheetSeed())]);
+  }
+
+  const activeKey = String(value?.activeKey || order[0] || "");
+  return {
+    activeKey: sheets[activeKey] ? activeKey : order[0],
+    order,
+    sheets,
+  };
+}
+
+function createAttendanceCollectionFromSheets(sheetsList) {
+  const sheets = {};
+  const order = [];
+
+  sheetsList.forEach((sheetValue, index) => {
+    const normalized = normalizeSheet(sheetValue, index);
+    const key = normalized.id;
+    if (!key || sheets[key]) {
+      return;
+    }
+
+    sheets[key] = normalized;
+    order.push(key);
+  });
+
+  const activeKey = order[0] || "";
+  return {
+    activeKey,
+    order,
+    sheets,
+  };
+}
+
+function saveAttendanceCollection(collection = attendanceCollection) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getActiveSheet() {
+  const sheetValue = attendanceCollection.sheets[activeSheetKey] || attendanceCollection.sheets[attendanceCollection.activeKey] || attendanceCollection.sheets[attendanceCollection.order[0]];
+  if (sheetValue) {
+    activeSheetKey = sheetValue.id;
+    attendanceCollection.activeKey = sheetValue.id;
+    return sheetValue;
+  }
+
+  const fallback = normalizeSheet(getDefaultSheetSeed(), 0);
+  activeSheetKey = fallback.id;
+  attendanceCollection = createAttendanceCollectionFromSheets([fallback]);
+  attendanceCollection.activeKey = activeSheetKey;
+  saveAttendanceCollection();
+  return fallback;
+}
+
+function setActiveSheetKey(nextKey) {
+  if (!nextKey || !attendanceCollection.sheets[nextKey]) {
+    return false;
+  }
+
+  activeSheetKey = nextKey;
+  attendanceCollection.activeKey = nextKey;
+  sheet = attendanceCollection.sheets[nextKey];
+  saveAttendanceCollection();
+  return true;
 }
 
 function getDefaultSheetSeed() {
@@ -243,12 +361,73 @@ function getAttendanceGateMessage() {
   return "Enter the root password or bar login to unlock the director-only attendance sheet.";
 }
 
-function normalizeSheet(value) {
+function getAttendanceAccessKind() {
+  const rootPassword = getStoredAttendanceRootPassword();
+  const rootSessionPassword = normalizeAttendanceRootPassword(getAttendanceRootSessionPassword());
+  if (rootSessionPassword && rootSessionPassword === rootPassword) {
+    return "root";
+  }
+
+  const session = readAttendanceAccessSession();
+  if (!session) {
+    return "";
+  }
+
+  if (session.kind === "root" && session.password === rootPassword) {
+    return "root";
+  }
+
+  if (session.kind === "bar" && findAttendanceSheetKeyForCredentials(session.username, session.password)) {
+    return "bar";
+  }
+
+  return "";
+}
+
+function findAttendanceSheetKeyForCredentials(username, password) {
+  const targetUsername = normalizeAttendanceRootPassword(username);
+  const targetPassword = normalizeAttendanceRootPassword(password);
+  if (!targetUsername || !targetPassword) {
+    return "";
+  }
+
+  for (const key of attendanceCollection.order) {
+    const candidate = attendanceCollection.sheets[key];
+    if (!candidate) {
+      continue;
+    }
+
+    if (normalizeAttendanceRootPassword(candidate.authUsername || "") === targetUsername
+      && normalizeAttendanceRootPassword(candidate.authPassword || "") === targetPassword) {
+      return key;
+    }
+  }
+
+  return "";
+}
+
+function syncActiveSheetToSession() {
+  const session = readAttendanceAccessSession();
+  if (!session || session.kind !== "bar") {
+    return false;
+  }
+
+  const matchingKey = findAttendanceSheetKeyForCredentials(session.username, session.password);
+  if (!matchingKey) {
+    return false;
+  }
+
+  return setActiveSheetKey(matchingKey);
+}
+
+function normalizeSheet(value, index = 0) {
   const total = clampWeekCount(value?.totalWeeks, DEMO.totalWeeks);
   const required = clampWeekCount(value?.requiredWeeks, DEMO.requiredWeeks, total);
   const players = Array.isArray(value?.players) ? value.players.map((player, index) => normalizePlayer(player, total, index)) : [];
+  const id = String(value?.id || `sheet-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`).trim();
 
   return {
+    id,
     venueName: String(value?.venueName || getDefaultSheetSeed().venueName || DEMO.venueName),
     eventName: String(value?.eventName || getDefaultSheetSeed().eventName || DEMO.eventName),
     eventDate: String(value?.eventDate || ""),
@@ -294,7 +473,18 @@ function clampWeekCount(value, fallback, max = 52) {
 }
 
 function saveSheet() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sheet));
+  if (!sheet.id) {
+    sheet.id = `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  sheet = normalizeSheet(sheet);
+  attendanceCollection.sheets[sheet.id] = sheet;
+  if (!attendanceCollection.order.includes(sheet.id)) {
+    attendanceCollection.order.push(sheet.id);
+  }
+  attendanceCollection.activeKey = sheet.id;
+  activeSheetKey = sheet.id;
+  saveAttendanceCollection(attendanceCollection);
 }
 
 function normalizeEventTracker(value) {
@@ -488,35 +678,13 @@ function getStoredSheetAdminPassword() {
 }
 
 function hasAttendanceAccess() {
-  const rootPassword = getStoredAttendanceRootPassword();
-  const rootSessionPassword = normalizeAttendanceRootPassword(getAttendanceRootSessionPassword());
-  if (rootSessionPassword && rootSessionPassword === rootPassword) {
-    return true;
-  }
-
-  const session = readAttendanceAccessSession();
-  if (!session) {
-    return false;
-  }
-
-  if (session.kind === "root" && session.password === rootPassword) {
-    return true;
-  }
-
-  if (session.kind === "bar") {
-    return session.username === normalizeAttendanceRootPassword(sheet.authUsername || "")
-      && session.password === getStoredSheetAdminPassword();
-  }
-
-  return false;
+  return Boolean(getAttendanceAccessKind());
 }
 
 function unlockAttendanceSheet() {
   const storedPassword = getStoredAttendanceRootPassword();
   const enteredUsername = normalizeAttendanceRootPassword(attendanceUsernameInput?.value || "");
   const enteredPassword = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
-  const venueUsername = normalizeAttendanceRootPassword(sheet.authUsername || "");
-  const venuePassword = getStoredSheetAdminPassword();
   const isRootLogin = !enteredUsername || enteredUsername.toLowerCase() === "root";
 
   if (!enteredPassword) {
@@ -533,13 +701,15 @@ function unlockAttendanceSheet() {
     saveAttendanceRootSessionPassword(enteredPassword);
     saveAttendanceAccessSession({ kind: "root", password: enteredPassword });
   } else {
-    if (!venueUsername || !venuePassword || enteredUsername !== venueUsername || enteredPassword !== venuePassword) {
+    const matchingSheetKey = findAttendanceSheetKeyForCredentials(enteredUsername, enteredPassword);
+    if (!matchingSheetKey) {
       showAttendanceGate(sheet.authUsername
         ? `Incorrect login for ${sheet.authUsername}.`
         : "Incorrect bar login.");
       return;
     }
 
+    setActiveSheetKey(matchingSheetKey);
     saveAttendanceAccessSession({
       kind: "bar",
       username: enteredUsername,
@@ -558,6 +728,9 @@ function unlockAttendanceSheet() {
 }
 
 function render() {
+  sheet = getActiveSheet();
+  syncActiveSheetToSession();
+  renderAttendanceSheetManager();
   venueName.value = sheet.venueName;
   eventName.value = sheet.eventName;
   totalWeeks.value = String(sheet.totalWeeks);
@@ -573,6 +746,24 @@ function render() {
   attendanceTable.innerHTML = renderTable();
   renderGameTracker();
   renderGameHistory();
+}
+
+function renderAttendanceSheetManager() {
+  if (!attendanceSheetManager || !attendanceSheetSelect) {
+    return;
+  }
+
+  const accessKind = getAttendanceAccessKind();
+  attendanceSheetManager.hidden = accessKind !== "root";
+  if (accessKind !== "root") {
+    return;
+  }
+
+  attendanceSheetSelect.innerHTML = attendanceCollection.order.map((key) => {
+    const optionSheet = attendanceCollection.sheets[key];
+    const label = optionSheet?.authUsername || optionSheet?.venueName || `List ${key}`;
+    return `<option value="${escapeHtml(key)}"${key === activeSheetKey ? " selected" : ""}>${escapeHtml(label)}</option>`;
+  }).join("");
 }
 
 function renderWeekDateEditor() {
@@ -1024,9 +1215,33 @@ weekDateEditor?.addEventListener("input", (event) => {
 
 clearDemoButton.addEventListener("click", () => {
   sheet = cloneSheet(getDefaultSheetSeed());
+  sheet.id = activeSheetKey || sheet.id;
   saveSheet();
   render();
   setStatus("Workbook attendance restored.");
+});
+
+attendanceSheetSelect?.addEventListener("change", () => {
+  const nextKey = attendanceSheetSelect.value;
+  if (setActiveSheetKey(nextKey)) {
+    render();
+    setStatus(`Switched to ${attendanceCollection.sheets[nextKey]?.authUsername || attendanceCollection.sheets[nextKey]?.venueName || "attendance list"}.`);
+  }
+});
+
+createAttendanceSheetButton?.addEventListener("click", () => {
+  const template = cloneSheet(getDefaultSheetSeed());
+  const newSheet = normalizeSheet({
+    ...template,
+    id: `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    authUsername: "",
+    authPassword: "",
+  });
+  attendanceCollection.sheets[newSheet.id] = newSheet;
+  attendanceCollection.order.push(newSheet.id);
+  setActiveSheetKey(newSheet.id);
+  render();
+  setStatus("Created a new attendance list.");
 });
 
 copyPostButton.addEventListener("click", async () => {
@@ -1057,7 +1272,8 @@ openFacebookButton.addEventListener("click", () => {
 });
 
 downloadJsonButton.addEventListener("click", () => {
-  const blob = new Blob([`${JSON.stringify(sheet, null, 2)}\n`], { type: "application/json" });
+  const exportValue = getAttendanceAccessKind() === "root" ? attendanceCollection : sheet;
+  const blob = new Blob([`${JSON.stringify(exportValue, null, 2)}\n`], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -1101,7 +1317,9 @@ window.addEventListener("storage", (event) => {
     }
   }
   if (event.key === STORAGE_KEY) {
-    sheet = loadSheet();
+    attendanceCollection = loadAttendanceCollection();
+    activeSheetKey = attendanceCollection.activeKey;
+    sheet = getActiveSheet();
     if (hasAttendanceAccess()) {
       showAttendanceApp();
       render();

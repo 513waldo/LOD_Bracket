@@ -290,6 +290,21 @@ h3 {
   border-top: 1px solid rgba(18, 33, 39, 0.1);
 }
 
+.attendance-sheet-manager {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(18, 33, 39, 0.1);
+}
+
+.sheet-manager-grid {
+  align-items: end;
+}
+
+.sheet-manager-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .inline-heading {
   margin-bottom: 12px;
 }
