@@ -108,6 +108,7 @@ function getDefaultSheetSeed() {
 function mergeSheetWithSeed(storedValue, seedValue) {
   const seed = cloneSheet(seedValue);
   const stored = storedValue && typeof storedValue === "object" ? storedValue : {};
+  const bracketNames = getBracketRosterNames();
 
   const byName = new Map();
   if (Array.isArray(stored.players)) {
@@ -135,10 +136,23 @@ function mergeSheetWithSeed(storedValue, seedValue) {
     }, seed.totalWeeks, index);
   });
 
+  bracketNames.forEach((name, index) => {
+    const key = normalizeRosterKey(name);
+    if (!key || byName.has(key) || mergedPlayers.some((player) => normalizeRosterKey(player.name) === key)) {
+      return;
+    }
+
+    mergedPlayers.push(normalizePlayer({
+      id: `b-${Date.now()}-${index}`,
+      name,
+      weeks: Array.from({ length: seed.totalWeeks }, () => false),
+    }, seed.totalWeeks, mergedPlayers.length));
+  });
+
   if (Array.isArray(stored.players)) {
     stored.players.forEach((player, index) => {
       const key = normalizeRosterKey(player?.name || "");
-      if (!key || byName.has(key)) {
+      if (!key || byName.has(key) || mergedPlayers.some((entry) => normalizeRosterKey(entry.name) === key)) {
         return;
       }
 
