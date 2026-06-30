@@ -394,9 +394,11 @@ function createAttendanceBucketForCredentials(username, password) {
   }
 
   const bucketKey = `bucket-${getAttendanceSheetLookupKey(targetUsername) || Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const seed = getDefaultSheetSeed();
   const sheetSeed = normalizeSheet({
-    ...cloneSheet(getDefaultSheetSeed()),
+    ...seed,
     id: `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    players: [],
     authUsername: targetUsername,
     authPassword: targetPassword,
   });
@@ -417,6 +419,11 @@ function createAttendanceBucketForCredentials(username, password) {
   activeSheetKey = bucket.activeSheetKey;
   sheet = bucket.sheets[bucket.activeSheetKey];
   saveAttendanceCollection(attendanceCollection);
+
+  syncVenueNameFromBracketDraft(true);
+  syncRosterFromBracketDraft(true, true);
+  syncEventTrackerFromBracketDraft(true);
+
   return bucket;
 }
 
