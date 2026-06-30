@@ -409,6 +409,38 @@ function getAttendanceAccessKind() {
   return "";
 }
 
+function getCurrentAttendanceLogin() {
+  const session = readAttendanceAccessSession();
+  if (session && session.kind === "bar") {
+    return {
+      kind: "bar",
+      username: normalizeAttendanceRootPassword(session.username || ""),
+      password: normalizeAttendanceRootPassword(session.password || ""),
+    };
+  }
+
+  const rootSessionPassword = normalizeAttendanceRootPassword(getAttendanceRootSessionPassword());
+  const rootPassword = getStoredAttendanceRootPassword();
+  if (rootSessionPassword && rootSessionPassword === rootPassword) {
+    return { kind: "root", username: "root", password: rootSessionPassword };
+  }
+
+  return { kind: "", username: "", password: "" };
+}
+
+function getVisibleAttendanceSheetKeys() {
+  const access = getCurrentAttendanceLogin();
+  if (access.kind === "root") {
+    return attendanceCollection.order.slice();
+  }
+
+  if (access.kind === "bar" && access.username) {
+    return attendanceCollection.order.filter((key) => normalizeAttendanceRootPassword(attendanceCollection.sheets[key]?.authUsername || "") === access.username);
+  }
+
+  return [activeSheetKey].filter(Boolean);
+}
+
 function findAttendanceSheetKeyForCredentials(username, password) {
   const targetUsername = normalizeAttendanceRootPassword(username);
   const targetPassword = normalizeAttendanceRootPassword(password);
@@ -440,6 +472,10 @@ function syncActiveSheetToSession() {
   const matchingKey = findAttendanceSheetKeyForCredentials(session.username, session.password);
   if (!matchingKey) {
     return false;
+  }
+
+  if (attendanceCollection.sheets[activeSheetKey] && normalizeAttendanceRootPassword(attendanceCollection.sheets[activeSheetKey].authUsername || "") === session.username) {
+    return true;
   }
 
   return setActiveSheetKey(matchingKey);
@@ -783,22 +819,27 @@ function renderAttendanceSheetManager() {
   }
 
   const accessKind = getAttendanceAccessKind();
-  attendanceSheetManager.hidden = accessKind !== "root";
-  if (accessKind !== "root") {
+  attendanceSheetManager.hidden = accessKind === "";
+  if (accessKind === "") {
     return;
   }
 
-  attendanceSheetSelect.innerHTML = attendanceCollection.order.map((key) => {
+  const visibleKeys = getVisibleAttendanceSheetKeys();
+  attendanceSheetSelect.innerHTML = visibleKeys.map((key) => {
     const optionSheet = attendanceCollection.sheets[key];
     const label = optionSheet?.authUsername || optionSheet?.venueName || `List ${key}`;
     return `<option value="${escapeHtml(key)}"${key === activeSheetKey ? " selected" : ""}>${escapeHtml(label)}</option>`;
   }).join("");
 
-  attendanceSheetLinks.innerHTML = attendanceCollection.order.map((key) => {
+  attendanceSheetLinks.innerHTML = visibleKeys.map((key) => {
     const optionSheet = attendanceCollection.sheets[key];
     const label = optionSheet?.authUsername || optionSheet?.venueName || `List ${key}`;
     return `<a class="button-link secondary-link" href="#" data-sheet-key="${escapeHtml(key)}">${escapeHtml(label)}</a>`;
   }).join("");
+
+  if (createAttendanceSheetButton) {
+    createAttendanceSheetButton.hidden = accessKind === "";
+  }
 }
 
 function renderWeekDateEditor() {
@@ -1283,12 +1324,13 @@ attendanceSheetSelect?.addEventListener("change", () => {
 });
 
 createAttendanceSheetButton?.addEventListener("click", () => {
-  const template = cloneSheet(getDefaultSheetSeed());
+  const access = getCurrentAttendanceLogin();
+  const template = cloneSheet(sheet);
   const newSheet = normalizeSheet({
     ...template,
     id: `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    authUsername: "",
-    authPassword: "",
+    authUsername: access.kind === "bar" ? access.username : template.authUsername,
+    authPassword: access.kind === "bar" ? access.password : template.authPassword,
   });
   attendanceCollection.sheets[newSheet.id] = newSheet;
   attendanceCollection.order.push(newSheet.id);
@@ -1427,10 +1469,9 @@ function saveVenueAccessCredentials() {
     sheet.authUsername = nextUsername;
     sheet.authPassword = nextPassword;
   } else {
-    const baseSheet = cloneSheet(getDefaultSheetSeed());
+    const baseSheet = cloneSheet(sheet);
     Object.assign(baseSheet, {
       id: `sheet-${getAttendanceSheetLookupKey(nextUsername) || Date.now()}`,
-      venueName: nextUsername,
       authUsername: nextUsername,
       authPassword: nextPassword,
     });
