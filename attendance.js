@@ -64,8 +64,6 @@ let sheet = loadSheet();
 clearAttendanceAccessSession();
 clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
-syncRosterFromBracketDraft(true);
-syncEventTrackerFromBracketDraft(true);
 
 if (unlockAttendanceButton) {
   unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
@@ -97,7 +95,7 @@ function loadSheet() {
     }
 
     const parsed = JSON.parse(raw);
-    return normalizeSheet(parsed);
+    return normalizeSheet(mergeSheetWithSeed(parsed, getDefaultSheetSeed()));
   } catch {
     return cloneSheet(getDefaultSheetSeed());
   }
@@ -105,6 +103,65 @@ function loadSheet() {
 
 function getDefaultSheetSeed() {
   return WORKBOOK_SEED || DEMO;
+}
+
+function mergeSheetWithSeed(storedValue, seedValue) {
+  const seed = cloneSheet(seedValue);
+  const stored = storedValue && typeof storedValue === "object" ? storedValue : {};
+
+  const byName = new Map();
+  if (Array.isArray(stored.players)) {
+    stored.players.forEach((player) => {
+      const key = normalizeRosterKey(player?.name || "");
+      if (key && !byName.has(key)) {
+        byName.set(key, player);
+      }
+    });
+  }
+
+  const mergedPlayers = seed.players.map((seedPlayer, index) => {
+    const storedPlayer = byName.get(normalizeRosterKey(seedPlayer.name));
+    if (!storedPlayer) {
+      return seedPlayer;
+    }
+
+    return normalizePlayer({
+      ...seedPlayer,
+      ...storedPlayer,
+      name: seedPlayer.name,
+      weeks: Array.isArray(storedPlayer.weeks) && storedPlayer.weeks.length
+        ? storedPlayer.weeks
+        : seedPlayer.weeks,
+    }, seed.totalWeeks, index);
+  });
+
+  if (Array.isArray(stored.players)) {
+    stored.players.forEach((player, index) => {
+      const key = normalizeRosterKey(player?.name || "");
+      if (!key || byName.has(key)) {
+        return;
+      }
+
+      mergedPlayers.push(normalizePlayer(player, seed.totalWeeks, mergedPlayers.length + index));
+    });
+  }
+
+  return {
+    ...seed,
+    venueName: String(stored.venueName || seed.venueName),
+    eventName: String(stored.eventName || seed.eventName),
+    eventDate: String(stored.eventDate || seed.eventDate || ""),
+    totalWeeks: seed.totalWeeks,
+    requiredWeeks: clampWeekCount(stored.requiredWeeks, seed.requiredWeeks, seed.totalWeeks),
+    startSaturday: normalizeSaturdayInput(stored.startSaturday) || seed.startSaturday,
+    weekDates: normalizeWeekDates(stored.weekDates, seed.totalWeeks, normalizeSaturdayInput(stored.startSaturday) || seed.startSaturday || getDefaultSaturdayInput()),
+    weekLabels: normalizeWeekLabels(stored.weekLabels, seed.totalWeeks, seed.weekLabels),
+    authUsername: String(stored.authUsername || seed.authUsername || ""),
+    authPassword: String(stored.authPassword || seed.authPassword || ""),
+    eventTracker: normalizeEventTracker(stored.eventTracker || seed.eventTracker),
+    eventHistory: normalizeEventHistory(stored.eventHistory || seed.eventHistory),
+    players: mergedPlayers,
+  };
 }
 
 function syncVenueNameFromBracketDraft(saveChanges = false) {
@@ -1020,7 +1077,6 @@ window.addEventListener("storage", (event) => {
   }
   if (event.key === BRACKET_DRAFT_STORAGE_KEY) {
     syncVenueNameFromBracketDraft(true);
-    syncRosterFromBracketDraft(true);
     syncEventTrackerFromBracketDraft(true);
     if (hasAttendanceAccess()) {
       showAttendanceApp();
