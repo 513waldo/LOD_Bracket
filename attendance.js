@@ -16,6 +16,7 @@ const DEMO = {
     { id: "p4", name: "Dana K.", weeks: [true, true, true, true, true, true, true, true, true, true, true, true] },
   ],
 };
+const WORKBOOK_SEED = window.DARTS_ATTENDANCE_WORKBOOK_SEED || null;
 
 const venueName = document.querySelector("#venueName");
 const eventName = document.querySelector("#eventName");
@@ -92,14 +93,18 @@ function loadSheet() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return cloneSheet(DEMO);
+      return cloneSheet(getDefaultSheetSeed());
     }
 
     const parsed = JSON.parse(raw);
     return normalizeSheet(parsed);
   } catch {
-    return cloneSheet(DEMO);
+    return cloneSheet(getDefaultSheetSeed());
   }
+}
+
+function getDefaultSheetSeed() {
+  return WORKBOOK_SEED || DEMO;
 }
 
 function syncVenueNameFromBracketDraft(saveChanges = false) {
@@ -171,13 +176,14 @@ function normalizeSheet(value) {
   const players = Array.isArray(value?.players) ? value.players.map((player, index) => normalizePlayer(player, total, index)) : [];
 
   return {
-    venueName: String(value?.venueName || DEMO.venueName),
-    eventName: String(value?.eventName || DEMO.eventName),
+    venueName: String(value?.venueName || getDefaultSheetSeed().venueName || DEMO.venueName),
+    eventName: String(value?.eventName || getDefaultSheetSeed().eventName || DEMO.eventName),
     eventDate: String(value?.eventDate || ""),
     totalWeeks: total,
     requiredWeeks: required,
     startSaturday: normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput(),
     weekDates: normalizeWeekDates(value?.weekDates, total, normalizeSaturdayInput(value?.startSaturday) || getDefaultSaturdayInput()),
+    weekLabels: normalizeWeekLabels(value?.weekLabels, total, value?.weekDates),
     authUsername: String(value?.authUsername || ""),
     authPassword: String(value?.authPassword || ""),
     eventTracker: normalizeEventTracker(value?.eventTracker),
@@ -285,6 +291,16 @@ function normalizeWeekDates(value, weekCount, fallbackStart) {
   }
 
   return dates;
+}
+
+function normalizeWeekLabels(value, weekCount, fallback = []) {
+  const labels = Array.isArray(value) ? value.slice(0, weekCount).map((entry) => String(entry || "").trim()) : [];
+
+  while (labels.length < weekCount) {
+    labels.push(String(fallback[labels.length] || "").trim());
+  }
+
+  return labels;
 }
 
 function normalizeSaturdayInput(value) {
@@ -934,10 +950,10 @@ weekDateEditor?.addEventListener("input", (event) => {
 });
 
 clearDemoButton.addEventListener("click", () => {
-  sheet = cloneSheet(DEMO);
+  sheet = cloneSheet(getDefaultSheetSeed());
   saveSheet();
   render();
-  setStatus("Demo attendance restored.");
+  setStatus("Workbook attendance restored.");
 });
 
 copyPostButton.addEventListener("click", async () => {
