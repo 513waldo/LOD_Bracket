@@ -386,6 +386,40 @@ function ensureBucketHasActiveSheet(bucket) {
   return newSheet;
 }
 
+function createAttendanceBucketForCredentials(username, password) {
+  const targetUsername = normalizeAttendanceRootPassword(username || "");
+  const targetPassword = normalizeAttendanceRootPassword(password || "");
+  if (!targetUsername || !targetPassword) {
+    return null;
+  }
+
+  const bucketKey = `bucket-${getAttendanceSheetLookupKey(targetUsername) || Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const sheetSeed = normalizeSheet({
+    ...cloneSheet(getDefaultSheetSeed()),
+    id: `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    authUsername: targetUsername,
+    authPassword: targetPassword,
+  });
+
+  const bucket = normalizeAttendanceBucket(bucketKey, {
+    label: targetUsername,
+    authUsername: targetUsername,
+    authPassword: targetPassword,
+    sheets: [sheetSeed],
+  });
+
+  attendanceCollection.buckets[bucket.key] = bucket;
+  if (!attendanceCollection.bucketOrder.includes(bucket.key)) {
+    attendanceCollection.bucketOrder.push(bucket.key);
+  }
+  attendanceCollection.activeBucketKey = bucket.key;
+  activeAttendanceBucketKey = bucket.key;
+  activeSheetKey = bucket.activeSheetKey;
+  sheet = bucket.sheets[bucket.activeSheetKey];
+  saveAttendanceCollection(attendanceCollection);
+  return bucket;
+}
+
 function getActiveSheet() {
   const bucket = getActiveBucket();
   const sheetValue = ensureBucketHasActiveSheet(bucket);
@@ -1013,7 +1047,8 @@ function unlockAttendanceSheet() {
       .map((bucketKey) => attendanceCollection.buckets[bucketKey])
       .find((candidate) => normalizeAttendanceRootPassword(candidate?.authUsername || "") === enteredUsername
         && normalizeAttendanceRootPassword(candidate?.authPassword || "") === enteredPassword);
-    if (!matchingBucket) {
+    const usernameExists = attendanceCollection.bucketOrder.some((bucketKey) => normalizeAttendanceRootPassword(attendanceCollection.buckets[bucketKey]?.authUsername || "") === enteredUsername);
+    if (!matchingBucket && usernameExists) {
       const barSheets = getBarSheetKeys(enteredUsername);
       showAttendanceGate(barSheets.length
         ? `Incorrect password for ${enteredUsername}.`
@@ -1021,8 +1056,14 @@ function unlockAttendanceSheet() {
       return;
     }
 
-    ensureBucketHasActiveSheet(matchingBucket);
-    setActiveBucketKey(matchingBucket.key);
+    const targetBucket = matchingBucket || createAttendanceBucketForCredentials(enteredUsername, enteredPassword);
+    if (!targetBucket) {
+      showAttendanceGate("Unable to create an attendance sheet for that login.");
+      return;
+    }
+
+    ensureBucketHasActiveSheet(targetBucket);
+    setActiveBucketKey(targetBucket.key);
     saveAttendanceAccessSession({
       kind: "bar",
       username: enteredUsername,
