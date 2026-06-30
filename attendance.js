@@ -27,6 +27,7 @@ const startSaturday = document.querySelector("#startSaturday");
 const weekDateEditor = document.querySelector("#weekDateEditor");
 const attendanceSheetManager = document.querySelector("#attendanceSheetManager");
 const attendanceSheetSelect = document.querySelector("#attendanceSheetSelect");
+const attendanceSheetLinks = document.querySelector("#attendanceSheetLinks");
 const createAttendanceSheetButton = document.querySelector("#createAttendanceSheetButton");
 const syncBracketPlayersButton = document.querySelector("#syncBracketPlayersButton");
 const syncBracketGamesButton = document.querySelector("#syncBracketGamesButton");
@@ -72,6 +73,7 @@ clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
 syncRosterFromBracketDraft(false, true);
 syncEventTrackerFromBracketDraft(true);
+maybeApplyRequestedAttendanceSheet();
 
 if (unlockAttendanceButton) {
   unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
@@ -207,6 +209,29 @@ function getActiveSheet() {
   attendanceCollection.activeKey = activeSheetKey;
   saveAttendanceCollection();
   return fallback;
+}
+
+function getRequestedAttendanceSheetKey() {
+  try {
+    const value = new URLSearchParams(window.location.search).get("sheet") || "";
+    const key = String(value).trim();
+    return key && attendanceCollection.sheets[key] ? key : "";
+  } catch {
+    return "";
+  }
+}
+
+function maybeApplyRequestedAttendanceSheet() {
+  if (getAttendanceAccessKind() !== "root") {
+    return false;
+  }
+
+  const requestedKey = getRequestedAttendanceSheetKey();
+  if (!requestedKey) {
+    return false;
+  }
+
+  return setActiveSheetKey(requestedKey);
 }
 
 function setActiveSheetKey(nextKey) {
@@ -487,6 +512,10 @@ function saveSheet() {
   saveAttendanceCollection(attendanceCollection);
 }
 
+function getAttendanceSheetLookupKey(username) {
+  return normalizeRosterKey(username).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 function normalizeEventTracker(value) {
   const sourceRows = Array.isArray(value) ? value : [];
   return DEFAULT_EVENT_TRACKER.map((fallbackRow) => {
@@ -749,7 +778,7 @@ function render() {
 }
 
 function renderAttendanceSheetManager() {
-  if (!attendanceSheetManager || !attendanceSheetSelect) {
+  if (!attendanceSheetManager || !attendanceSheetSelect || !attendanceSheetLinks) {
     return;
   }
 
@@ -763,6 +792,12 @@ function renderAttendanceSheetManager() {
     const optionSheet = attendanceCollection.sheets[key];
     const label = optionSheet?.authUsername || optionSheet?.venueName || `List ${key}`;
     return `<option value="${escapeHtml(key)}"${key === activeSheetKey ? " selected" : ""}>${escapeHtml(label)}</option>`;
+  }).join("");
+
+  attendanceSheetLinks.innerHTML = attendanceCollection.order.map((key) => {
+    const optionSheet = attendanceCollection.sheets[key];
+    const label = optionSheet?.authUsername || optionSheet?.venueName || `List ${key}`;
+    return `<a class="button-link secondary-link" href="#" data-sheet-key="${escapeHtml(key)}">${escapeHtml(label)}</a>`;
   }).join("");
 }
 
@@ -1165,6 +1200,24 @@ attendanceTable.addEventListener("input", (event) => {
   updateDerivedOutputs();
 });
 
+attendanceSheetLinks?.addEventListener("click", (event) => {
+  const link = event.target.closest("[data-sheet-key]");
+  if (!link) {
+    return;
+  }
+
+  event.preventDefault();
+  if (getAttendanceAccessKind() !== "root") {
+    return;
+  }
+
+  const nextKey = String(link.dataset.sheetKey || "");
+  if (setActiveSheetKey(nextKey)) {
+    render();
+    setStatus(`Opened ${attendanceCollection.sheets[nextKey]?.authUsername || attendanceCollection.sheets[nextKey]?.venueName || "attendance list"}.`);
+  }
+});
+
 gameTracker?.addEventListener("input", (event) => {
   const input = event.target.closest("[data-tracker-field]");
   if (!input) {
@@ -1365,8 +1418,27 @@ function saveVenueAccessCredentials() {
     return;
   }
 
-  sheet.authUsername = nextUsername;
-  sheet.authPassword = nextPassword;
+  const sheetKey = findAttendanceSheetKeyForCredentials(nextUsername, nextPassword)
+    || attendanceCollection.order.find((key) => normalizeAttendanceRootPassword(attendanceCollection.sheets[key]?.authUsername || "") === nextUsername)
+    || "";
+
+  if (sheetKey) {
+    setActiveSheetKey(sheetKey);
+    sheet.authUsername = nextUsername;
+    sheet.authPassword = nextPassword;
+  } else {
+    const baseSheet = cloneSheet(getDefaultSheetSeed());
+    Object.assign(baseSheet, {
+      id: `sheet-${getAttendanceSheetLookupKey(nextUsername) || Date.now()}`,
+      venueName: nextUsername,
+      authUsername: nextUsername,
+      authPassword: nextPassword,
+    });
+    attendanceCollection.sheets[baseSheet.id] = baseSheet;
+    attendanceCollection.order.push(baseSheet.id);
+    setActiveSheetKey(baseSheet.id);
+    sheet = baseSheet;
+  }
   saveSheet();
   if (venueAccessUsername) {
     venueAccessUsername.value = "";
