@@ -65,6 +65,7 @@ const DEFAULT_EVENT_TRACKER = [
   { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
 const DEFAULT_EVENT_HISTORY = [];
+const ATTENDANCE_BUCKETS_TO_REMOVE = new Set(["outofbounds"]);
 
 let attendanceCollection = loadAttendanceCollection();
 let activeSheetKey = "";
@@ -107,12 +108,14 @@ function loadAttendanceCollection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return normalizeAttendanceCollection(JSON.parse(raw));
+      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(raw)));
+      saveAttendanceCollection(collection);
+      return collection;
     }
 
     const legacyCollectionRaw = localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
     if (legacyCollectionRaw) {
-      const collection = normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw));
+      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw)));
       saveAttendanceCollection(collection);
       return collection;
     }
@@ -120,26 +123,26 @@ function loadAttendanceCollection() {
     const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacyRaw) {
       const legacySheet = normalizeSheet(mergeSheetWithSeed(JSON.parse(legacyRaw), getDefaultSheetSeed()));
-      const collection = createAttendanceCollectionFromBuckets({
+      const collection = purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
         default: { label: "Default list", sheets: [legacySheet] },
-      });
+      }));
       saveAttendanceCollection(collection);
       return collection;
     }
 
-    return createAttendanceCollectionFromBuckets({
+    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    });
+    }));
   } catch {
-    return createAttendanceCollectionFromBuckets({
+    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    });
+    }));
   }
 }
 
@@ -251,6 +254,41 @@ function normalizeAttendanceBucket(bucketKey, value) {
     sheets,
     authUsername: authUsername || normalizeAttendanceRootPassword(sheets[order[0]]?.authUsername || ""),
     authPassword: authPassword || normalizeAttendanceRootPassword(sheets[order[0]]?.authPassword || ""),
+  };
+}
+
+function purgeRemovedAttendanceBuckets(collection) {
+  if (!collection || typeof collection !== "object" || !collection.buckets || !collection.bucketOrder) {
+    return collection;
+  }
+
+  const nextBuckets = {};
+  const nextBucketOrder = [];
+  let changed = false;
+
+  collection.bucketOrder.forEach((bucketKey) => {
+    const bucket = collection.buckets[bucketKey];
+    const authUsername = normalizeAttendanceRootPassword(bucket?.authUsername || "");
+    if (ATTENDANCE_BUCKETS_TO_REMOVE.has(authUsername)) {
+      changed = true;
+      return;
+    }
+
+    if (bucket) {
+      nextBuckets[bucketKey] = bucket;
+      nextBucketOrder.push(bucketKey);
+    }
+  });
+
+  if (!changed) {
+    return collection;
+  }
+
+  const activeBucketKey = nextBuckets[collection.activeBucketKey] ? collection.activeBucketKey : (nextBucketOrder[0] || "");
+  return {
+    activeBucketKey,
+    bucketOrder: nextBucketOrder,
+    buckets: nextBuckets,
   };
 }
 
