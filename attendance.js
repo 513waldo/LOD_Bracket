@@ -65,7 +65,7 @@ const DEFAULT_EVENT_TRACKER = [
   { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
 const DEFAULT_EVENT_HISTORY = [];
-const ATTENDANCE_BUCKETS_TO_REMOVE = new Set(["outofbounds"]);
+const ATTENDANCE_BUCKETS_TO_REMOVE = new Set(["outofbounds", "garys"]);
 
 let attendanceCollection = loadAttendanceCollection();
 let activeSheetKey = "";
