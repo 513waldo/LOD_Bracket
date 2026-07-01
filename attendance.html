@@ -107,7 +107,7 @@
             <input id="totalWeeks" type="number" min="1" max="52" value="12">
           </label>
           <label>
-            First Saturday
+            First Day of Tournament
             <input id="startSaturday" type="date">
           </label>
         </div>
@@ -120,6 +120,7 @@
             </div>
             <p>Edit each date for monthly or custom tournament schedules.</p>
           </div>
+          <p id="weekDateSummary" class="section-note week-date-summary">Week dates will update from the first day of tournament.</p>
           <div id="weekDateEditor" class="week-date-editor" aria-live="polite"></div>
         </div>
 
@@ -259,6 +260,6 @@
 
   <script src="attendance-auth.js?v=2"></script>
   <script src="attendance-workbook-seed.js?v=1"></script>
-  <script src="attendance.js?v=50"></script>
+  <script src="attendance.js?v=54"></script>
 </body>
 </html>

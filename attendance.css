@@ -316,6 +316,12 @@ h3 {
   width: 100%;
 }
 
+.sheet-link-list .button-link.active {
+  border-color: rgba(15, 125, 116, 0.55);
+  background: rgba(15, 125, 116, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(15, 125, 116, 0.18);
+}
+
 .inline-heading {
   margin-bottom: 12px;
 }

@@ -386,6 +386,40 @@ function ensureBucketHasActiveSheet(bucket) {
   return newSheet;
 }
 
+function looksLikeWorkbookSeedRoster(players) {
+  const seedPlayers = Array.isArray(getDefaultSheetSeed()?.players) ? getDefaultSheetSeed().players : [];
+  const currentPlayers = Array.isArray(players) ? players : [];
+  if (!seedPlayers.length || currentPlayers.length !== seedPlayers.length) {
+    return false;
+  }
+
+  const seedNames = new Set(seedPlayers.map((player) => normalizeRosterKey(player?.name || "")).filter(Boolean));
+  let matchingNames = 0;
+  currentPlayers.forEach((player) => {
+    if (seedNames.has(normalizeRosterKey(player?.name || ""))) {
+      matchingNames += 1;
+    }
+  });
+
+  return matchingNames >= Math.max(1, Math.ceil(seedPlayers.length * 0.8));
+}
+
+function sanitizeBarSheetRoster(nextSheet) {
+  const login = getCurrentAttendanceLogin();
+  if (login.kind !== "bar" || !nextSheet) {
+    return false;
+  }
+
+  if (!looksLikeWorkbookSeedRoster(nextSheet.players)) {
+    return false;
+  }
+
+  nextSheet.players = [];
+  nextSheet.eventTracker = normalizeEventTracker(DEFAULT_EVENT_TRACKER);
+  nextSheet.eventHistory = [];
+  return true;
+}
+
 function createAttendanceBucketForCredentials(username, password) {
   const targetUsername = normalizeAttendanceRootPassword(username || "");
   const targetPassword = normalizeAttendanceRootPassword(password || "");
@@ -431,6 +465,9 @@ function getActiveSheet() {
   const bucket = getActiveBucket();
   const sheetValue = ensureBucketHasActiveSheet(bucket);
   if (sheetValue) {
+    if (sanitizeBarSheetRoster(sheetValue)) {
+      saveAttendanceCollection(attendanceCollection);
+    }
     activeSheetKey = sheetValue.id;
     bucket.activeSheetKey = sheetValue.id;
     activeAttendanceBucketKey = bucket.key;
@@ -1071,6 +1108,9 @@ function unlockAttendanceSheet() {
 
     ensureBucketHasActiveSheet(targetBucket);
     setActiveBucketKey(targetBucket.key);
+    if (sanitizeBarSheetRoster(sheet)) {
+      saveSheet();
+    }
     saveAttendanceAccessSession({
       kind: "bar",
       username: enteredUsername,
@@ -1137,7 +1177,8 @@ function renderAttendanceSheetManager() {
   attendanceSheetLinks.innerHTML = bucketKeys.map((key) => {
     const optionBucket = attendanceCollection.buckets[key];
     const label = optionBucket?.authUsername || optionBucket?.label || `List ${key}`;
-    return `<a class="button-link secondary-link" href="#" data-bucket-key="${escapeHtml(key)}">${escapeHtml(label)}</a>`;
+    const isActive = key === activeAttendanceBucketKey;
+    return `<button class="button-link secondary-link${isActive ? " active" : ""}" type="button" data-bucket-key="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">${escapeHtml(label)}</button>`;
   }).join("");
 
   if (createAttendanceSheetButton) {
