@@ -280,10 +280,10 @@ function purgeRemovedAttendanceBuckets(collection) {
         sheetValue?.authUsername,
       ]),
     ]
-      .map((value) => normalizeAttendanceRootPassword(value || "").toLowerCase())
+      .map((value) => normalizePurgeKey(value))
       .join(" ");
 
-    const shouldRemove = Array.from(ATTENDANCE_BUCKETS_TO_REMOVE).some((needle) => bucketText.includes(needle));
+    const shouldRemove = Array.from(ATTENDANCE_BUCKETS_TO_REMOVE).some((needle) => bucketText.includes(normalizePurgeKey(needle)));
     if (shouldRemove) {
       changed = true;
       return;
@@ -305,6 +305,12 @@ function purgeRemovedAttendanceBuckets(collection) {
     bucketOrder: nextBucketOrder,
     buckets: nextBuckets,
   };
+}
+
+function normalizePurgeKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function createAttendanceCollectionFromBuckets(bucketsValue) {
