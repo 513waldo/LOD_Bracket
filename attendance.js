@@ -422,7 +422,6 @@ function createAttendanceBucketForCredentials(username, password) {
   saveAttendanceCollection(attendanceCollection);
 
   syncVenueNameFromBracketDraft(true);
-  syncRosterFromBracketDraft(true, true);
   syncEventTrackerFromBracketDraft(true);
 
   return bucket;
