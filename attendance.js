@@ -65,7 +65,15 @@ const DEFAULT_EVENT_TRACKER = [
   { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
 const DEFAULT_EVENT_HISTORY = [];
-const ATTENDANCE_BUCKETS_TO_REMOVE = new Set(["outofbounds", "garys"]);
+// Drop merged legacy bar records from storage, even if the saved names vary a bit.
+const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
+  "outofbounds",
+  "outofboundsbar",
+  "gary",
+  "garys",
+  "garyswestsider",
+  "westsider",
+]);
 
 let attendanceCollection = loadAttendanceCollection();
 let activeSheetKey = "";
