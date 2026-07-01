@@ -269,8 +269,23 @@ function purgeRemovedAttendanceBuckets(collection) {
 
   collection.bucketOrder.forEach((bucketKey) => {
     const bucket = collection.buckets[bucketKey];
-    const authUsername = normalizeAttendanceRootPassword(bucket?.authUsername || "");
-    if (ATTENDANCE_BUCKETS_TO_REMOVE.has(authUsername)) {
+    const bucketText = [
+      bucketKey,
+      bucket?.key,
+      bucket?.label,
+      bucket?.authUsername,
+      bucket?.authPassword,
+      ...Object.values(bucket?.sheets || {}).flatMap((sheetValue) => [
+        sheetValue?.venueName,
+        sheetValue?.eventName,
+        sheetValue?.authUsername,
+      ]),
+    ]
+      .map((value) => normalizeAttendanceRootPassword(value || "").toLowerCase())
+      .join(" ");
+
+    const shouldRemove = Array.from(ATTENDANCE_BUCKETS_TO_REMOVE).some((needle) => bucketText.includes(needle));
+    if (shouldRemove) {
       changed = true;
       return;
     }
