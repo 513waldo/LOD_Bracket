@@ -5,6 +5,8 @@ const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
 const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
 const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
+const ATTENDANCE_STORAGE_RESET_STATE_KEY = "dartsTournamentAttendanceResetState:v1";
+const ATTENDANCE_STORAGE_RESET_VERSION = "2026-07-01-start-fresh-v3";
 const DEMO = {
   venueName: "Bullseye Taproom",
   eventName: "Appreciation Tournament",
@@ -66,16 +68,8 @@ const DEFAULT_EVENT_TRACKER = [
   { id: "bullshoot", label: "Bullshoot", date: "", result: "", picked: "", note: "" },
 ];
 const DEFAULT_EVENT_HISTORY = [];
-// Drop merged legacy bar records from storage, even if the saved names vary a bit.
-const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
-  "outofbounds",
-  "outofboundsbar",
-  "gary",
-  "garys",
-  "garyswestsider",
-  "westsider",
-]);
 
+resetAttendanceStorageOnce();
 let attendanceCollection = loadAttendanceCollection();
 let activeSheetKey = "";
 let activeAttendanceBucketKey = attendanceCollection.activeBucketKey || "";
@@ -117,14 +111,14 @@ function loadAttendanceCollection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(raw)));
+      const collection = normalizeAttendanceCollection(JSON.parse(raw));
       saveAttendanceCollection(collection);
       return collection;
     }
 
     const legacyCollectionRaw = localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
     if (legacyCollectionRaw) {
-      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw)));
+      const collection = normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw));
       saveAttendanceCollection(collection);
       return collection;
     }
@@ -132,26 +126,26 @@ function loadAttendanceCollection() {
     const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacyRaw) {
       const legacySheet = normalizeSheet(mergeSheetWithSeed(JSON.parse(legacyRaw), getDefaultSheetSeed()));
-      const collection = purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
+      const collection = createAttendanceCollectionFromBuckets({
         default: { label: "Default list", sheets: [legacySheet] },
-      }));
+      });
       saveAttendanceCollection(collection);
       return collection;
     }
 
-    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
+    return createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    }));
+    });
   } catch {
-    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
+    return createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    }));
+    });
   }
 }
 
@@ -266,62 +260,6 @@ function normalizeAttendanceBucket(bucketKey, value) {
   };
 }
 
-function purgeRemovedAttendanceBuckets(collection) {
-  if (!collection || typeof collection !== "object" || !collection.buckets || !collection.bucketOrder) {
-    return collection;
-  }
-
-  const nextBuckets = {};
-  const nextBucketOrder = [];
-  let changed = false;
-
-  collection.bucketOrder.forEach((bucketKey) => {
-    const bucket = collection.buckets[bucketKey];
-    const bucketText = [
-      bucketKey,
-      bucket?.key,
-      bucket?.label,
-      bucket?.authUsername,
-      bucket?.authPassword,
-      ...Object.values(bucket?.sheets || {}).flatMap((sheetValue) => [
-        sheetValue?.venueName,
-        sheetValue?.eventName,
-        sheetValue?.authUsername,
-      ]),
-    ]
-      .map((value) => normalizePurgeKey(value))
-      .join(" ");
-
-    const shouldRemove = Array.from(ATTENDANCE_BUCKETS_TO_REMOVE).some((needle) => bucketText.includes(normalizePurgeKey(needle)));
-    if (shouldRemove) {
-      changed = true;
-      return;
-    }
-
-    if (bucket) {
-      nextBuckets[bucketKey] = bucket;
-      nextBucketOrder.push(bucketKey);
-    }
-  });
-
-  if (!changed) {
-    return collection;
-  }
-
-  const activeBucketKey = nextBuckets[collection.activeBucketKey] ? collection.activeBucketKey : (nextBucketOrder[0] || "");
-  return {
-    activeBucketKey,
-    bucketOrder: nextBucketOrder,
-    buckets: nextBuckets,
-  };
-}
-
-function normalizePurgeKey(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
 function createAttendanceCollectionFromBuckets(bucketsValue) {
   const buckets = {};
   const bucketOrder = [];
@@ -345,6 +283,31 @@ function createAttendanceCollectionFromBuckets(bucketsValue) {
     bucketOrder,
     buckets,
   };
+}
+
+function clearAttendanceStorageData() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_COLLECTION_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    localStorage.removeItem(ATTENDANCE_STORAGE_RESET_STATE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function resetAttendanceStorageOnce() {
+  try {
+    const currentVersion = localStorage.getItem(ATTENDANCE_STORAGE_RESET_STATE_KEY);
+    if (currentVersion === ATTENDANCE_STORAGE_RESET_VERSION) {
+      return;
+    }
+
+    clearAttendanceStorageData();
+    localStorage.setItem(ATTENDANCE_STORAGE_RESET_STATE_KEY, ATTENDANCE_STORAGE_RESET_VERSION);
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 function saveAttendanceCollection(collection = attendanceCollection) {
@@ -1726,36 +1689,21 @@ weekDateEditor?.addEventListener("input", (event) => {
 });
 
 clearDemoButton.addEventListener("click", () => {
-  const confirmed = window.confirm("Clear the active weekly sheet roster, checkmarks, tracker data, and history?");
+  const confirmed = window.confirm("Clear all attendance data and restore the blank workbook seed?");
   if (!confirmed) {
-    setStatus("Clear sheet cancelled.");
+    setStatus("Clear attendance cancelled.");
     return;
   }
 
-  const preserve = {
-    id: sheet.id || activeSheetKey || `sheet-${Date.now()}`,
-    venueName: sheet.venueName,
-    eventName: sheet.eventName,
-    eventDate: sheet.eventDate,
-    totalWeeks: sheet.totalWeeks,
-    requiredWeeks: sheet.requiredWeeks,
-    startSaturday: sheet.startSaturday,
-    weekDates: Array.isArray(sheet.weekDates) ? sheet.weekDates.slice() : [],
-    weekLabels: Array.isArray(sheet.weekLabels) ? sheet.weekLabels.slice() : [],
-    authUsername: sheet.authUsername,
-    authPassword: sheet.authPassword,
-  };
-
-  sheet = normalizeSheet({
-    ...getDefaultSheetSeed(),
-    ...preserve,
-    players: [],
-    eventTracker: normalizeEventTracker(DEFAULT_EVENT_TRACKER),
-    eventHistory: [],
-  });
+  clearAttendanceStorageData();
+  resetAttendanceStorageOnce();
+  attendanceCollection = loadAttendanceCollection();
+  activeSheetKey = attendanceCollection.activeBucketKey || "";
+  activeAttendanceBucketKey = attendanceCollection.activeBucketKey || "";
+  sheet = getActiveSheet();
   saveSheet();
   render();
-  setStatus("Active weekly sheet cleared.");
+  setStatus("Attendance data reset.");
 });
 
 attendanceSheetSelect?.addEventListener("change", () => {
@@ -2431,6 +2379,10 @@ function getBracketRosterNames() {
         return;
       }
 
+      if (shouldIgnoreAttendanceRosterName(name)) {
+        return;
+      }
+
       const key = getExactRosterKey(name);
       if (seen.has(key)) {
         return;
@@ -2483,6 +2435,11 @@ function normalizeRosterKey(value) {
 
 function getExactRosterKey(value) {
   return normalizeRosterName(value).toLowerCase();
+}
+
+function shouldIgnoreAttendanceRosterName(value) {
+  const key = normalizeRosterKey(value).replace(/[^a-z0-9]+/g, "");
+  return key.startsWith("gary") || key.includes("outofbounds") || key.includes("westsider");
 }
 
 function escapeHtml(value) {

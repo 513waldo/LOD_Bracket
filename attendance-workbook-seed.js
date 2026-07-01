@@ -74,30 +74,6 @@ window.DARTS_ATTENDANCE_WORKBOOK_SEED = {
       ]
     },
     {
-      "id": "p6",
-      "name": "Gary N",
-      "weeks": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    },
-    {
-      "id": "p7",
-      "name": "Gary J",
-      "weeks": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    },
-    {
       "id": "p8",
       "name": "Joe P",
       "weeks": [
