@@ -1043,7 +1043,7 @@ function clearBullShootEntries() {
 clearBullseyeShootEntriesButton?.addEventListener("click", clearBullShootEntries);
 
 playerList.addEventListener("input", () => {
-  syncPayoutTeams();
+  syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
 });
 
@@ -1094,7 +1094,7 @@ async function generatePlayers() {
     blockedGenerateCount = 0;
     hideTeamDrawWarning();
     renderTeams(currentTeams);
-    syncPayoutTeams(teams.length);
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
     savePortalSnapshotToLocalStorage();
     if (assistantMode) {
@@ -1170,7 +1170,7 @@ async function buildBracket() {
     renderBracket();
     queueActiveLodCodesRefresh();
     syncPdfLayoutToTeamCount(activePlayers.length);
-    syncPayoutTeams(activePlayers.length);
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
     savePortalSnapshotToLocalStorage();
     if (assistantMode) {
@@ -1376,7 +1376,7 @@ function renderTeams(teams) {
   playerList.value = teams.map(formatTeam).join("\n");
   renderGroups(teams);
   syncPdfLayoutToTeamCount(teams.length);
-  syncPayoutTeams(teams.length);
+  syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
   queueBracketDraftSave();
 }
@@ -6182,9 +6182,6 @@ function restoreBracketDraft() {
   }
 
   if (draft.payout && typeof draft.payout === "object") {
-    if (payoutTeams && draft.payout.teams !== undefined) {
-      payoutTeams.value = String(draft.payout.teams);
-    }
     if (payoutEntry && draft.payout.entry !== undefined) {
       payoutEntry.value = String(draft.payout.entry);
     }
@@ -6202,6 +6199,7 @@ function restoreBracketDraft() {
         }
       });
     }
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
   }
 
@@ -7372,9 +7370,6 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
 
   if (snapshot.payout && typeof snapshot.payout === "object") {
-    if (payoutTeams && snapshot.payout.teams !== undefined) {
-      payoutTeams.value = String(snapshot.payout.teams);
-    }
     if (payoutEntry && snapshot.payout.entry !== undefined) {
       payoutEntry.value = String(snapshot.payout.entry);
     }
@@ -7392,6 +7387,7 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
         }
       });
     }
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
   }
 
