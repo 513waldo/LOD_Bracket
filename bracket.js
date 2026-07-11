@@ -31,6 +31,7 @@ const payoutTeams = document.querySelector("#payoutTeams");
 const payoutEntry = document.querySelector("#payoutEntry");
 const payoutAdded = document.querySelector("#payoutAdded");
 const payoutPlaces = document.querySelector("#payoutPlaces");
+const payoutPanel = document.querySelector(".payout-panel");
 const clearPayoutButton = document.querySelector("#clearPayout");
 const payoutPercentInputs = document.querySelector("#payoutPercentInputs");
 const payoutPercentStatus = document.querySelector("#payoutPercentStatus");
@@ -115,6 +116,7 @@ const bracketDraftWindowNamePrefix = "dartsTournamentBracketDraftWindow:";
 const bracketDraftHistoryStateKey = "bracketDraft";
 const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
 const lodCodeStorageKey = "dartsTournamentLodCode";
+const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
 const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
@@ -293,6 +295,7 @@ let totalPlayersSyncTimer = null;
 let suppressPortalSnapshotPublish = false;
 let diceRollerFullscreenRequested = false;
 let diceRollerMaximizeMode = "";
+let payoutCalculatorUpdateFrame = null;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -929,25 +932,37 @@ mysteryOutModeInputs.forEach((input) => {
 });
 
 [payoutTeams, payoutEntry, payoutAdded, payoutPlaces].forEach((input) => {
-  input?.addEventListener("input", updatePayoutCalculator);
-  input?.addEventListener("change", updatePayoutCalculator);
+  input?.addEventListener("input", schedulePayoutCalculatorUpdate);
+  input?.addEventListener("change", schedulePayoutCalculatorUpdate);
   input?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") {
       return;
     }
 
     event.preventDefault();
-    updatePayoutCalculator();
+    schedulePayoutCalculatorUpdate();
     input.blur();
   });
 });
 
 payoutPercentInputs?.addEventListener("input", () => {
-  updatePayoutCalculator();
+  schedulePayoutCalculatorUpdate();
 });
 
 payoutPercentInputs?.addEventListener("change", () => {
-  updatePayoutCalculator();
+  schedulePayoutCalculatorUpdate();
+});
+
+payoutPanel?.addEventListener("input", (event) => {
+  if (event.target?.matches?.("#payoutTeams, #payoutEntry, #payoutAdded, #payoutPlaces, [data-payout-percent]")) {
+    schedulePayoutCalculatorUpdate();
+  }
+});
+
+payoutPanel?.addEventListener("change", (event) => {
+  if (event.target?.matches?.("#payoutTeams, #payoutEntry, #payoutAdded, #payoutPlaces, [data-payout-percent]")) {
+    schedulePayoutCalculatorUpdate();
+  }
 });
 
 clearPayoutButton?.addEventListener("click", clearPayoutInputs);
@@ -1394,7 +1409,7 @@ function clearPayoutInputs() {
     payoutPercentInputs.dataset.placeCount = "";
     payoutPercentInputs.innerHTML = "";
   }
-  updatePayoutCalculator();
+  schedulePayoutCalculatorUpdate();
 }
 
 function updatePayoutCalculator() {
@@ -1538,30 +1553,37 @@ function renderPayoutPercentInputs(placeCount) {
   `).join("");
 
   Array.from(payoutPercentInputs.querySelectorAll("[data-payout-percent]")).forEach((input) => {
-    input.addEventListener("input", updatePayoutCalculator);
-    input.addEventListener("change", updatePayoutCalculator);
+    input.addEventListener("input", schedulePayoutCalculatorUpdate);
+    input.addEventListener("change", schedulePayoutCalculatorUpdate);
     input.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") {
         return;
       }
 
       event.preventDefault();
-      updatePayoutCalculator();
+      schedulePayoutCalculatorUpdate();
       input.blur();
     });
   });
 }
 
 function getCustomPayoutSplit(placeCount) {
-  const inputs = Array.from(document.querySelectorAll("[data-payout-percent]"));
+  const inputs = Array.from(payoutPercentInputs?.querySelectorAll("[data-payout-percent]") || []);
   if (!inputs.length || inputs.length !== placeCount) {
     setPayoutPercentStatus("Using automatic split");
     return null;
   }
 
+  const defaultSplit = getPayoutSplitByPlaces(placeCount);
   const values = inputs.map((input) => Math.max(0, Number(input.value) || 0));
   const total = values.reduce((sum, value) => sum + value, 0);
   if (!total) {
+    setPayoutPercentStatus("Using automatic split");
+    return null;
+  }
+
+  const isDefaultSplit = values.length === defaultSplit.length && values.every((value, index) => Math.abs(value - defaultSplit[index] * 100) <= 0.05);
+  if (isDefaultSplit) {
     setPayoutPercentStatus("Using automatic split");
     return null;
   }
@@ -1595,6 +1617,17 @@ function formatMoney(value) {
 function formatMoneyExact(value) {
   const amount = Number(value) || 0;
   return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function schedulePayoutCalculatorUpdate() {
+  if (payoutCalculatorUpdateFrame !== null) {
+    return;
+  }
+
+  payoutCalculatorUpdateFrame = window.requestAnimationFrame(() => {
+    payoutCalculatorUpdateFrame = null;
+    updatePayoutCalculator();
+  });
 }
 
 function getSplitPotPrizeAmount() {
@@ -2801,7 +2834,7 @@ function getDuplicateOutShotNumber() {
 }
 
 function updateOutShotWinners() {
-  const winningScore = mysteryOut ? Number(mysteryOut.score) : null;
+  const winningScore = getMysteryOutScore();
 
   outShotSheet.querySelectorAll(".out-shot-row").forEach((row) => {
     const numberInput = row.querySelector('[data-out-field="number"]');
@@ -2835,9 +2868,12 @@ function renderMysteryOutWinner() {
 }
 
 function renderMysteryOut() {
+  const mysteryOutMode = getMysteryOutMode();
+  const mysteryOutScore = getMysteryOutScore();
+
   if (mysteryOutModeInputs.length) {
     mysteryOutModeInputs.forEach((input) => {
-      input.checked = Boolean(mysteryOut && input.dataset.mysteryOutMode === mysteryOut.mode);
+      input.checked = input.dataset.mysteryOutMode === mysteryOutMode;
     });
   }
 
@@ -2845,12 +2881,12 @@ function renderMysteryOut() {
     const hasActiveRoll = Boolean(mysteryOutDrawAnimation?.active && mysteryOutDrawAnimation.value !== null);
     const currentValue = hasActiveRoll
       ? mysteryOutDrawAnimation.value
-      : (mysteryOut && Number.isFinite(Number(mysteryOut.score)) ? Number(mysteryOut.score) : null);
+      : mysteryOutScore;
     mysteryOutValue.textContent = currentValue ? String(currentValue) : "--";
   }
 
   if (resetMysteryOutButton) {
-    resetMysteryOutButton.hidden = !mysteryOut;
+    resetMysteryOutButton.hidden = !mysteryOutScore && !mysteryOutDrawAnimation;
   }
 
   renderMysteryOutWinner();
@@ -2888,10 +2924,11 @@ function buildMysteryOutRangeValues(mode) {
 
 function setMysteryOutMode(mode) {
   const normalizedMode = ["open", "double", "master"].includes(String(mode)) ? String(mode) : "double";
+  const currentScore = getMysteryOutScore();
   mysteryOut = {
     ...(mysteryOut && typeof mysteryOut === "object" ? mysteryOut : {}),
     mode: normalizedMode,
-    score: mysteryOut && typeof mysteryOut === "object" ? mysteryOut.score || "" : "",
+    score: currentScore || "",
   };
   savePortalSnapshotToLocalStorage();
   renderMysteryOut();
@@ -2899,8 +2936,7 @@ function setMysteryOutMode(mode) {
 }
 
 function generateMysteryOut() {
-  const selectedMode = Array.from(mysteryOutModeInputs).find((input) => input.checked)?.dataset?.mysteryOutMode;
-  const mode = selectedMode || mysteryOut?.mode || "double";
+  const mode = getMysteryOutMode();
   const values = getMysteryOutValues(mode);
 
   if (!values.length) {
@@ -2960,6 +2996,25 @@ function resetMysteryOut() {
   queueBracketDraftSave();
 }
 
+function getMysteryOutMode() {
+  if (mysteryOut && typeof mysteryOut === "object" && mysteryOut.mode) {
+    return String(mysteryOut.mode);
+  }
+
+  const selectedMode = Array.from(mysteryOutModeInputs).find((input) => input.checked)?.dataset?.mysteryOutMode;
+  return ["open", "double", "master"].includes(String(selectedMode)) ? String(selectedMode) : "double";
+}
+
+function getMysteryOutScore() {
+  if (!mysteryOut) {
+    return null;
+  }
+
+  const rawScore = typeof mysteryOut === "object" ? mysteryOut.score : mysteryOut;
+  const score = Number(rawScore);
+  return Number.isFinite(score) && score > 0 ? score : null;
+}
+
 function renderHighestOutRecord() {
   if (!highestOutRecordBody) {
     return;
@@ -2994,7 +3049,7 @@ function getHighestOutRecord() {
 }
 
 function getMysteryOutWinner() {
-  const winningScore = mysteryOut ? Number(mysteryOut.score) : null;
+  const winningScore = getMysteryOutScore();
   if (!winningScore) {
     return null;
   }
@@ -8078,7 +8133,9 @@ function saveStoredLodCode(code) {
     return;
   }
 
-  localStorage.setItem(lodCodeStorageKey, code || lodCodeClearedValue);
+  const value = code || lodCodeClearedValue;
+  localStorage.setItem(lodCodeStorageKey, value);
+  localStorage.setItem(portalLodCodeStorageKey, value);
 }
 
 function generateLodCode() {
