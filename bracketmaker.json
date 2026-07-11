@@ -6,7 +6,7 @@
     "losers_bracket": "left as-is for now",
     "winners_bracket": "25-team PDF order matched",
     "display_numbering": "updated to preserve PDF game IDs",
-    "cache_buster": "bracket.html points at bracket.js?v=interactive-tools-337"
+    "cache_buster": "bracket.html points at bracket.js?v=interactive-tools-338"
   },
   "25_team_pdf_order": {
     "winners_round_1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
