@@ -1416,11 +1416,14 @@ function updatePayoutCalculator() {
     return;
   }
 
-  const teams = Math.max(0, Number(payoutTeams?.value) || 0);
+  const teams = Math.max(0, Number(totalPlayers?.value) || Number(payoutTeams?.value) || 0);
   const entry = Math.max(0, Number(payoutEntry?.value) || 0);
   const added = Math.max(0, Number(payoutAdded?.value) || 0);
   const pot = teams * entry + added;
   const placeCount = getPaidPlaces(teams, payoutPlaces?.value || "auto");
+  if (payoutTeams) {
+    payoutTeams.value = String(teams);
+  }
   renderPayoutPercentInputs(placeCount);
   const customSplit = getCustomPayoutSplit(placeCount);
   const split = customSplit || getPayoutSplit(teams, payoutPlaces?.value || "auto");
