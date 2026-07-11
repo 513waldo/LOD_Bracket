@@ -4938,46 +4938,26 @@ function resetGraphMatchCascade(matchId) {
   const boardAssignments = new Map(
     state.matches.map((match) => [match.id, match.boardAssignment ?? null])
   );
+  const manualResults = state.matches
+    .filter((match) => match.winner && !match.autoAdvanced && !affectedSet.has(match.id))
+    .map((match) => ({
+      id: match.id,
+      winner: match.winner,
+    }));
 
-  affectedIds.forEach((id) => {
-    const match = state.matchesById[id];
-    if (!match) {
-      return;
-    }
-
-    match.winner = "";
-    match.loser = "";
-    match.autoAdvanced = false;
-
-    match.players = ["", ""];
-    match.slotSources = ["", ""];
-  });
-
+  state = createBracketGraph(state.originalPlayers);
   state.matches.forEach((match) => {
     if (boardAssignments.has(match.id)) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
 
-  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
-    state.champion = "";
-    if (state.resetFinal) {
-      state.resetFinal.players = ["", ""];
-      state.resetFinal.slotSources = ["", ""];
-      state.resetFinal.winner = "";
-      state.resetFinal.loser = "";
-      state.resetFinal.autoAdvanced = false;
+  manualResults.forEach((result) => {
+    const match = state.matchesById[result.id];
+    if (match?.players.includes(result.winner) && !match.winner) {
+      chooseWinner(result.id, result.winner);
     }
-    if (state.doubleDipFinal) {
-      state.doubleDipFinal.players = ["", ""];
-      state.doubleDipFinal.slotSources = ["", ""];
-      state.doubleDipFinal.winner = "";
-      state.doubleDipFinal.loser = "";
-      state.doubleDipFinal.autoAdvanced = false;
-    }
-  }
-
-  settleGraphByesAndSources(state);
+  });
 }
 
 function getGraphResetCascadeIds(bracketState, matchId) {
