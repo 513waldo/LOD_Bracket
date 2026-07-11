@@ -296,6 +296,7 @@ let suppressPortalSnapshotPublish = false;
 let diceRollerFullscreenRequested = false;
 let diceRollerMaximizeMode = "";
 let payoutCalculatorUpdateFrame = null;
+let payoutTeamsLockedToPlayerCount = true;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -1376,6 +1377,7 @@ function renderTeams(teams) {
   playerList.value = teams.map(formatTeam).join("\n");
   renderGroups(teams);
   syncPdfLayoutToTeamCount(teams.length);
+  payoutTeamsLockedToPlayerCount = true;
   syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
   queueBracketDraftSave();
@@ -1391,10 +1393,16 @@ function syncPayoutTeams(teamCount = getPlayers().length) {
 
 function syncPayoutTeamsFromPlayerCount() {
   const playerCount = Math.max(0, Number(totalPlayers.value) || 0);
-  syncPayoutTeams(playerCount);
+  if (payoutTeamsLockedToPlayerCount) {
+    syncPayoutTeams(playerCount);
+  }
 }
 
 function clearPayoutInputs() {
+  payoutTeamsLockedToPlayerCount = false;
+  if (payoutTeams) {
+    payoutTeams.value = "0";
+  }
   if (payoutEntry) {
     payoutEntry.value = "";
   }
@@ -1416,12 +1424,14 @@ function updatePayoutCalculator() {
     return;
   }
 
-  const teams = Math.max(0, Number(totalPlayers?.value) || Number(payoutTeams?.value) || 0);
+  const teams = payoutTeamsLockedToPlayerCount
+    ? Math.max(0, Number(totalPlayers?.value) || 0)
+    : Math.max(0, Number(payoutTeams?.value) || 0);
   const entry = Math.max(0, Number(payoutEntry?.value) || 0);
   const added = Math.max(0, Number(payoutAdded?.value) || 0);
   const pot = teams * entry + added;
   const placeCount = getPaidPlaces(teams, payoutPlaces?.value || "auto");
-  if (payoutTeams) {
+  if (payoutTeams && payoutTeamsLockedToPlayerCount) {
     payoutTeams.value = String(teams);
   }
   renderPayoutPercentInputs(placeCount);
