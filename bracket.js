@@ -932,9 +932,22 @@ mysteryOutModeInputs.forEach((input) => {
 [payoutTeams, payoutEntry, payoutAdded, payoutPlaces].forEach((input) => {
   input?.addEventListener("input", updatePayoutCalculator);
   input?.addEventListener("change", updatePayoutCalculator);
+  input?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    updatePayoutCalculator();
+    input.blur();
+  });
 });
 
-payoutPercentInputs?.addEventListener("input", (event) => {
+payoutPercentInputs?.addEventListener("input", () => {
+  updatePayoutCalculator();
+});
+
+payoutPercentInputs?.addEventListener("change", () => {
   updatePayoutCalculator();
 });
 
@@ -1380,6 +1393,7 @@ function clearPayoutInputs() {
   }
   if (payoutPercentInputs) {
     payoutPercentInputs.dataset.placeCount = "";
+    payoutPercentInputs.innerHTML = "";
   }
   updatePayoutCalculator();
 }
@@ -1523,6 +1537,20 @@ function renderPayoutPercentInputs(placeCount) {
       >
     </label>
   `).join("");
+
+  Array.from(payoutPercentInputs.querySelectorAll("[data-payout-percent]")).forEach((input) => {
+    input.addEventListener("input", updatePayoutCalculator);
+    input.addEventListener("change", updatePayoutCalculator);
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      updatePayoutCalculator();
+      input.blur();
+    });
+  });
 }
 
 function getCustomPayoutSplit(placeCount) {
@@ -6101,7 +6129,7 @@ function restoreBracketDraft() {
   }
 
   if (draft.payout && typeof draft.payout === "object") {
-  if (payoutTeams && draft.payout.teams !== undefined) {
+    if (payoutTeams && draft.payout.teams !== undefined) {
       payoutTeams.value = String(draft.payout.teams);
     }
     if (payoutEntry && draft.payout.entry !== undefined) {
