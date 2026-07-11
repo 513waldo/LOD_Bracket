@@ -4945,12 +4945,44 @@ function resetGraphMatchCascade(matchId) {
       winner: match.winner,
     }));
 
-  state = createBracketGraph(state.originalPlayers);
+  affectedIds.forEach((id) => {
+    const match = state.matchesById[id];
+    if (!match) {
+      return;
+    }
+
+    match.winner = "";
+    match.loser = "";
+    match.autoAdvanced = false;
+    match.players = ["", ""];
+    match.slotSources = ["", ""];
+  });
+
   state.matches.forEach((match) => {
     if (boardAssignments.has(match.id)) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
+
+  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
+    state.champion = "";
+    if (state.resetFinal) {
+      state.resetFinal.players = ["", ""];
+      state.resetFinal.slotSources = ["", ""];
+      state.resetFinal.winner = "";
+      state.resetFinal.loser = "";
+      state.resetFinal.autoAdvanced = false;
+    }
+    if (state.doubleDipFinal) {
+      state.doubleDipFinal.players = ["", ""];
+      state.doubleDipFinal.slotSources = ["", ""];
+      state.doubleDipFinal.winner = "";
+      state.doubleDipFinal.loser = "";
+      state.doubleDipFinal.autoAdvanced = false;
+    }
+  }
+
+  settleGraphByesAndSources(state);
 
   manualResults.forEach((result) => {
     const match = state.matchesById[result.id];
