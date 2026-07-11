@@ -4944,48 +4944,20 @@ function resetGraphMatchCascade(matchId) {
       id: match.id,
       winner: match.winner,
     }));
+  const targetSnapshot = state.matchesById[matchId]
+    ? {
+        players: [...state.matchesById[matchId].players],
+        slotSources: [...state.matchesById[matchId].slotSources],
+        boardAssignment: state.matchesById[matchId].boardAssignment ?? null,
+      }
+    : null;
 
-  affectedIds.forEach((id) => {
-    const match = state.matchesById[id];
-    if (!match) {
-      return;
-    }
-
-    match.winner = "";
-    match.loser = "";
-    match.autoAdvanced = false;
-
-    if (id !== matchId) {
-      match.players = ["", ""];
-      match.slotSources = ["", ""];
-    }
-  });
-
+  state = createBracketGraph(state.originalPlayers);
   state.matches.forEach((match) => {
     if (boardAssignments.has(match.id)) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
-
-  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
-    state.champion = "";
-    if (state.resetFinal) {
-      state.resetFinal.players = ["", ""];
-      state.resetFinal.slotSources = ["", ""];
-      state.resetFinal.winner = "";
-      state.resetFinal.loser = "";
-      state.resetFinal.autoAdvanced = false;
-    }
-    if (state.doubleDipFinal) {
-      state.doubleDipFinal.players = ["", ""];
-      state.doubleDipFinal.slotSources = ["", ""];
-      state.doubleDipFinal.winner = "";
-      state.doubleDipFinal.loser = "";
-      state.doubleDipFinal.autoAdvanced = false;
-    }
-  }
-
-  settleGraphByesAndSources(state);
 
   manualResults.forEach((result) => {
     const match = state.matchesById[result.id];
@@ -4993,6 +4965,18 @@ function resetGraphMatchCascade(matchId) {
       chooseWinner(result.id, result.winner);
     }
   });
+
+  const targetMatch = state.matchesById[matchId];
+  if (targetMatch && targetSnapshot) {
+    targetMatch.players = [...targetSnapshot.players];
+    targetMatch.slotSources = [...targetSnapshot.slotSources];
+    targetMatch.boardAssignment = targetSnapshot.boardAssignment;
+    targetMatch.winner = "";
+    targetMatch.loser = "";
+    targetMatch.autoAdvanced = false;
+  }
+
+  settleGraphByesAndSources(state);
 }
 
 function getGraphResetCascadeIds(bracketState, matchId) {
