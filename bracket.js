@@ -1391,8 +1391,7 @@ function syncPayoutTeams(teamCount = getPlayers().length) {
 
 function syncPayoutTeamsFromPlayerCount() {
   const playerCount = Math.max(0, Number(totalPlayers.value) || 0);
-  const groupSize = Math.max(1, Number(playersPerGroup.value) || 1);
-  syncPayoutTeams(Math.ceil(playerCount / groupSize));
+  syncPayoutTeams(playerCount);
 }
 
 function clearPayoutInputs() {
