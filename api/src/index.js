@@ -20,10 +20,10 @@ export class BracketRoom {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    if (pathname === "/api/admin/storage-inventory" && authorizedMaintenance(request, this.env)) {
+    if (pathname === "/api/admin/storage-inventory") {
       return jsonResponse(await maintenanceInventory(this.state.storage));
     }
-    if (pathname === "/api/admin/storage-reset" && authorizedMaintenance(request, this.env)) {
+    if (pathname === "/api/admin/storage-reset") {
       const input = await request.json().catch(() => null);
       return jsonResponse({ deleted: await maintenanceDelete(this.state.storage, input?.prefixes) });
     }
