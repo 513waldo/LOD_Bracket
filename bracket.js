@@ -300,6 +300,7 @@ let suppressPortalSnapshotPublish = false;
 let diceRollerFullscreenRequested = false;
 let diceRollerMaximizeMode = "";
 let payoutCalculatorUpdateFrame = null;
+let payoutTeamsManualOverride = false;
 
 window.startTeamGeneration = generatePlayers;
 window.startBracketBuild = buildBracket;
@@ -956,6 +957,14 @@ mysteryOutModeInputs.forEach((input) => {
   });
 });
 
+payoutTeams?.addEventListener("input", () => {
+  payoutTeamsManualOverride = true;
+});
+
+payoutTeams?.addEventListener("change", () => {
+  payoutTeamsManualOverride = true;
+});
+
 payoutPercentInputs?.addEventListener("input", () => {
   schedulePayoutCalculatorUpdate();
 });
@@ -1054,7 +1063,7 @@ function clearBullShootEntries() {
 clearBullseyeShootEntriesButton?.addEventListener("click", clearBullShootEntries);
 
 playerList.addEventListener("input", () => {
-  syncPayoutTeams();
+  syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
 });
 
@@ -1105,7 +1114,7 @@ async function generatePlayers() {
     blockedGenerateCount = 0;
     hideTeamDrawWarning();
     renderTeams(currentTeams);
-    syncPayoutTeams(teams.length);
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
     savePortalSnapshotToLocalStorage();
     if (assistantMode) {
@@ -1181,7 +1190,7 @@ async function buildBracket() {
     renderBracket();
     queueActiveLodCodesRefresh();
     syncPdfLayoutToTeamCount(activePlayers.length);
-    syncPayoutTeams(activePlayers.length);
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
     savePortalSnapshotToLocalStorage();
     if (assistantMode) {
@@ -1387,7 +1396,8 @@ function renderTeams(teams) {
   playerList.value = teams.map(formatTeam).join("\n");
   renderGroups(teams);
   syncPdfLayoutToTeamCount(teams.length);
-  syncPayoutTeams(teams.length);
+  payoutTeamsManualOverride = false;
+  syncPayoutTeamsFromPlayerCount();
   updatePayoutCalculator();
   queueBracketDraftSave();
 }
@@ -1403,10 +1413,13 @@ function syncPayoutTeams(teamCount = getPlayers().length) {
 function syncPayoutTeamsFromPlayerCount() {
   const playerCount = Math.max(0, Number(totalPlayers.value) || 0);
   const groupSize = Math.max(1, Number(playersPerGroup.value) || 1);
-  syncPayoutTeams(Math.ceil(playerCount / groupSize));
+  if (!payoutTeamsManualOverride) {
+    syncPayoutTeams(Math.ceil(playerCount / groupSize));
+  }
 }
 
 function clearPayoutInputs() {
+  payoutTeamsManualOverride = false;
   if (payoutEntry) {
     payoutEntry.value = "";
   }
@@ -1420,6 +1433,7 @@ function clearPayoutInputs() {
     payoutPercentInputs.dataset.placeCount = "";
     payoutPercentInputs.innerHTML = "";
   }
+  syncPayoutTeamsFromPlayerCount();
   schedulePayoutCalculatorUpdate();
 }
 
@@ -1428,11 +1442,15 @@ function updatePayoutCalculator() {
     return;
   }
 
-  const teams = Math.max(0, Number(payoutTeams?.value) || 0);
+  const derivedTeams = Math.max(0, Math.ceil((Number(totalPlayers?.value) || 0) / Math.max(1, Number(playersPerGroup?.value) || 1)));
+  const teams = Math.max(0, Number(payoutTeams?.value) || (payoutTeamsManualOverride ? 0 : derivedTeams));
   const entry = Math.max(0, Number(payoutEntry?.value) || 0);
   const added = Math.max(0, Number(payoutAdded?.value) || 0);
   const pot = teams * entry + added;
   const placeCount = getPaidPlaces(teams, payoutPlaces?.value || "auto");
+  if (payoutTeams && !payoutTeamsManualOverride) {
+    payoutTeams.value = String(teams);
+  }
   renderPayoutPercentInputs(placeCount);
   const customSplit = getCustomPayoutSplit(placeCount);
   const split = customSplit || getPayoutSplit(teams, payoutPlaces?.value || "auto");
@@ -6235,6 +6253,7 @@ function restoreBracketDraft() {
         }
       });
     }
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
   }
 
@@ -7375,9 +7394,6 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
 
   if (snapshot.payout && typeof snapshot.payout === "object") {
-    if (payoutTeams && snapshot.payout.teams !== undefined) {
-      payoutTeams.value = String(snapshot.payout.teams);
-    }
     if (payoutEntry && snapshot.payout.entry !== undefined) {
       payoutEntry.value = String(snapshot.payout.entry);
     }
@@ -7395,6 +7411,7 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
         }
       });
     }
+    syncPayoutTeamsFromPlayerCount();
     updatePayoutCalculator();
   }
 
