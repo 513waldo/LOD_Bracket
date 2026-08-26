@@ -20,6 +20,7 @@
           <button id="copyPortalLink" class="secondary" type="button">Copy link</button>
         </div>
         <button id="openAttendanceSheet" class="secondary" type="button">Attendance sheet</button>
+        <button id="localExitButton" class="secondary" type="button" hidden>Exit local test</button>
         <button id="assistantAdminLogout" class="secondary" type="button">Return to Player Portal</button>
         <button id="clearAllSentMessages" class="secondary" type="button">Clear all sent messages</button>
         <button id="deleteAllActiveLods" class="secondary" type="button">Delete all active LODs</button>
@@ -53,6 +54,19 @@
             <label class="setup-full-span">
               Bar name
               <input id="barName" type="text" autocomplete="organization" placeholder="">
+            </label>
+
+            <label>
+              Event type
+              <select id="eventType">
+                <option value="normal-lod">Normal LOD</option>
+                <option value="appreciation">Appreciation Tournament</option>
+                <option value="custom">Name a specific tournament</option>
+              </select>
+            </label>
+            <label id="customEventNameWrap" hidden>
+              Tournament name
+              <input id="customEventName" type="text" autocomplete="off" placeholder="Tournament name">
             </label>
 
             <div class="setup-date-row setup-full-span">
@@ -499,7 +513,8 @@
   <script src="config.js?v=3"></script>
   <script src="qr.js?v=11"></script>
   <script src="attendance-auth.js?v=2"></script>
+  <script src="account-gate.js?v=1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-325"></script>
+  <script src="bracket.js?v=interactive-tools-326"></script>
 </body>
 </html>

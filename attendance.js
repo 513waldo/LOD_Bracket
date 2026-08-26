@@ -6,7 +6,16 @@ const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
 const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const ATTENDANCE_STORAGE_RESET_STATE_KEY = "dartsTournamentAttendanceResetState:v1";
-const ATTENDANCE_STORAGE_RESET_VERSION = "2026-07-01-start-fresh-v3";
+const ATTENDANCE_STORAGE_RESET_VERSION = "2026-07-01-start-fresh-v6";
+const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
+  "outofbounds",
+  "outofboundsbar",
+  "gary",
+  "garys",
+  "garyswestsider",
+  "westsider",
+  ["waldo", "pub"].join(""),
+]);
 const DEMO = {
   venueName: "Bullseye Taproom",
   eventName: "Appreciation Tournament",
@@ -23,7 +32,10 @@ const DEMO = {
 const WORKBOOK_SEED = window.DARTS_ATTENDANCE_WORKBOOK_SEED || null;
 
 const venueName = document.querySelector("#venueName");
+const description = document.querySelector("#description");
+const eventType = document.querySelector("#eventType");
 const eventName = document.querySelector("#eventName");
+const customEventNameWrap = document.querySelector("#customEventNameWrap");
 const totalWeeks = document.querySelector("#totalWeeks");
 const requiredWeeks = document.querySelector("#requiredWeeks");
 const startSaturday = document.querySelector("#startSaturday");
@@ -39,6 +51,7 @@ const clearBracketGamesButton = document.querySelector("#clearBracketGamesButton
 const clearDemoButton = document.querySelector("#clearDemoButton");
 const statusMessage = document.querySelector("#statusMessage");
 const attendanceUsernameInput = document.querySelector("#attendanceUsernameInput");
+const venueAccessBarName = document.querySelector("#venueAccessBarName");
 const venueAccessUsername = document.querySelector("#venueAccessUsername");
 const venueAccessPassword = document.querySelector("#venueAccessPassword");
 const venueAccessPasswordConfirm = document.querySelector("#venueAccessPasswordConfirm");
@@ -47,9 +60,12 @@ const clearVenueAccessCredentialsButton = document.querySelector("#clearVenueAcc
 const venueAccessStatus = document.querySelector("#venueAccessStatus");
 const attendanceApp = document.querySelector("#attendanceApp");
 const attendanceGate = document.querySelector("#attendanceGate");
+const rootGateMessage = document.querySelector("#rootGateMessage");
 const gateMessage = document.querySelector("#gateMessage");
+const rootPasswordInput = document.querySelector("#rootPasswordInput");
 const attendancePasswordInput = document.querySelector("#attendancePasswordInput");
-const unlockAttendanceButton = document.querySelector("#unlockAttendanceButton");
+const unlockRootButton = document.querySelector("#unlockRootButton");
+const unlockBarButton = document.querySelector("#unlockBarButton");
 const attendanceTable = document.querySelector("#attendanceTable");
 const manualPlayerName = document.querySelector("#manualPlayerName");
 const addManualPlayerButton = document.querySelector("#addManualPlayerButton");
@@ -77,31 +93,38 @@ let sheet = getActiveSheet();
 clearAttendanceAccessSession();
 clearAttendanceRootSessionPassword();
 syncVenueNameFromBracketDraft();
-syncRosterFromBracketDraft(false, true);
 syncEventTrackerFromBracketDraft(true);
 maybeApplyRequestedAttendanceSheet();
+initializeAccountAttendanceAccess();
 
-if (unlockAttendanceButton) {
-  unlockAttendanceButton.addEventListener("click", unlockAttendanceSheet);
+if (unlockRootButton) {
+  unlockRootButton.addEventListener("click", unlockRootAttendanceSheet);
 }
+
+if (unlockBarButton) {
+  unlockBarButton.addEventListener("click", unlockBarAttendanceSheet);
+}
+
+rootPasswordInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    unlockRootAttendanceSheet();
+  }
+});
 
 attendancePasswordInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    unlockAttendanceSheet();
+    unlockBarAttendanceSheet();
   }
 });
 
 attendanceUsernameInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    unlockAttendanceSheet();
+    unlockBarAttendanceSheet();
   }
 });
 
-if (hasAttendanceAccess()) {
-  showAttendanceApp();
-} else {
-  showAttendanceGate();
-}
+// account-gate.js handles redirecting unauthenticated visitors before the sheet loads.
+showAttendanceApp();
 
 function loadSheet() {
   return getActiveSheet();
@@ -111,14 +134,14 @@ function loadAttendanceCollection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const collection = normalizeAttendanceCollection(JSON.parse(raw));
+      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(raw)));
       saveAttendanceCollection(collection);
       return collection;
     }
 
     const legacyCollectionRaw = localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
     if (legacyCollectionRaw) {
-      const collection = normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw));
+      const collection = purgeRemovedAttendanceBuckets(normalizeAttendanceCollection(JSON.parse(legacyCollectionRaw)));
       saveAttendanceCollection(collection);
       return collection;
     }
@@ -126,35 +149,35 @@ function loadAttendanceCollection() {
     const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacyRaw) {
       const legacySheet = normalizeSheet(mergeSheetWithSeed(JSON.parse(legacyRaw), getDefaultSheetSeed()));
-      const collection = createAttendanceCollectionFromBuckets({
+      const collection = purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
         default: { label: "Default list", sheets: [legacySheet] },
-      });
+      }));
       saveAttendanceCollection(collection);
       return collection;
     }
 
-    return createAttendanceCollectionFromBuckets({
+    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    });
+    }));
   } catch {
-    return createAttendanceCollectionFromBuckets({
+    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
       default: {
         label: "Default list",
         sheets: [cloneSheet(getDefaultSheetSeed())],
       },
-    });
+    }));
   }
 }
 
 function normalizeAttendanceCollection(value) {
   if (value && typeof value === "object" && Array.isArray(value.players) && !value.buckets) {
     const legacySheet = normalizeSheet(mergeSheetWithSeed(value, getDefaultSheetSeed()));
-    return createAttendanceCollectionFromBuckets({
+    return purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets({
       default: { label: "Default list", sheets: [legacySheet] },
-    });
+    }));
   }
 
   if (value && typeof value === "object" && value.sheets && typeof value.sheets === "object" && !value.buckets) {
@@ -187,7 +210,7 @@ function normalizeAttendanceCollection(value) {
       }
     });
 
-    const collection = createAttendanceCollectionFromBuckets(groupedBuckets);
+    const collection = purgeRemovedAttendanceBuckets(createAttendanceCollectionFromBuckets(groupedBuckets));
     if (activeBucketKey && collection.buckets[activeBucketKey]) {
       collection.activeBucketKey = activeBucketKey;
     }
@@ -226,11 +249,11 @@ function normalizeAttendanceCollection(value) {
   }
 
   const activeBucketKey = String(value?.activeBucketKey || bucketOrder[0] || "");
-  return {
+  return purgeRemovedAttendanceBuckets({
     activeBucketKey: buckets[activeBucketKey] ? activeBucketKey : bucketOrder[0],
     bucketOrder,
     buckets,
-  };
+  });
 }
 
 function normalizeAttendanceBucket(bucketKey, value) {
@@ -283,6 +306,91 @@ function createAttendanceCollectionFromBuckets(bucketsValue) {
     bucketOrder,
     buckets,
   };
+}
+
+function purgeRemovedAttendanceBuckets(collection) {
+  if (!collection || typeof collection !== "object" || !collection.buckets || !collection.bucketOrder) {
+    return collection;
+  }
+
+  const nextBuckets = {};
+  const nextBucketOrder = [];
+  let changed = false;
+
+  collection.bucketOrder.forEach((bucketKey) => {
+    const bucket = collection.buckets[bucketKey];
+    const bucketText = [
+      bucketKey,
+      bucket?.key,
+      bucket?.label,
+      bucket?.authUsername,
+      bucket?.authPassword,
+      ...Object.values(bucket?.sheets || {}).flatMap((sheetValue) => [
+        sheetValue?.venueName,
+        sheetValue?.eventName,
+        sheetValue?.authUsername,
+      ]),
+    ]
+      .map((value) => normalizePurgeKey(value))
+      .join(" ");
+
+    const shouldRemove = Array.from(ATTENDANCE_BUCKETS_TO_REMOVE).some((needle) => bucketText.includes(normalizePurgeKey(needle)));
+    if (shouldRemove) {
+      changed = true;
+      return;
+    }
+
+    if (bucket) {
+      nextBuckets[bucketKey] = bucket;
+      nextBucketOrder.push(bucketKey);
+    }
+  });
+
+  if (!changed) {
+    return collection;
+  }
+
+  const activeBucketKey = nextBuckets[collection.activeBucketKey] ? collection.activeBucketKey : (nextBucketOrder[0] || "");
+  return {
+    activeBucketKey,
+    bucketOrder: nextBucketOrder,
+    buckets: nextBuckets,
+  };
+}
+
+function normalizePurgeKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function deleteAttendanceBucket(bucketKey) {
+  const key = String(bucketKey || "");
+  if (!key || !attendanceCollection?.buckets?.[key]) {
+    return false;
+  }
+
+  delete attendanceCollection.buckets[key];
+  attendanceCollection.bucketOrder = (Array.isArray(attendanceCollection.bucketOrder) ? attendanceCollection.bucketOrder : [])
+    .filter((entry) => entry !== key);
+
+  if (!attendanceCollection.bucketOrder.length) {
+    attendanceCollection = createAttendanceCollectionFromBuckets({
+      default: {
+        label: "Default list",
+        sheets: [cloneSheet(getDefaultSheetSeed())],
+      },
+    });
+  } else if (attendanceCollection.activeBucketKey === key || !attendanceCollection.buckets[attendanceCollection.activeBucketKey]) {
+    attendanceCollection.activeBucketKey = attendanceCollection.bucketOrder[0];
+  }
+
+  const activeBucket = getActiveBucket();
+  ensureBucketHasActiveSheet(activeBucket);
+  activeAttendanceBucketKey = attendanceCollection.activeBucketKey || "";
+  sheet = getActiveSheet();
+  saveAttendanceCollection(attendanceCollection);
+  return true;
 }
 
 function clearAttendanceStorageData() {
@@ -437,7 +545,7 @@ function looksLikeWorkbookSeedRoster(players) {
 
 function sanitizeBarSheetRoster(nextSheet) {
   const login = getCurrentAttendanceLogin();
-  if (login.kind !== "bar" || !nextSheet) {
+  if ((login.kind !== "bar" && login.kind !== "account") || !nextSheet) {
     return false;
   }
 
@@ -645,10 +753,26 @@ function syncVenueNameFromBracketDraft(saveChanges = false) {
       changed = true;
     }
 
+    const draftDescription = String(draft?.description || "").trim();
+    if (draftDescription && sheet.description !== draftDescription) {
+      sheet.description = draftDescription;
+      changed = true;
+    }
+
     if (typeof draft?.eventDate === "string") {
       const nextEventDate = normalizeAnyDateInput(draft.eventDate);
       if (sheet.eventDate !== nextEventDate) {
         sheet.eventDate = nextEventDate;
+        changed = true;
+      }
+    }
+
+    if (typeof draft?.eventType === "string") {
+      const nextEventType = normalizeAttendanceEventType(draft.eventType);
+      const nextEventName = getAttendanceEventName(nextEventType, draft.eventName);
+      if (sheet.eventType !== nextEventType || sheet.eventName !== nextEventName) {
+        sheet.eventType = nextEventType;
+        sheet.eventName = nextEventName;
         changed = true;
       }
     }
@@ -671,8 +795,10 @@ function showAttendanceApp() {
   }
 }
 
-function showAttendanceGate(message) {
-  if (gateMessage) {
+function showAttendanceGate(message, kind = "bar") {
+  if (kind === "root" && rootGateMessage) {
+    rootGateMessage.textContent = message || getRootGateMessage();
+  } else if (gateMessage) {
     gateMessage.textContent = message || getAttendanceGateMessage();
   }
 
@@ -687,10 +813,14 @@ function showAttendanceGate(message) {
 function getAttendanceGateMessage() {
   const bucket = getActiveBucket();
   if (bucket.authUsername && bucket.authPassword) {
-    return `Enter the root password or the ${bucket.authUsername} login to unlock the director-only attendance sheet.`;
+    return `Enter the bar username and password to open the ${bucket.authUsername} attendance sheet.`;
   }
 
-  return "Enter the root password or bar login to unlock the director-only attendance sheet.";
+  return "Enter the bar username and password to open your attendance sheet.";
+}
+
+function getRootGateMessage() {
+  return "Use the root password to open the director portal and drill into each bar portal.";
 }
 
 function getAttendanceAccessKind() {
@@ -713,6 +843,10 @@ function getAttendanceAccessKind() {
     return "bar";
   }
 
+  if (session.kind === "account" && isCurrentAccountAttendanceSession(session)) {
+    return "account";
+  }
+
   return "";
 }
 
@@ -726,6 +860,14 @@ function getCurrentAttendanceLogin() {
     };
   }
 
+  if (session && session.kind === "account" && isCurrentAccountAttendanceSession(session)) {
+    return {
+      kind: "account",
+      username: normalizeAttendanceRootPassword(session.username || ""),
+      password: "",
+    };
+  }
+
   const rootSessionPassword = normalizeAttendanceRootPassword(getAttendanceRootSessionPassword());
   const rootPassword = getStoredAttendanceRootPassword();
   if (rootSessionPassword && rootSessionPassword === rootPassword) {
@@ -735,13 +877,81 @@ function getCurrentAttendanceLogin() {
   return { kind: "", username: "", password: "" };
 }
 
+function isCurrentAccountAttendanceSession(session) {
+  const accountUsername = normalizeAttendanceRootPassword(window.LOD_ACCOUNT_SESSION?.username || "");
+  return Boolean(accountUsername && session?.username === accountUsername);
+}
+
+function initializeAccountAttendanceAccess() {
+  const accountUsername = normalizeAttendanceRootPassword(window.LOD_ACCOUNT_SESSION?.username || "");
+  const accountBarName = String(window.LOD_ACCOUNT_SESSION?.barName || "").trim();
+  if (!accountUsername || !accountBarName) {
+    return;
+  }
+
+  let bucketKey = attendanceCollection.bucketOrder.find((candidateKey) => {
+    const candidate = attendanceCollection.buckets[candidateKey];
+    return normalizeAttendanceRootPassword(candidate?.authUsername || "") === accountUsername;
+  });
+
+  if (!bucketKey) {
+    bucketKey = attendanceCollection.bucketOrder.find((candidateKey) => {
+      const candidate = attendanceCollection.buckets[candidateKey];
+      return candidateKey === "default" && !normalizeAttendanceRootPassword(candidate?.authUsername || "");
+    });
+  }
+
+  if (!bucketKey && attendanceCollection.bucketOrder.length === 1) {
+    bucketKey = attendanceCollection.bucketOrder[0];
+  }
+
+  if (bucketKey && !attendanceCollection.buckets[bucketKey].authUsername) {
+    const bucket = attendanceCollection.buckets[bucketKey];
+    bucket.authUsername = accountUsername;
+    bucket.label = accountBarName;
+    const activeSheet = getActiveSheet();
+    activeSheet.authUsername = accountUsername;
+    activeSheet.venueName = accountBarName;
+    saveAttendanceCollection(attendanceCollection);
+  }
+
+  if (!bucketKey) {
+    bucketKey = `account-${getAttendanceSheetLookupKey(accountUsername) || Date.now()}`;
+    const seed = getDefaultSheetSeed();
+    const accountSheet = normalizeSheet({
+      ...seed,
+      id: `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      venueName: accountBarName,
+      players: [],
+      authUsername: accountUsername,
+      authPassword: "",
+    });
+    attendanceCollection.buckets[bucketKey] = normalizeAttendanceBucket(bucketKey, {
+      label: accountBarName,
+      authUsername: accountUsername,
+      authPassword: "",
+      sheets: [accountSheet],
+    });
+    attendanceCollection.bucketOrder.push(bucketKey);
+    saveAttendanceCollection(attendanceCollection);
+  }
+
+  setActiveBucketKey(bucketKey);
+  const activeSheet = getActiveSheet();
+  if (activeSheet.venueName !== accountBarName) {
+    activeSheet.venueName = accountBarName;
+    saveSheet();
+  }
+  saveAttendanceAccessSession({ kind: "account", username: accountUsername });
+}
+
 function getVisibleAttendanceBucketKeys() {
   const access = getCurrentAttendanceLogin();
   if (access.kind === "root") {
     return attendanceCollection.bucketOrder.slice();
   }
 
-  if (access.kind === "bar" && access.username) {
+  if ((access.kind === "bar" || access.kind === "account") && access.username) {
     const bucket = attendanceCollection.bucketOrder.find((bucketKey) => {
       const candidate = attendanceCollection.buckets[bucketKey];
       return normalizeAttendanceRootPassword(candidate?.authUsername || "") === access.username;
@@ -759,7 +969,7 @@ function getVisibleAttendanceSheetKeys() {
     return bucket.order.slice();
   }
 
-  if (access.kind === "bar" && access.username) {
+  if ((access.kind === "bar" || access.kind === "account") && access.username) {
     return bucket.order.slice();
   }
 
@@ -838,7 +1048,9 @@ function normalizeSheet(value, index = 0) {
   return {
     id,
     venueName: String(value?.venueName || getDefaultSheetSeed().venueName || DEMO.venueName),
-    eventName: String(value?.eventName || getDefaultSheetSeed().eventName || DEMO.eventName),
+    description: String(value?.description || getDefaultSheetSeed().description || ""),
+    eventType: normalizeAttendanceEventType(value?.eventType || value?.eventName),
+    eventName: getAttendanceEventName(value?.eventType || value?.eventName, value?.eventName),
     eventDate: String(value?.eventDate || ""),
     totalWeeks: total,
     requiredWeeks: required,
@@ -851,6 +1063,28 @@ function normalizeSheet(value, index = 0) {
     eventHistory: normalizeEventHistory(value?.eventHistory),
     players,
   };
+}
+
+function normalizeAttendanceEventType(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "appreciation" || normalized.includes("appreciation")) {
+    return "appreciation";
+  }
+  if (normalized === "custom" || (normalized && !normalized.includes("normal") && !normalized.includes("luck"))) {
+    return "custom";
+  }
+  return "normal-lod";
+}
+
+function getAttendanceEventName(type, customName = "") {
+  const normalized = normalizeAttendanceEventType(type);
+  if (normalized === "appreciation") {
+    return "Appreciation Tournament";
+  }
+  if (normalized === "custom") {
+    return String(customName || "").trim() || "Custom Tournament";
+  }
+  return "Normal LOD";
 }
 
 function normalizePlayer(player, weekCount, index) {
@@ -1097,56 +1331,70 @@ function hasAttendanceAccess() {
   return Boolean(getAttendanceAccessKind());
 }
 
-function unlockAttendanceSheet() {
+function unlockRootAttendanceSheet() {
   const storedPassword = getStoredAttendanceRootPassword();
-  const enteredUsername = normalizeAttendanceRootPassword(attendanceUsernameInput?.value || "");
-  const enteredPassword = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
-  const isRootLogin = !enteredUsername || enteredUsername.toLowerCase() === "root";
+  const enteredPassword = normalizeAttendanceRootPassword(rootPasswordInput?.value || "");
 
   if (!enteredPassword) {
-    showAttendanceGate("Enter the root password or bar login to unlock the attendance sheet.");
+    showAttendanceGate("Enter the root password to open the director portal.", "root");
     return;
   }
 
-  if (isRootLogin) {
-    if (enteredPassword !== storedPassword) {
-      showAttendanceGate("Incorrect root password.");
-      return;
-    }
-
-    saveAttendanceRootSessionPassword(enteredPassword);
-    saveAttendanceAccessSession({ kind: "root", password: enteredPassword });
-  } else {
-    const matchingBucket = attendanceCollection.bucketOrder
-      .map((bucketKey) => attendanceCollection.buckets[bucketKey])
-      .find((candidate) => normalizeAttendanceRootPassword(candidate?.authUsername || "") === enteredUsername
-        && normalizeAttendanceRootPassword(candidate?.authPassword || "") === enteredPassword);
-    const usernameExists = attendanceCollection.bucketOrder.some((bucketKey) => normalizeAttendanceRootPassword(attendanceCollection.buckets[bucketKey]?.authUsername || "") === enteredUsername);
-    if (!matchingBucket && usernameExists) {
-      const barSheets = getBarSheetKeys(enteredUsername);
-      showAttendanceGate(barSheets.length
-        ? `Incorrect password for ${enteredUsername}.`
-        : "Incorrect bar login.");
-      return;
-    }
-
-    const targetBucket = matchingBucket || createAttendanceBucketForCredentials(enteredUsername, enteredPassword);
-    if (!targetBucket) {
-      showAttendanceGate("Unable to create an attendance sheet for that login.");
-      return;
-    }
-
-    ensureBucketHasActiveSheet(targetBucket);
-    setActiveBucketKey(targetBucket.key);
-    if (sanitizeBarSheetRoster(sheet)) {
-      saveSheet();
-    }
-    saveAttendanceAccessSession({
-      kind: "bar",
-      username: enteredUsername,
-      password: enteredPassword,
-    });
+  if (enteredPassword !== storedPassword) {
+    showAttendanceGate("Incorrect root password.", "root");
+    return;
   }
+
+  saveAttendanceRootSessionPassword(enteredPassword);
+  saveAttendanceAccessSession({ kind: "root", password: enteredPassword });
+
+  if (rootPasswordInput) {
+    rootPasswordInput.value = "";
+  }
+  showAttendanceApp();
+  render();
+}
+
+function unlockBarAttendanceSheet() {
+  const enteredUsername = normalizeAttendanceRootPassword(attendanceUsernameInput?.value || "");
+  const enteredPassword = normalizeAttendanceRootPassword(attendancePasswordInput?.value || "");
+
+  if (!enteredUsername || !enteredPassword) {
+    showAttendanceGate("Enter a bar username and password to open the attendance sheet.", "bar");
+    return;
+  }
+
+  const matchingBucket = attendanceCollection.bucketOrder
+    .map((bucketKey) => attendanceCollection.buckets[bucketKey])
+    .find((candidate) => normalizeAttendanceRootPassword(candidate?.authUsername || "") === enteredUsername
+      && normalizeAttendanceRootPassword(candidate?.authPassword || "") === enteredPassword);
+  const usernameExists = attendanceCollection.bucketOrder.some((bucketKey) => normalizeAttendanceRootPassword(attendanceCollection.buckets[bucketKey]?.authUsername || "") === enteredUsername);
+  if (!matchingBucket && usernameExists) {
+    const barSheets = getBarSheetKeys(enteredUsername);
+    showAttendanceGate(barSheets.length
+      ? `Incorrect password for ${enteredUsername}.`
+      : "Incorrect bar login.", "bar");
+    return;
+  }
+
+  const targetBucket = matchingBucket || createAttendanceBucketForCredentials(enteredUsername, enteredPassword);
+  if (!targetBucket) {
+    showAttendanceGate("Unable to create an attendance sheet for that login.", "bar");
+    return;
+  }
+
+  ensureBucketHasActiveSheet(targetBucket);
+  setActiveBucketKey(targetBucket.key);
+  sheet.venueName = targetBucket.authUsername || targetBucket.label || enteredUsername;
+  if (sanitizeBarSheetRoster(sheet)) {
+    saveSheet();
+  }
+  clearAttendanceRootSessionPassword();
+  saveAttendanceAccessSession({
+    kind: "bar",
+    username: enteredUsername,
+    password: enteredPassword,
+  });
 
   if (attendancePasswordInput) {
     attendancePasswordInput.value = "";
@@ -1161,9 +1409,19 @@ function unlockAttendanceSheet() {
 function render() {
   sheet = getActiveSheet();
   syncActiveSheetToSession();
+  syncVenueNameFromActiveBucket();
   renderAttendanceSheetManager();
   venueName.value = sheet.venueName;
+  if (description) {
+    description.value = sheet.description || "";
+  }
   eventName.value = sheet.eventName;
+  if (eventType) {
+    eventType.value = sheet.eventType || normalizeAttendanceEventType(sheet.eventName);
+  }
+  if (customEventNameWrap) {
+    customEventNameWrap.hidden = eventType?.value !== "custom";
+  }
   totalWeeks.value = String(sheet.totalWeeks);
   requiredWeeks.value = String(sheet.requiredWeeks);
   if (startSaturday) {
@@ -1194,8 +1452,11 @@ function renderAttendanceSheetManager() {
   const visibleKeys = getVisibleAttendanceSheetKeys();
   attendanceSheetSelect.innerHTML = visibleKeys.map((key) => {
     const optionSheet = bucket.sheets[key];
+    const portalName = getAttendancePortalBarName(bucket) || "Attendance list";
     const labelParts = [
-      optionSheet?.venueName || bucket.label || "Attendance list",
+      portalName,
+      bucket?.authUsername && bucket?.authUsername !== portalName ? bucket.authUsername : "",
+      optionSheet?.description || "",
       optionSheet?.eventDate ? formatDateDisplay(optionSheet.eventDate) : "",
       bucket.order.length > 1 ? `Day ${bucket.order.indexOf(key) + 1}` : "",
     ].filter(Boolean);
@@ -1206,15 +1467,85 @@ function renderAttendanceSheetManager() {
   const bucketKeys = getVisibleAttendanceBucketKeys();
   attendanceSheetLinks.innerHTML = bucketKeys.map((key) => {
     const optionBucket = attendanceCollection.buckets[key];
-    const label = optionBucket?.authUsername || optionBucket?.label || `List ${key}`;
+    const label = getAttendancePortalBarName(optionBucket) || `List ${key}`;
+    const username = String(optionBucket?.authUsername || "").trim();
+    const descriptionText = optionBucket?.sheets?.[optionBucket.activeSheetKey]?.description
+      || optionBucket?.sheets?.[optionBucket.order?.[0]]?.description
+      || "";
     const isActive = key === activeAttendanceBucketKey;
-    return `<button class="button-link secondary-link${isActive ? " active" : ""}" type="button" data-bucket-key="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">${escapeHtml(label)}</button>`;
+    const usernameMarkup = username && normalizeAttendanceDisplayKey(username) !== normalizeAttendanceDisplayKey(label)
+      ? `<span class="portal-card-username">${escapeHtml(username)}</span>`
+      : "";
+    const descriptionMarkup = descriptionText ? `<span class="portal-card-description">${escapeHtml(descriptionText)}</span>` : "";
+    return `
+      <div class="portal-card${isActive ? " active" : ""}">
+        <button class="button-link secondary-link portal-card-main" type="button" data-bucket-key="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">
+          <span class="portal-card-title">${escapeHtml(label)}</span>
+          ${usernameMarkup}
+          ${descriptionMarkup}
+        </button>
+        <button class="secondary portal-card-delete" type="button" data-delete-bucket-key="${escapeHtml(key)}">Delete</button>
+      </div>
+    `;
   }).join("");
 
   if (createAttendanceSheetButton) {
     createAttendanceSheetButton.hidden = accessKind === "";
     createAttendanceSheetButton.textContent = accessKind === "root" ? "New list" : "New day";
   }
+}
+
+function normalizeAttendanceDisplayKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function shouldRedactAttendanceDisplayName(value) {
+  const key = normalizeAttendanceDisplayKey(value);
+  return key === ["waldo", "pub"].join("");
+}
+
+function getAttendancePortalDisplayName(bucket) {
+  const label = String(bucket?.label || "").trim();
+  const username = String(bucket?.authUsername || "").trim();
+  const candidate = label || username;
+  if (!candidate) {
+    return "";
+  }
+
+  if (shouldRedactAttendanceDisplayName(candidate)) {
+    return "Bar portal";
+  }
+
+  return candidate;
+}
+
+function getAttendancePortalBarName(bucket) {
+  const label = String(bucket?.label || "").trim();
+  if (label) {
+    return shouldRedactAttendanceDisplayName(label) ? "Bar portal" : label;
+  }
+
+  const username = String(bucket?.authUsername || "").trim();
+  if (!username) {
+    return "";
+  }
+
+  return shouldRedactAttendanceDisplayName(username) ? "Bar portal" : username;
+}
+
+function getAttendanceDisplayVenueName(sheetValue, bucket) {
+  const candidate = String(sheetValue?.venueName || "").trim() || getAttendancePortalDisplayName(bucket);
+  if (!candidate) {
+    return "";
+  }
+
+  if (shouldRedactAttendanceDisplayName(candidate)) {
+    return "Bar portal";
+  }
+
+  return candidate;
 }
 
 function renderWeekDateEditor() {
@@ -1412,6 +1743,9 @@ function buildFacebookPost(mode = getShareMode()) {
   if (sheet.venueName) {
     lines.push(`Venue: ${sheet.venueName}`);
   }
+  if (sheet.description) {
+    lines.push(`Description: ${sheet.description}`);
+  }
   if (sheet.eventDate) {
     lines.push(`Tournament date: ${formatDateDisplay(sheet.eventDate)}`);
   }
@@ -1467,12 +1801,31 @@ function getShareMode() {
 
 function syncFromInputs() {
   sheet.venueName = venueName.value.trim();
-  sheet.eventName = eventName.value.trim();
+  sheet.description = description?.value.trim() || "";
+  sheet.eventType = eventType?.value || "normal-lod";
+  sheet.eventName = getAttendanceEventName(sheet.eventType, eventName?.value || "");
   sheet.startSaturday = normalizeSaturdayInput(startSaturday?.value || "") || getDefaultSaturdayInput();
   sheet.weekDates = normalizeWeekDates(sheet.weekDates, sheet.totalWeeks, sheet.startSaturday);
   sheet.eventTracker = normalizeEventTracker(sheet.eventTracker);
   saveSheet();
   updateDerivedOutputs();
+}
+
+function syncVenueNameFromActiveBucket() {
+  const bucket = getActiveBucket();
+  const accountBarName = String(window.LOD_ACCOUNT_SESSION?.barName || "").trim();
+  const access = getCurrentAttendanceLogin();
+  const displayName = access.kind === "account"
+    ? accountBarName
+    : String(bucket?.authUsername || bucket?.label || "").trim();
+  if (!displayName) {
+    return;
+  }
+
+  if (sheet.venueName !== displayName) {
+    sheet.venueName = displayName;
+    saveSheet();
+  }
 }
 
 function addManualPlayerFromInput() {
@@ -1509,7 +1862,14 @@ function addManualPlayerFromInput() {
 }
 
 venueName.addEventListener("input", syncFromInputs);
+description?.addEventListener("input", syncFromInputs);
 eventName.addEventListener("input", syncFromInputs);
+eventType?.addEventListener("change", () => {
+  if (customEventNameWrap) {
+    customEventNameWrap.hidden = eventType.value !== "custom";
+  }
+  syncFromInputs();
+});
 startSaturday?.addEventListener("change", () => {
   syncFromInputs();
   render();
@@ -1623,6 +1983,29 @@ attendanceTable.addEventListener("input", (event) => {
 });
 
 attendanceSheetLinks?.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-bucket-key]");
+  if (deleteButton) {
+    event.preventDefault();
+    if (getAttendanceAccessKind() !== "root") {
+      return;
+    }
+
+    const deleteKey = String(deleteButton.dataset.deleteBucketKey || "");
+    const bucket = attendanceCollection.buckets[deleteKey];
+    const label = getAttendancePortalBarName(bucket) || bucket?.authUsername || bucket?.label || "attendance list";
+    const confirmed = window.confirm(`Delete ${label} and all of its attendance data?`);
+    if (!confirmed) {
+      setStatus("Delete cancelled.");
+      return;
+    }
+
+    if (deleteAttendanceBucket(deleteKey)) {
+      render();
+      setStatus(`Deleted ${label}.`);
+    }
+    return;
+  }
+
   const link = event.target.closest("[data-bucket-key]");
   if (!link) {
     return;
@@ -1842,16 +2225,23 @@ function updateVenueAccessStatus() {
 
   const bucket = getActiveBucket();
   if (bucket.authUsername && bucket.authPassword) {
-    venueAccessStatus.textContent = `Login set for ${bucket.authUsername}. Root access still works.`;
+    venueAccessStatus.textContent = `Login set for ${getAttendancePortalDisplayName(bucket) || "this venue"}. Root access still works.`;
   } else {
     venueAccessStatus.textContent = "No bar login set. Root access still works.";
   }
 }
 
 function saveVenueAccessCredentials() {
+  const nextBarName = normalizeRosterName(venueAccessBarName?.value || "");
   const nextUsername = normalizeAttendanceRootPassword(venueAccessUsername?.value || "");
   const nextPassword = normalizeAttendanceRootPassword(venueAccessPassword?.value || "");
   const confirmPassword = normalizeAttendanceRootPassword(venueAccessPasswordConfirm?.value || "");
+
+  if (!nextBarName) {
+    setStatus("Enter a bar name first.");
+    venueAccessBarName?.focus();
+    return;
+  }
 
   if (!nextUsername) {
     setStatus("Enter a bar username first.");
@@ -1871,10 +2261,14 @@ function saveVenueAccessCredentials() {
   const bucket = getActiveBucket();
   bucket.authUsername = nextUsername;
   bucket.authPassword = nextPassword;
-  bucket.label = bucket.label && bucket.label !== "Attendance" ? bucket.label : nextUsername;
+  bucket.label = nextBarName;
   sheet.authUsername = nextUsername;
   sheet.authPassword = nextPassword;
+  sheet.venueName = nextBarName;
   saveSheet();
+  if (venueAccessBarName) {
+    venueAccessBarName.value = "";
+  }
   if (venueAccessUsername) {
     venueAccessUsername.value = "";
   }
@@ -1889,11 +2283,11 @@ function saveVenueAccessCredentials() {
   const syncedCount = importedNames.length ? syncRosterFromBracketDraft(true, true) : 0;
   if (importedNames.length) {
     render();
-    setStatus(`Saved the bar login and synced the bracket roster for ${sheet.venueName || "this venue"} and checked imported players present for the tournament date.${syncedCount ? ` ${syncedCount} new player${syncedCount === 1 ? "" : "s"} were added to the sheet.` : ""}`);
+    setStatus(`Saved the bar login and synced the bracket roster for ${getAttendancePortalDisplayName(bucket) || "this venue"} and checked imported players present for the tournament date.${syncedCount ? ` ${syncedCount} new player${syncedCount === 1 ? "" : "s"} were added to the sheet.` : ""}`);
     return;
   }
 
-  setStatus(`Saved the bar login for ${sheet.venueName || "this venue"}.`);
+  setStatus(`Saved the bar login for ${getAttendancePortalDisplayName(bucket) || "this venue"}.`);
 }
 
 function clearVenueAccessCredentials() {
@@ -1908,6 +2302,9 @@ function clearVenueAccessCredentials() {
   sheet.authUsername = "";
   sheet.authPassword = "";
   saveSheet();
+  if (venueAccessBarName) {
+    venueAccessBarName.value = "";
+  }
   if (venueAccessUsername) {
     venueAccessUsername.value = "";
   }

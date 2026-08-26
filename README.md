@@ -49,3 +49,23 @@ Then:
 6. Keep using the same QR code; the portal URL stays `portal.html?lod=ABC123`.
 
 The admin page will publish bracket state to every configured host, and the portal will poll until one of them responds.
+
+## Email test setup
+
+The Worker includes a server-side Resend test endpoint. The Resend API key must stay out of browser code and Git:
+
+```bash
+cd api
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put EMAIL_TEST_TOKEN
+```
+
+When prompted for `RESEND_API_KEY`, replace the placeholder `re_xxxxxxxxx` with the real API key from Resend. Set `RESEND_FROM` to `onboarding@resend.dev` for initial testing, or configure a verified sending domain before using a custom address.
+
+After deployment, send the test email with:
+
+```bash
+curl -X POST \
+  -H "x-email-test-token: YOUR_EMAIL_TEST_TOKEN" \
+  https://YOUR_WORKER_HOST/api/test-email
+```

@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -111,8 +115,14 @@ h3 {
   background: #000;
 }
 
+.gate-grid {
+  width: min(100%, 1100px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .gate-card {
-  width: min(100%, 560px);
   padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 28px;
@@ -131,6 +141,18 @@ h3 {
   margin-bottom: 18px;
   color: rgba(247, 243, 234, 0.72);
   line-height: 1.55;
+}
+
+.gate-card-root {
+  background:
+    linear-gradient(135deg, rgba(244, 180, 60, 0.18), rgba(0, 0, 0, 0.94)),
+    rgba(0, 0, 0, 0.96);
+}
+
+.gate-card-bar {
+  background:
+    linear-gradient(135deg, rgba(17, 82, 92, 0.24), rgba(0, 0, 0, 0.94)),
+    rgba(0, 0, 0, 0.96);
 }
 
 .gate-card label {
@@ -318,11 +340,41 @@ h3 {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.sheet-link-list .button-link {
+.portal-card {
+  display: grid;
+  gap: 8px;
+}
+
+.portal-card-main {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 76px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.portal-card-title {
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.portal-card-description {
+  color: rgba(20, 33, 38, 0.68);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.portal-card-delete {
+  justify-self: start;
+}
+
+.portal-card-main,
+.portal-card-delete {
   width: 100%;
 }
 
-.sheet-link-list .button-link.active {
+.portal-card.active .portal-card-main {
   border-color: rgba(15, 125, 116, 0.55);
   background: rgba(15, 125, 116, 0.12);
   box-shadow: inset 0 0 0 1px rgba(15, 125, 116, 0.18);
@@ -790,7 +842,8 @@ h3 {
 @media (max-width: 980px) {
   .feature-band,
   .workspace-grid,
-  .share-controls {
+  .share-controls,
+  .gate-grid {
     grid-template-columns: 1fr;
   }
 

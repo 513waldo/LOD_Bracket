@@ -60,9 +60,13 @@ const pdfLayoutSelect = document.querySelector("#pdfLayoutSelect");
 const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet");
+const localExitButton = document.querySelector("#localExitButton");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const barNameInput = document.querySelector("#barName");
+const eventTypeInput = document.querySelector("#eventType");
+const customEventNameInput = document.querySelector("#customEventName");
+const customEventNameWrap = document.querySelector("#customEventNameWrap");
 const eventDateInput = document.querySelector("#eventDate");
 const eventDateStatus = document.querySelector("#eventDateStatus");
 const generateEventDateButton = document.querySelector("#generateEventDate");
@@ -367,6 +371,8 @@ updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
 restoreBracketDraft();
+syncEventTypeControls();
+applyAccountBarName();
 if (requestedLodCode) {
   loadRemoteAdminSnapshot(requestedLodCode, true);
 } else if (getAssistantAdminSessionCode() && normalizeLodCode(lodCode) === getAssistantAdminSessionCode()) {
@@ -497,6 +503,11 @@ eventDateInput?.addEventListener("change", () => {
   updateEventDateStatus();
   queueBracketDraftSave();
 });
+eventTypeInput?.addEventListener("change", () => {
+  syncEventTypeControls();
+  queueBracketDraftSave();
+});
+customEventNameInput?.addEventListener("input", queueBracketDraftSave);
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -3742,6 +3753,35 @@ function getBarName() {
   return String(barNameInput?.value || "").trim();
 }
 
+function applyAccountBarName() {
+  const accountBarName = String(window.LOD_ACCOUNT_SESSION?.barName || "").trim();
+  if (accountBarName && barNameInput && !getBarName()) {
+    barNameInput.value = accountBarName;
+    queueBracketDraftSave();
+  }
+}
+
+function getEventType() {
+  return String(eventTypeInput?.value || "normal-lod");
+}
+
+function getEventName() {
+  const type = getEventType();
+  if (type === "appreciation") {
+    return "Appreciation Tournament";
+  }
+  if (type === "custom") {
+    return String(customEventNameInput?.value || "").trim() || "Custom Tournament";
+  }
+  return "Normal LOD";
+}
+
+function syncEventTypeControls() {
+  if (customEventNameWrap) {
+    customEventNameWrap.hidden = getEventType() !== "custom";
+  }
+}
+
 function shrinkTotalPlayersToEnteredNames() {
   const enteredNames = Array.from(nameList?.querySelectorAll("[data-player-number]") || [])
     .map((input) => input.value.trim())
@@ -4920,7 +4960,6 @@ function resetGraphMatchCascade(matchId) {
   const boardAssignments = new Map(
     state.matches.map((match) => [match.id, match.boardAssignment ?? null])
   );
-
   affectedIds.forEach((id) => {
     const match = state.matchesById[id];
     if (!match) {
@@ -4931,8 +4970,10 @@ function resetGraphMatchCascade(matchId) {
     match.loser = "";
     match.autoAdvanced = false;
 
-    match.players = ["", ""];
-    match.slotSources = ["", ""];
+    if (id !== matchId) {
+      match.players = ["", ""];
+      match.slotSources = ["", ""];
+    }
   });
 
   state.matches.forEach((match) => {
@@ -4940,24 +4981,6 @@ function resetGraphMatchCascade(matchId) {
       match.boardAssignment = boardAssignments.get(match.id);
     }
   });
-
-  if (affectedSet.has(state.final?.id) || affectedSet.has(state.resetFinal?.id) || affectedSet.has(state.doubleDipFinal?.id)) {
-    state.champion = "";
-    if (state.resetFinal) {
-      state.resetFinal.players = ["", ""];
-      state.resetFinal.slotSources = ["", ""];
-      state.resetFinal.winner = "";
-      state.resetFinal.loser = "";
-      state.resetFinal.autoAdvanced = false;
-    }
-    if (state.doubleDipFinal) {
-      state.doubleDipFinal.players = ["", ""];
-      state.doubleDipFinal.slotSources = ["", ""];
-      state.doubleDipFinal.winner = "";
-      state.doubleDipFinal.loser = "";
-      state.doubleDipFinal.autoAdvanced = false;
-    }
-  }
 
   settleGraphByesAndSources(state);
 }
@@ -5738,6 +5761,8 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
     barName: getBarName(),
+    eventType: getEventType(),
+    eventName: getEventName(),
     eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
     playerList: playerList?.value || "",
     nameMap: getPlayerNameMap(),
@@ -6027,6 +6052,13 @@ function restoreBracketDraft() {
     eventDateInput.value = normalizeDateInputValue(draft.eventDate);
     updateEventDateStatus();
   }
+  if (typeof draft.eventType === "string" && eventTypeInput) {
+    eventTypeInput.value = draft.eventType;
+  }
+  if (typeof draft.eventName === "string" && customEventNameInput) {
+    customEventNameInput.value = draft.eventName;
+  }
+  syncEventTypeControls();
 
   if (Array.isArray(draft.currentTeams) && draft.currentTeams.length) {
     currentTeams = draft.currentTeams;
@@ -6411,6 +6443,8 @@ function buildBracketDraft() {
     totalPlayers: Number(totalPlayers.value) || 0,
     playersPerGroup: Number(playersPerGroup.value) || 0,
     barName: getBarName(),
+    eventType: getEventType(),
+    eventName: getEventName(),
     eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
     playerList: playerList.value || "",
     nameMap: getPlayerNameMap(),
@@ -7283,6 +7317,14 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   if (snapshot.barName !== undefined && barNameInput) {
     barNameInput.value = String(snapshot.barName || "");
   }
+  applyAccountBarName();
+  if (snapshot.eventType !== undefined && eventTypeInput) {
+    eventTypeInput.value = String(snapshot.eventType || "normal-lod");
+    syncEventTypeControls();
+  }
+  if (snapshot.eventName !== undefined && customEventNameInput) {
+    customEventNameInput.value = String(snapshot.eventName || "");
+  }
   if (snapshot.eventDate !== undefined && eventDateInput) {
     eventDateInput.value = normalizeDateInputValue(snapshot.eventDate);
     updateEventDateStatus();
@@ -7858,6 +7900,15 @@ function deleteAllPlayerNameBackups() {
 
 document.querySelector("#resetBracket").addEventListener("click", resetTournament);
 openAttendanceSheetButton?.addEventListener("click", openAttendanceSheet);
+if (localExitButton) {
+  localExitButton.hidden = !isLocalHost();
+  localExitButton.addEventListener("click", () => {
+    // Preserve the current local tournament before leaving the admin page.
+    flushBracketDraftSave();
+    savePortalSnapshotToLocalStorage();
+    window.location.href = "index.html";
+  });
+}
 saveAttendanceRootPasswordButton?.addEventListener("click", saveAttendanceRootPasswordFromAdmin);
 clearAttendanceRootPasswordButton?.addEventListener("click", clearAttendanceRootPasswordFromAdmin);
 openAttendancePageButton?.addEventListener("click", openAttendanceSheet);

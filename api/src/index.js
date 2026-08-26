@@ -1,6 +1,8 @@
+import { sendResendEmail } from "./email.js";
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -16,6 +18,10 @@ export class BracketRoom {
 
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    if (pathname.startsWith("/api/auth/")) {
+      return handleAuthRequest(request, this.state.storage, this.env);
     }
 
     if (isNameBackupsRequest(pathname)) {
@@ -86,6 +92,35 @@ export default {
 
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    if (url.pathname.startsWith("/api/auth/")) {
+      const authStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__auth__"));
+      const targetUrl = new URL(request.url);
+      targetUrl.pathname = url.pathname;
+      return withCors(await authStub.fetch(new Request(targetUrl, request)));
+    }
+
+    if (url.pathname === "/api/test-email") {
+      if (method !== "POST") {
+        return withCors(jsonResponse({ error: "Method not allowed" }, 405));
+      }
+
+      const testToken = String(env.EMAIL_TEST_TOKEN || "").trim();
+      if (!testToken || request.headers.get("x-email-test-token") !== testToken) {
+        return withCors(jsonResponse({ error: "Unauthorized" }, 401));
+      }
+
+      try {
+        const result = await sendResendEmail(env, {
+          to: "dartwaldo513@gmail.com",
+          subject: "LOD Bracket email test",
+          html: "<p>Congrats on sending your <strong>first LOD Bracket email</strong>!</p>",
+        });
+        return withCors(jsonResponse({ ok: true, id: result?.id || "" }));
+      } catch (error) {
+        return withCors(jsonResponse({ error: error.message || "Email send failed" }, 502));
+      }
     }
 
     if (isRegistryRequest(url.pathname)) {
@@ -165,6 +200,168 @@ export default {
     return withCors(response);
   },
 };
+
+async function handleAuthRequest(request, storage, env) {
+  const url = new URL(request.url);
+  const method = request.method.toUpperCase();
+
+  if (url.pathname === "/api/auth/register" && method === "POST") {
+    const input = await request.json().catch(() => null);
+    const username = normalizeUsername(input?.username);
+    const barName = String(input?.barName || "").trim().slice(0, 120);
+    const email = String(input?.email || "").trim().toLowerCase();
+    const password = String(input?.password || "");
+
+    if (!username || !barName || !isEmail(email) || password.length < 8) {
+      return jsonResponse({ error: "Enter a bar name, valid email, username, and password of at least 8 characters." }, 400);
+    }
+
+    const accountKey = `account:${username}`;
+    if (await storage.get(accountKey)) {
+      return jsonResponse({ error: "That username is already in use." }, 409);
+    }
+
+    const passwordRecord = await hashPassword(password);
+    const verificationToken = randomToken();
+    const account = {
+      version: 1,
+      username,
+      barName,
+      email,
+      passwordHash: passwordRecord.hash,
+      passwordSalt: passwordRecord.salt,
+      verified: false,
+      verificationToken,
+      createdAt: new Date().toISOString(),
+    };
+
+    await storage.put(accountKey, account);
+    await storage.put(`verify:${verificationToken}`, username, { expirationTtl: 86400 });
+
+    const appBaseUrl = String(env?.APP_BASE_URL || "https://lod-bracket.pages.dev").replace(/\/$/, "");
+    const verificationUrl = `${url.origin}/api/auth/verify?token=${encodeURIComponent(verificationToken)}`;
+
+    try {
+      await sendResendEmail(env, {
+        to: email,
+        subject: "Verify your LOD Bracket account",
+        html: `<p>Thanks for creating an account for <strong>${escapeHtmlForEmail(barName)}</strong>.</p><p><a href="${verificationUrl}">Confirm your account</a></p><p>This link expires in 24 hours.</p>`,
+      });
+    } catch (error) {
+      await storage.delete(accountKey);
+      await storage.delete(`verify:${verificationToken}`);
+      return jsonResponse({ error: error.message || "Could not send the verification email." }, 502);
+    }
+
+    return jsonResponse({ ok: true, verified: false, email });
+  }
+
+  if (url.pathname === "/api/auth/verify" && (method === "GET" || method === "POST")) {
+    const token = String(url.searchParams.get("token") || (await request.json().catch(() => null))?.token || "").trim();
+    const username = await storage.get(`verify:${token}`);
+    const appBaseUrl = String(env?.APP_BASE_URL || "https://lod-bracket.pages.dev").replace(/\/$/, "");
+    if (!token || !username) {
+      return method === "GET"
+        ? Response.redirect(`${appBaseUrl}/login.html?verified=0`, 302)
+        : jsonResponse({ error: "This verification link is invalid or expired." }, 400);
+    }
+
+    const accountKey = `account:${username}`;
+    const account = await storage.get(accountKey);
+    if (!account) {
+      return jsonResponse({ error: "Account not found." }, 404);
+    }
+
+    account.verified = true;
+    account.verificationToken = "";
+    await storage.put(accountKey, account);
+    await storage.delete(`verify:${token}`);
+
+    return method === "GET"
+      ? Response.redirect(`${appBaseUrl}/login.html?verified=1`, 302)
+      : jsonResponse({ ok: true, verified: true });
+  }
+
+  if (url.pathname === "/api/auth/login" && method === "POST") {
+    const input = await request.json().catch(() => null);
+    const username = normalizeUsername(input?.username);
+    const password = String(input?.password || "");
+    const account = await storage.get(`account:${username}`);
+
+    if (!account || !(await verifyPassword(password, account))) {
+      return jsonResponse({ error: "That username or password is not recognized." }, 401);
+    }
+    if (!account.verified) {
+      return jsonResponse({ error: "Verify your email before signing in.", verificationRequired: true, email: account.email }, 403);
+    }
+
+    const sessionToken = randomToken();
+    await storage.put(`session:${sessionToken}`, {
+      username: account.username,
+      barName: account.barName,
+      verified: true,
+    }, { expirationTtl: 604800 });
+
+    return jsonResponse({ ok: true, sessionToken, username: account.username, barName: account.barName, verified: true });
+  }
+
+  if (url.pathname === "/api/auth/session" && method === "GET") {
+    const token = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    const session = token ? await storage.get(`session:${token}`) : null;
+    return session ? jsonResponse({ ok: true, ...session }) : jsonResponse({ error: "Not signed in" }, 401);
+  }
+
+  return jsonResponse({ error: "Not found" }, 404);
+}
+
+function normalizeUsername(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 48);
+}
+
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function randomToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(password, salt = randomToken()) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: 120000, hash: "SHA-256" }, key, 256);
+  return { salt, hash: bytesToHex(new Uint8Array(bits)) };
+}
+
+async function verifyPassword(password, account) {
+  const result = await hashPassword(password, account.passwordSalt);
+  return timingSafeEqual(result.hash, account.passwordHash);
+}
+
+function timingSafeEqual(left, right) {
+  const a = new TextEncoder().encode(String(left || ""));
+  const b = new TextEncoder().encode(String(right || ""));
+  const length = Math.max(a.length, b.length);
+  let difference = a.length ^ b.length;
+  for (let index = 0; index < length; index += 1) {
+    difference |= (a[index] || 0) ^ (b[index] || 0);
+  }
+  return difference === 0;
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function escapeHtmlForEmail(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 function isRegistryRequest(pathname) {
   return pathname === "/api/lod" || pathname === "/api/lod/" || pathname === "/api/lod/index";

@@ -3,37 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LOD Bracket Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-46">
+  <title>LOD Bracket</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=4">
 </head>
 <body>
-  <main class="app">
-    <section class="landing-panel" aria-labelledby="landingTitle">
-      <div class="landing-copy">
-        <p class="eyebrow">Darts tournament portal</p>
-        <h1 id="landingTitle">Player Access</h1>
-        <p class="landing-note">Scan the QR code to open the view-only bracket portal for this LOD.</p>
-        <p class="landing-note"><a href="scoresheet.html">Open the tablet scoresheet</a> for league night scoring.</p>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="landingTitle">
+      <p class="eyebrow">Darts tournament portal</p>
+      <h1 id="landingTitle">LOD Bracket</h1>
+      <p class="login-intro">Create an account or sign in to manage your bracket and attendance tools.</p>
+      <div class="login-form landing-actions">
+        <a class="button-link" href="login.html">Sign in</a>
+        <a class="button-link secondary" href="create-account.html">Create an account</a>
       </div>
-
-      <img id="landingQrCode" class="landing-qr" alt="QR code for the player portal" src="" width="240" height="240">
+      <p class="login-note">Players can open their view-only bracket from the LOD QR code.</p>
+      <p class="login-note"><a href="scoresheet.html">Open the tablet scoresheet</a></p>
     </section>
   </main>
-
-  <script src="config.js?v=3"></script>
-  <script src="qr.js?v=4"></script>
-  <script>
-    (function () {
-      const code = new URLSearchParams(window.location.search).get("lod") || "";
-      const portalUrl = new URL("portal.html", window.location.href);
-
-      if (code) {
-        portalUrl.searchParams.set("lod", code);
-      }
-
-      const qr = document.getElementById("landingQrCode");
-      qr.src = createPortalQrDataUrl(portalUrl.toString(), 500);
-    }());
-  </script>
 </body>
 </html>

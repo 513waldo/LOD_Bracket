@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your account</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=2">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="verifyTitle">
+      <p class="eyebrow">LOD Bracket</p>
+      <h1 id="verifyTitle">Verify your account</h1>
+      <p id="verifyMessage" class="login-intro">Your account was created, but the bracket is still locked.</p>
+      <p class="verification-callout">Check your email for a confirmation link. Open that link before signing in.</p>
+      <p class="login-note">For security, the bracket and attendance sheet will remain unavailable until verification is complete.</p>
+      <a class="button-link" href="login.html">Return to sign in</a>
+    </section>
+  </main>
+  <script>
+    const username = new URLSearchParams(window.location.search).get("username");
+    const message = document.querySelector("#verifyMessage");
+    if (username) {
+      const email = new URLSearchParams(window.location.search).get("email");
+      message.textContent = email
+        ? `A confirmation message was sent to ${email}.`
+        : `Check the email address used for ${username}.`;
+    }
+  </script>
+</body>
+</html>

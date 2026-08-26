@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOD Bracket Login</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=4">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="loginTitle">
+      <p class="eyebrow">LOD Bracket</p>
+      <h1 id="loginTitle">Bar login</h1>
+      <p class="login-intro">Sign in to open your bracket and attendance tools.</p>
+
+      <form id="signInForm" class="login-form">
+        <label>
+          Username
+          <input id="signInUsername" type="text" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input id="signInPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Sign in</button>
+        <a class="text-button" href="create-account.html">Need an account? Create one</a>
+      </form>
+
+      <p id="loginMessage" class="login-message" aria-live="polite"></p>
+      <p class="login-note">Local development account setup. Production accounts will be stored securely on the shared backend.</p>
+    </section>
+  </main>
+  <script src="config.js?v=5"></script>
+  <script src="login.js?v=4"></script>
+</body>
+</html>

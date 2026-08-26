@@ -1,0 +1,96 @@
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(100%, 460px);
+  padding: clamp(24px, 5vw, 44px);
+}
+
+.login-intro,
+.login-note {
+  color: var(--muted, #6b7280);
+}
+
+.text-button {
+  background: transparent;
+  color: var(--muted, #6b7280);
+  border: 0;
+  box-shadow: none;
+  padding: 2px 0;
+  justify-self: center;
+  text-decoration: underline;
+}
+
+.text-button:hover,
+.text-button:focus-visible {
+  color: inherit;
+  background: transparent;
+}
+
+.back-button {
+  justify-self: start;
+  text-decoration: none;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.landing-actions {
+  margin-top: 24px;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  padding: 0 16px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.button-link.secondary {
+  border: 1px solid var(--line);
+  background: var(--blue-surface-strong);
+  color: var(--primary-dark);
+}
+
+.login-form label {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.login-form input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-message {
+  min-height: 1.4em;
+  margin: 16px 0 0;
+  font-weight: 700;
+}
+
+.login-message.error {
+  color: #b42318;
+}
+
+.login-message.success {
+  color: #18794e;
+}
+
+.login-note {
+  margin: 24px 0 0;
+  font-size: .85rem;
+}

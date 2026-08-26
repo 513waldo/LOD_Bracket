@@ -21,6 +21,7 @@ const teamCountText = document.querySelector("#teamCountText");
 const bracketSubtitle = document.querySelector("#bracketSubtitle");
 const snapshotFile = document.querySelector("#snapshotFile");
 const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
+const sharedLodCodeStorageKey = "dartsTournamentLodCode";
 const portalLodCodeClearedValue = "__CLEARED__";
 const portalSessionExpiryStorageKey = "dartsTournamentPortalExpiry";
 const portalSessionDurationMs = 60 * 60 * 1000;
@@ -1183,7 +1184,7 @@ function getStoredPortalLodCode() {
   }
 
   try {
-    const raw = localStorage.getItem(portalLodCodeStorageKey);
+    const raw = localStorage.getItem(portalLodCodeStorageKey) ?? localStorage.getItem(sharedLodCodeStorageKey);
     if (raw === null) {
       return null;
     }
@@ -1209,6 +1210,33 @@ function saveStoredPortalLodCode(code) {
     // Ignore storage failures.
   }
 }
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== portalLodCodeStorageKey && event.key !== sharedLodCodeStorageKey) {
+    return;
+  }
+
+  const nextCode = getStoredPortalLodCode();
+  if (nextCode === null) {
+    return;
+  }
+
+  if (!nextCode) {
+    clearPortalCode();
+    return;
+  }
+
+  if (nextCode === activeLodCode) {
+    return;
+  }
+
+  activeLodCode = nextCode;
+  saveStoredPortalLodCode(nextCode);
+  clearPortalExpiry(nextCode);
+  updateUrlForCode(nextCode);
+  beginPortalLoad(nextCode);
+  void loadPublishedSnapshot(nextCode, false);
+});
 
 function updateUrlForCode(code) {
   const normalized = normalizeLodCode(code);

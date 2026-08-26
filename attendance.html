@@ -4,32 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Sheet</title>
-  <link rel="stylesheet" href="attendance.css?v=41">
+  <link rel="stylesheet" href="attendance.css?v=43">
 </head>
 <body>
-  <div id="attendanceGate" class="attendance-gate">
-    <section class="gate-card" aria-labelledby="gateTitle">
-      <p class="eyebrow">Director access</p>
-      <h1 id="gateTitle">Locked attendance sheet</h1>
-      <p id="gateMessage" class="gate-message">Enter the root password or the bar username and password to unlock the attendance sheet.</p>
-      <div class="field-grid gate-fields">
-        <label>
-          Bar username
-          <input id="attendanceUsernameInput" type="text" autocomplete="username" placeholder="Optional for root login">
-        </label>
-        <label>
-          Password
-          <input id="attendancePasswordInput" type="password" autocomplete="current-password" placeholder="Password">
-        </label>
-      </div>
-      <div class="action-row">
-        <button id="unlockAttendanceButton" type="button">Unlock sheet</button>
-        <a class="button-link secondary-link" href="bracket.html">Back to director portal</a>
-      </div>
-    </section>
+  <div id="attendanceGate" class="attendance-gate" hidden>
+    <div class="gate-grid">
+      <section class="gate-card gate-card-root" aria-labelledby="rootGateTitle">
+        <p class="eyebrow">Root access</p>
+        <h1 id="rootGateTitle">Director portal</h1>
+        <p id="rootGateMessage" class="gate-message">Use the root password to drill into every bar portal and switch between attendance lists.</p>
+        <div class="field-grid gate-fields">
+          <label>
+            Root password
+            <input id="rootPasswordInput" type="password" autocomplete="current-password" placeholder="Root password">
+          </label>
+        </div>
+        <div class="action-row">
+          <button id="unlockRootButton" type="button">Unlock as root</button>
+          <a class="button-link secondary-link" href="bracket.html">Back to director portal</a>
+        </div>
+      </section>
+
+      <section class="gate-card gate-card-bar" aria-labelledby="barGateTitle">
+        <p class="eyebrow">Bar access</p>
+        <h1 id="barGateTitle">Your attendance sheet</h1>
+        <p id="gateMessage" class="gate-message">Enter the bar username and password to open that bar's attendance sheet.</p>
+        <div class="field-grid gate-fields">
+          <label>
+            Bar username
+            <input id="attendanceUsernameInput" type="text" autocomplete="username" placeholder="Bar username">
+          </label>
+          <label>
+            Password
+            <input id="attendancePasswordInput" type="password" autocomplete="current-password" placeholder="Bar password">
+          </label>
+        </div>
+        <div class="action-row">
+          <button id="unlockBarButton" type="button">Open sheet</button>
+        </div>
+      </section>
+    </div>
   </div>
 
-  <main id="attendanceApp" class="sheet-shell" hidden>
+  <main id="attendanceApp" class="sheet-shell">
     <section class="hero" aria-labelledby="attendanceTitle">
       <div class="hero-copy">
         <p class="eyebrow"><a href="bracket.html">Director Portal</a> / Attendance Sheet</p>
@@ -41,6 +58,7 @@
         <div class="hero-actions">
           <a class="button-link" href="#sheet">Open sheet</a>
           <a class="button-link secondary-link" href="#share">Facebook post</a>
+          <a class="button-link secondary-link portal-link-pill" href="bracket.html">Return to the director portal</a>
         </div>
       </div>
     </section>
@@ -69,7 +87,6 @@
           </div>
           <div class="eligibility-actions">
             <p>Configure the current appreciation tournament.</p>
-            <a class="button-link secondary-link portal-link-pill" href="bracket.html">Return to the director portal</a>
           </div>
         </div>
 
@@ -77,17 +94,17 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Root only</p>
-              <h3 id="attendanceSheetsTitle">Attendance lists</h3>
+              <h3 id="attendanceSheetsTitle">Bar portals</h3>
             </div>
-            <p>Switch between separate bar accounts and create a fresh list when needed.</p>
+            <p>Switch between separate bar accounts and drill into each venue's attendance list.</p>
           </div>
           <div class="field-grid sheet-manager-grid">
             <label>
-              Current list
+              Current portal
               <select id="attendanceSheetSelect"></select>
             </label>
             <div class="sheet-manager-actions">
-              <button id="createAttendanceSheetButton" type="button" class="secondary">New list</button>
+              <button id="createAttendanceSheetButton" type="button" class="secondary">New portal</button>
             </div>
           </div>
           <div id="attendanceSheetLinks" class="sheet-link-list"></div>
@@ -99,8 +116,20 @@
             <input id="venueName" type="text" placeholder="Bullseye Taproom">
           </label>
           <label>
+            Description
+            <input id="description" type="text" placeholder="Saturday LOD / Monthly Sunday LOD">
+          </label>
+          <label>
+            Event type
+            <select id="eventType">
+              <option value="normal-lod">Normal LOD</option>
+              <option value="appreciation">Appreciation Tournament</option>
+              <option value="custom">Specific tournament</option>
+            </select>
+          </label>
+          <label id="customEventNameWrap" hidden>
             Tournament name
-            <input id="eventName" type="text" placeholder="Appreciation Tournament">
+            <input id="eventName" type="text" placeholder="Tournament name">
           </label>
           <label>
             Total weeks
@@ -141,6 +170,10 @@
           </div>
 
           <div class="field-grid">
+            <label>
+              Bar name *
+              <input id="venueAccessBarName" type="text" autocomplete="off" placeholder="Set the bar name" required>
+            </label>
             <label>
               Bar username
               <input id="venueAccessUsername" type="text" autocomplete="off" placeholder="Set a username for this bar">
@@ -259,7 +292,8 @@
   </main>
 
   <script src="attendance-auth.js?v=2"></script>
-  <script src="attendance-workbook-seed.js?v=3"></script>
-  <script src="attendance.js?v=63"></script>
+  <script src="account-gate.js?v=1"></script>
+  <script src="attendance-workbook-seed.js?v=6"></script>
+  <script src="attendance.js?v=84"></script>
 </body>
 </html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create LOD Bracket Account</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=4">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="createAccountTitle">
+      <p class="eyebrow">LOD Bracket</p>
+      <h1 id="createAccountTitle">Create your account</h1>
+      <p class="login-intro">Create an account for your bar. You’ll verify it by email before using the bracket.</p>
+
+      <form id="createAccountForm" class="login-form">
+        <label>
+          Bar name
+          <input id="createBarName" type="text" autocomplete="organization" required>
+        </label>
+        <label>
+          Email address
+          <input id="createEmail" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          Your username
+          <input id="createUsername" type="text" autocomplete="username" minlength="3" required>
+        </label>
+        <label>
+          Password
+          <input id="createPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+          Confirm password
+          <input id="createPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button type="submit">Create bar account</button>
+        <a class="text-button" href="login.html">Already have an account? Sign in</a>
+      </form>
+
+      <p id="loginMessage" class="login-message" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="config.js?v=5"></script>
+  <script src="create-account.js?v=2"></script>
+</body>
+</html>
