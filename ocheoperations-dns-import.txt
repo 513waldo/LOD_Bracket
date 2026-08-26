@@ -1,0 +1,2 @@
+ocheoperations.com. 300 IN CNAME lod-bracket.pages.dev.
+www.ocheoperations.com. 300 IN CNAME lod-bracket.pages.dev.
