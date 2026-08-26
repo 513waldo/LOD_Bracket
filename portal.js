@@ -12,6 +12,7 @@ const lodRegistryList = document.querySelector("#lodRegistryList");
 const lodRegistryStatus = document.querySelector("#lodRegistryStatus");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
+const portalQrCode = document.querySelector("#portalQrCode");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
@@ -254,6 +255,7 @@ function clearPortalCode() {
   saveStoredPortalLodCode("");
   updateUrlForCode("");
   syncPortalCodeInput();
+  renderPortalQrCode();
   renderEmptyPortal();
   setMessage("LOD code cleared.");
 }
@@ -384,6 +386,7 @@ function renderSnapshot(snapshot, sourceLabel) {
   const state = snapshot.state || null;
   publishedAt.textContent = snapshot.exportedAt ? formatDate(snapshot.exportedAt) : sourceLabel;
   lodCodeText.textContent = activeLodCode || "Not set";
+  renderPortalQrCode();
   championText.textContent = state?.champion || "Pending";
   teamCountText.textContent = getTeamCount(state);
   bracketSubtitle.textContent = `${sourceLabel} loaded`;
@@ -410,6 +413,7 @@ function renderEmptyPortal() {
   portalBracket.textContent = "No bracket snapshot available.";
   publishedAt.textContent = "No snapshot loaded";
   lodCodeText.textContent = "Not set";
+  renderPortalQrCode();
   championText.textContent = "Pending";
   teamCountText.textContent = "-";
   bracketSubtitle.textContent = "Waiting for a published snapshot.";
@@ -1253,6 +1257,25 @@ function updateUrlForCode(code) {
   } catch {
     // Ignore URL update failures.
   }
+
+  renderPortalQrCode();
+}
+
+function renderPortalQrCode() {
+  if (!portalQrCode) {
+    return;
+  }
+
+  const link = new URL("portal.html", window.location.href);
+  const normalizedCode = normalizeLodCode(activeLodCode);
+
+  if (normalizedCode) {
+    link.searchParams.set("lod", normalizedCode);
+  } else {
+    link.searchParams.delete("lod");
+  }
+
+  portalQrCode.src = createPortalQrDataUrl(link.toString(), 500);
 }
 
 function readStoredSnapshot(code) {

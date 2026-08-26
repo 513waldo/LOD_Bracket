@@ -1636,8 +1636,8 @@
           "slot": 1
         },
         "loserTo": {
-          "game": 8,
-          "slot": 1,
+          "game": 7,
+          "slot": 0,
           "ifFirstLoss": false
         }
       },
@@ -1698,7 +1698,7 @@
         },
         "loserTo": {
           "game": 7,
-          "slot": 0,
+          "slot": 1,
           "ifFirstLoss": false
         }
       },
@@ -1718,7 +1718,7 @@
           "slot": 0
         },
         "loserTo": {
-          "game": 7,
+          "game": 8,
           "slot": 1,
           "ifFirstLoss": false
         }
@@ -1728,12 +1728,12 @@
         "inputs": [
           {
             "kind": "loser",
-            "game": 5,
+            "game": 2,
             "ifFirstLoss": false
           },
           {
             "kind": "loser",
-            "game": 6,
+            "game": 5,
             "ifFirstLoss": false
           }
         ],
@@ -1753,7 +1753,7 @@
           },
           {
             "kind": "loser",
-            "game": 2,
+            "game": 6,
             "ifFirstLoss": false
           }
         ],
