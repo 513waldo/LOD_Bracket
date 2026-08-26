@@ -20,15 +20,6 @@ export class BracketRoom {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    if (pathname === "/api/admin/storage-inventory" && isDataMaintenanceAuthorized(request, this.env)) {
-      return jsonResponse(await listOwnStorageRecords(this.state.storage));
-    }
-
-    if (pathname === "/api/admin/storage-reset" && isDataMaintenanceAuthorized(request, this.env)) {
-      const input = await request.json().catch(() => null);
-      return jsonResponse({ deleted: await deleteOwnStorageRecords(this.state.storage, input?.records) });
-    }
-
     if (pathname.startsWith("/api/auth/")) {
       return handleAuthRequest(request, this.state.storage, this.env);
     }
@@ -108,10 +99,6 @@ export default {
       const targetUrl = new URL(request.url);
       targetUrl.pathname = url.pathname;
       return withCors(await authStub.fetch(new Request(targetUrl, request)));
-    }
-
-    if (url.pathname === "/api/admin/data-inventory" || url.pathname === "/api/admin/data-reset") {
-      return withCors(await handleDataMaintenanceRequest(request, env));
     }
 
     if (url.pathname === "/api/test-email") {
@@ -325,140 +312,6 @@ async function handleAuthRequest(request, storage, env) {
   }
 
   return jsonResponse({ error: "Not found" }, 404);
-}
-
-async function handleDataMaintenanceRequest(request, env) {
-  if (!isDataMaintenanceAuthorized(request, env)) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
-  }
-
-  const authStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__auth__"));
-  const registryStub = getRegistryStub(env);
-  const nameBackupsStub = getNameBackupsStub(env);
-  const maintenanceToken = String(request.headers.get("x-data-reset-token") || "").trim();
-  const authInventory = await listStorageRecords(authStub, maintenanceToken);
-  const registry = await readRegistry(env);
-  const registryInventory = await listStorageRecords(registryStub, maintenanceToken);
-  const nameBackupsInventory = await listStorageRecords(nameBackupsStub, maintenanceToken);
-  const lodCodes = Array.isArray(registry.codes) ? registry.codes : [];
-  const lodRecords = [];
-
-  for (const code of lodCodes) {
-    const stub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName(code));
-    const inventory = await listStorageRecords(stub, maintenanceToken);
-    lodRecords.push({ code, ...inventory });
-  }
-
-  const inventory = {
-    auth: authInventory,
-    registry: {
-      durableObject: "__registry__",
-      records: registryInventory.records,
-      activeLodCodes: lodCodes,
-    },
-    nameBackups: {
-      durableObject: "__global_name_backups__",
-      records: nameBackupsInventory.records,
-    },
-    lodRecords,
-    resetScope: [
-      "__auth__: account:<username>, verify:<token>, session:<token>",
-      "__registry__: snapshot",
-      "__global_name_backups__: nameBackups",
-      "<each active LOD code Durable Object>: snapshot",
-    ],
-  };
-
-  if (request.method.toUpperCase() === "GET") {
-    return jsonResponse(inventory);
-  }
-
-  if (request.method.toUpperCase() !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
-  }
-
-  const input = await request.json().catch(() => null);
-  if (input?.confirmation !== "RESET_PRODUCTION_DATA") {
-    return jsonResponse({ error: "Confirmation required." }, 400);
-  }
-
-  const deleted = {
-    auth: await deleteStorageRecords(authStub, maintenanceToken, ["account:", "verify:", "session:"]),
-    registry: await deleteStorageRecords(registryStub, maintenanceToken, ["snapshot"]),
-    nameBackups: await deleteStorageRecords(nameBackupsStub, maintenanceToken, ["nameBackups"]),
-    lod: [],
-  };
-
-  for (const code of lodCodes) {
-    const stub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName(code));
-    deleted.lod.push({ code, deleted: await deleteStorageRecords(stub, maintenanceToken, ["snapshot"]) });
-  }
-
-  return jsonResponse({ ok: true, deleted });
-}
-
-function isDataMaintenanceAuthorized(request, env) {
-  const configuredToken = String(env?.DATA_RESET_TOKEN || "").trim();
-  const suppliedToken = String(request.headers.get("x-data-reset-token") || "").trim();
-  return Boolean(configuredToken && suppliedToken && timingSafeEqual(configuredToken, suppliedToken));
-}
-
-async function listStorageRecords(stub, token) {
-  const response = await stub.fetch(new Request("https://maintenance/api/admin/storage-inventory", {
-    method: "GET",
-    headers: { "x-data-reset-token": token },
-  }));
-  return response.ok
-    ? response.json()
-    : { records: [], recordCount: 0 };
-}
-
-async function deleteStorageRecords(stub, token, prefixes) {
-  const response = await stub.fetch(new Request("https://maintenance/api/admin/storage-reset", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-data-reset-token": token },
-    body: JSON.stringify({ records: prefixes }),
-  }));
-  const result = await response.json().catch(() => ({}));
-  return Number(result.deleted || 0);
-}
-
-async function listOwnStorageRecords(storage) {
-  const entries = await storage.list();
-  const records = [];
-  for (const [key, value] of entries) {
-    const descriptor = { key };
-    if (key === "account:" || key.startsWith("account:")) {
-      descriptor.type = "account";
-      descriptor.username = key.slice("account:".length);
-    } else if (key.startsWith("verify:")) {
-      descriptor.key = "verify:<redacted>";
-      descriptor.type = "verificationToken";
-    } else if (key.startsWith("session:")) {
-      descriptor.key = "session:<redacted>";
-      descriptor.type = "session";
-    } else if (key === "nameBackups") {
-      descriptor.type = "rosterBackups";
-      descriptor.count = Array.isArray(value?.backups) ? value.backups.length : 0;
-    } else if (key === "snapshot") {
-      descriptor.type = "snapshot";
-      descriptor.hasData = Boolean(value);
-    } else {
-      descriptor.type = "other";
-    }
-    records.push(descriptor);
-  }
-  return { records, recordCount: records.length };
-}
-
-async function deleteOwnStorageRecords(storage, prefixes = []) {
-  const allowedPrefixes = Array.isArray(prefixes) ? prefixes.map(String) : [];
-  const keys = Array.from((await storage.list()).keys()).filter((key) =>
-    allowedPrefixes.some((prefix) => key === prefix || key.startsWith(prefix)));
-  if (keys.length) {
-    await storage.delete(keys);
-  }
-  return keys.length;
 }
 
 function normalizeUsername(value) {
