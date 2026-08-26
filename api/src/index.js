@@ -307,6 +307,73 @@ async function handleAuthRequest(request, storage, env) {
     return jsonResponse({ ok: true, sessionToken, username: account.username, barName: account.barName, verified: true });
   }
 
+  if (url.pathname === "/api/auth/forgot-username" && method === "POST") {
+    const input = await request.json().catch(() => null);
+    const email = String(input?.email || "").trim().toLowerCase();
+    const accounts = isEmail(email) ? await findAccountsByEmail(storage, email) : [];
+
+    if (accounts.length) {
+      await sendResendEmail(env, {
+        to: email,
+        subject: "Your Oche Operations username",
+        html: `<p>We found ${accounts.length === 1 ? "your username" : "your usernames"} for Oche Operations:</p><p><strong>${accounts.map((account) => escapeHtmlForEmail(account.username)).join("<br>")}</strong></p>`,
+      });
+    }
+
+    return jsonResponse({ ok: true, message: "If an account matches that email, we sent the username reminder." });
+  }
+
+  if (url.pathname === "/api/auth/forgot-password" && method === "POST") {
+    const input = await request.json().catch(() => null);
+    const email = String(input?.email || "").trim().toLowerCase();
+    const username = normalizeUsername(input?.username);
+    const account = isEmail(email) ? await storage.get(`account:${username}`) : null;
+
+    if (account && account.email === email) {
+      const resetToken = randomToken();
+      await storage.put(`reset:${resetToken}`, username, { expirationTtl: 3600 });
+      const appBaseUrl = String(env?.APP_BASE_URL || "https://lod-bracket.pages.dev").replace(/\/$/, "");
+      await sendResendEmail(env, {
+        to: email,
+        subject: "Reset your Oche Operations password",
+        html: `<p>We received a request to reset the password for <strong>${escapeHtmlForEmail(account.username)}</strong>.</p><p><a href="${appBaseUrl}/reset-password.html?token=${encodeURIComponent(resetToken)}">Reset your password</a></p><p>This link expires in one hour. If you did not request this, you can ignore this email.</p>`,
+      });
+    }
+
+    return jsonResponse({ ok: true, message: "If the account details match, we sent a password-reset link." });
+  }
+
+  if (url.pathname === "/api/auth/reset-password" && method === "POST") {
+    const input = await request.json().catch(() => null);
+    const token = String(input?.token || "").trim();
+    const password = String(input?.password || "");
+    if (!token || password.length < 8) {
+      return jsonResponse({ error: "Enter a valid reset link and a password of at least 8 characters." }, 400);
+    }
+
+    const username = await storage.get(`reset:${token}`);
+    const account = username ? await storage.get(`account:${username}`) : null;
+    if (!account) {
+      return jsonResponse({ error: "This password-reset link is invalid or expired." }, 400);
+    }
+
+    const passwordRecord = await hashPassword(password);
+    account.passwordHash = passwordRecord.hash;
+    account.passwordSalt = passwordRecord.salt;
+    await storage.put(`account:${username}`, account);
+    await storage.delete(`reset:${token}`);
+
+    const sessions = await storage.list({ prefix: "session:" });
+    const sessionsToDelete = Array.from(sessions.entries())
+      .filter(([, session]) => session?.username === username)
+      .map(([key]) => key);
+    if (sessionsToDelete.length) {
+      await storage.delete(sessionsToDelete);
+    }
+
+    return jsonResponse({ ok: true, username });
+  }
+
   if (url.pathname === "/api/auth/session" && method === "GET") {
     const token = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
     const session = token ? await storage.get(`session:${token}`) : null;
@@ -314,6 +381,11 @@ async function handleAuthRequest(request, storage, env) {
   }
 
   return jsonResponse({ error: "Not found" }, 404);
+}
+
+async function findAccountsByEmail(storage, email) {
+  const entries = await storage.list({ prefix: "account:" });
+  return Array.from(entries.values()).filter((account) => account?.email === email);
 }
 
 function normalizeUsername(value) {

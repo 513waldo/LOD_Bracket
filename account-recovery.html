@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recover your account</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=4">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="recoveryTitle">
+      <p class="eyebrow">LOD Bracket</p>
+      <h1 id="recoveryTitle">Recover your account</h1>
+      <p class="login-intro">Use the email address on your account.</p>
+
+      <form id="usernameRecoveryForm" class="login-form">
+        <h2>Forgot username?</h2>
+        <label>
+          Email address
+          <input id="recoveryEmail" type="email" autocomplete="email" required>
+        </label>
+        <button type="submit">Email my username</button>
+      </form>
+
+      <form id="passwordRecoveryForm" class="login-form">
+        <h2>Forgot password?</h2>
+        <label>
+          Username
+          <input id="recoveryUsername" type="text" autocomplete="username" required>
+        </label>
+        <label>
+          Email address
+          <input id="passwordRecoveryEmail" type="email" autocomplete="email" required>
+        </label>
+        <button type="submit">Send password reset</button>
+      </form>
+
+      <p id="recoveryMessage" class="login-message" aria-live="polite"></p>
+      <a class="button-link" href="login.html">Return to sign in</a>
+    </section>
+  </main>
+  <script src="config.js?v=5"></script>
+  <script src="account-recovery.js?v=1"></script>
+</body>
+</html>
