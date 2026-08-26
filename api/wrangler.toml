@@ -4,9 +4,9 @@ compatibility_date = "2026-05-14"
 
 [vars]
 APP_BASE_URL = "https://ocheoperations.com"
+RESEND_FROM = "Oche Operations <noreply@ocheoperations.com>"
 
 # Set these with `wrangler secret put`; do not commit API keys here.
-# RESEND_FROM may remain onboarding@resend.dev for initial testing.
 
 [[durable_objects.bindings]]
 name = "BRACKET_ROOMS"
