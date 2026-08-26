@@ -129,7 +129,9 @@ export default {
         const response = await registryStub.fetch(
           new Request("https://registry/api/lod/index", { method: "GET" }),
         );
-        return withCors(response);
+        return response.status === 404
+          ? withCors(jsonResponse({ version: 1, updatedAt: "", codes: [] }))
+          : withCors(response);
       }
 
       if (method === "DELETE") {
