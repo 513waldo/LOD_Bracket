@@ -20,6 +20,14 @@ export class BracketRoom {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
+    if (pathname === "/api/admin/storage-inventory" && authorizedMaintenance(request, this.env)) {
+      return jsonResponse(await maintenanceInventory(this.state.storage));
+    }
+    if (pathname === "/api/admin/storage-reset" && authorizedMaintenance(request, this.env)) {
+      const input = await request.json().catch(() => null);
+      return jsonResponse({ deleted: await maintenanceDelete(this.state.storage, input?.prefixes) });
+    }
+
     if (pathname.startsWith("/api/auth/")) {
       return handleAuthRequest(request, this.state.storage, this.env);
     }
@@ -99,6 +107,10 @@ export default {
       const targetUrl = new URL(request.url);
       targetUrl.pathname = url.pathname;
       return withCors(await authStub.fetch(new Request(targetUrl, request)));
+    }
+
+    if (url.pathname === "/api/admin/data-inventory" || url.pathname === "/api/admin/data-reset") {
+      return withCors(await handleMaintenance(request, env));
     }
 
     if (url.pathname === "/api/test-email") {
@@ -386,6 +398,59 @@ async function handleAuthRequest(request, storage, env) {
 async function findAccountsByEmail(storage, email) {
   const entries = await storage.list({ prefix: "account:" });
   return Array.from(entries.values()).filter((account) => account?.email === email);
+}
+
+function authorizedMaintenance(request, env) {
+  const expected = String(env?.DATA_RESET_TOKEN || "").trim();
+  const supplied = String(request.headers.get("x-data-reset-token") || "").trim();
+  return Boolean(expected && supplied && timingSafeEqual(expected, supplied));
+}
+
+async function maintenanceInventory(storage) {
+  const records = [];
+  for (const [key, value] of await storage.list()) {
+    if (key.startsWith("account:")) records.push({ key, type: "account", username: key.slice(8) });
+    else if (key.startsWith("verify:")) records.push({ key: "verify:<redacted>", type: "verificationToken" });
+    else if (key.startsWith("reset:")) records.push({ key: "reset:<redacted>", type: "passwordResetToken" });
+    else if (key.startsWith("session:")) records.push({ key: "session:<redacted>", type: "session" });
+    else records.push({ key, type: key === "snapshot" ? "snapshot" : key === "nameBackups" ? "rosterBackups" : "other", count: Array.isArray(value?.backups) ? value.backups.length : undefined });
+  }
+  return { records, recordCount: records.length };
+}
+
+async function maintenanceDelete(storage, prefixes = []) {
+  const allowed = Array.isArray(prefixes) ? prefixes.map(String) : [];
+  const keys = Array.from((await storage.list()).keys()).filter((key) => allowed.some((prefix) => key === prefix || key.startsWith(prefix)));
+  if (keys.length) await storage.delete(keys);
+  return keys.length;
+}
+
+async function handleMaintenance(request, env) {
+  if (!authorizedMaintenance(request, env)) return jsonResponse({ error: "Unauthorized" }, 401);
+  const token = String(request.headers.get("x-data-reset-token") || "").trim();
+  const auth = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__auth__"));
+  const registry = getRegistryStub(env);
+  const backups = getNameBackupsStub(env);
+  const authInventory = await maintenanceCall(auth, token, "inventory");
+  const registryInventory = await maintenanceCall(registry, token, "inventory");
+  const backupInventory = await maintenanceCall(backups, token, "inventory");
+  const registryValue = await readRegistry(env);
+  const codes = Array.isArray(registryValue.codes) ? registryValue.codes : [];
+  const lodRecords = [];
+  for (const code of codes) lodRecords.push({ code, ...(await maintenanceCall(env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName(code)), token, "inventory")) });
+  const inventory = { auth: authInventory, registry: registryInventory, nameBackups: backupInventory, lodRecords, activeLodCodes: codes };
+  if (request.method.toUpperCase() === "GET") return jsonResponse(inventory);
+  if (request.method.toUpperCase() !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+  const input = await request.json().catch(() => null);
+  if (input?.confirmation !== "RESET_PRODUCTION_DATA") return jsonResponse({ error: "Confirmation required." }, 400);
+  const deleted = { auth: await maintenanceCall(auth, token, "reset", ["account:", "verify:", "reset:", "session:"]), registry: await maintenanceCall(registry, token, "reset", ["snapshot"]), nameBackups: await maintenanceCall(backups, token, "reset", ["nameBackups"]), lod: [] };
+  for (const code of codes) deleted.lod.push({ code, deleted: await maintenanceCall(env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName(code)), token, "reset", ["snapshot"]) });
+  return jsonResponse({ ok: true, deleted });
+}
+
+async function maintenanceCall(stub, token, operation, prefixes = []) {
+  const response = await stub.fetch(new Request("https://maintenance/api/admin/storage-" + operation, { method: operation === "inventory" ? "GET" : "POST", headers: { "x-data-reset-token": token, "content-type": "application/json" }, body: operation === "inventory" ? undefined : JSON.stringify({ prefixes }) }));
+  return response.json().catch(() => ({}));
 }
 
 function normalizeUsername(value) {
