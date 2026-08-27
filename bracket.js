@@ -3901,9 +3901,6 @@ function syncEventTypeControls() {
     customEventNameWrap.hidden = false;
   }
   if (customEventNameInput) {
-    if (!customEventNameInput.value.trim()) {
-      customEventNameInput.value = getEventName();
-    }
     customEventNameInput.removeAttribute("readonly");
     customEventNameInput.removeAttribute("disabled");
     customEventNameInput.readOnly = false;
