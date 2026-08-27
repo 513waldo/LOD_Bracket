@@ -1,9 +1,15 @@
 const STORAGE_KEY = "dartsTournamentAttendanceBuckets:v1";
 const LEGACY_COLLECTION_STORAGE_KEY = "dartsTournamentAttendanceSheets:v2";
 const LEGACY_STORAGE_KEY = "dartsTournamentAttendanceSheet:v1";
-const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
-const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
-const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
+const ACCOUNT_STORAGE_SCOPE = String(window.LOD_ACCOUNT_SESSION?.username || "anonymous")
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9._-]/g, "_")
+  .slice(0, 48) || "anonymous";
+const getScopedStorageKey = (key) => `${String(key || "").replace(/:+$/, "")}:${ACCOUNT_STORAGE_SCOPE}`;
+const BRACKET_DRAFT_STORAGE_KEY = getScopedStorageKey("dartsTournamentBracketDraft");
+const PORTAL_SNAPSHOT_STORAGE_KEY = getScopedStorageKey("dartsTournamentPortalSnapshot");
+const LOD_CODE_STORAGE_KEY = getScopedStorageKey("dartsTournamentLodCode");
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
   "outofbounds",
