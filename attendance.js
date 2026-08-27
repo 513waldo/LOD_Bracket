@@ -778,10 +778,12 @@ function syncVenueNameFromBracketDraft(saveChanges = false) {
       changed = true;
     }
 
-    const draftDescription = String(draft?.description || "").trim();
-    if (draftDescription && sheet.description !== draftDescription) {
-      sheet.description = draftDescription;
-      changed = true;
+    if (typeof draft?.description === "string") {
+      const draftDescription = draft.description.trim();
+      if (sheet.description !== draftDescription) {
+        sheet.description = draftDescription;
+        changed = true;
+      }
     }
 
     if (typeof draft?.eventDate === "string") {

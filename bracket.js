@@ -6600,6 +6600,7 @@ function buildBracketDraft() {
     totalPlayers: Number(totalPlayers.value) || 0,
     playersPerGroup: Number(playersPerGroup.value) || 0,
     barName: getBarName(),
+    description: String(descriptionInput?.value || "").trim(),
     eventType: getEventType(),
     eventName: getEventName(),
     eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
