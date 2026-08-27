@@ -63,6 +63,8 @@ const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet")
 const localExitButton = document.querySelector("#localExitButton");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
+const organizerAccessDeniedPanel = document.querySelector("#organizerAccessDenied");
+const organizerAccessDeniedLink = document.querySelector("#organizerAccessDeniedLink");
 const barNameInput = document.querySelector("#barName");
 const eventTypeInput = document.querySelector("#eventType");
 const customEventNameInput = document.querySelector("#customEventName");
@@ -105,26 +107,26 @@ const EMPTY_QR_DATA_URL = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
 const API_BASE_URLS = getApiBaseUrls();
 const API_PUBLISH_DEBOUNCE_MS = 300;
 const REGISTRY_REFRESH_DEBOUNCE_MS = 300;
-const backupIndexKey = "dartsTournamentBracketBackupIndex";
-const backupKeyPrefix = "dartsTournamentBracketBackup:";
+const backupIndexKey = getScopedStorageKey("dartsTournamentBracketBackupIndex");
+const backupKeyPrefix = getScopedStorageKey("dartsTournamentBracketBackup");
 const maxBracketBackups = 25;
-const nameBackupIndexKey = "dartsTournamentPlayerNameBackupIndex";
-const nameBackupKeyPrefix = "dartsTournamentPlayerNameBackup:";
-const outShotStorageKey = "dartsTournamentOutShots";
-const splitPotStorageKey = "dartsTournamentSplitPot";
-const bullseyeShootStorageKey = "dartsTournamentBullseyeShoot";
-const portalSnapshotStorageKey = "dartsTournamentPortalSnapshot";
-const bracketDraftStorageKey = "dartsTournamentBracketDraft";
-const bracketDraftSessionStorageKey = "dartsTournamentBracketDraftSession";
-const bracketDraftWindowNamePrefix = "dartsTournamentBracketDraftWindow:";
+const nameBackupIndexKey = getScopedStorageKey("dartsTournamentPlayerNameBackupIndex");
+const nameBackupKeyPrefix = getScopedStorageKey("dartsTournamentPlayerNameBackup");
+const outShotStorageKey = getScopedStorageKey("dartsTournamentOutShots");
+const splitPotStorageKey = getScopedStorageKey("dartsTournamentSplitPot");
+const bullseyeShootStorageKey = getScopedStorageKey("dartsTournamentBullseyeShoot");
+const portalSnapshotStorageKey = getScopedStorageKey("dartsTournamentPortalSnapshot");
+const bracketDraftStorageKey = getScopedStorageKey("dartsTournamentBracketDraft");
+const bracketDraftSessionStorageKey = getScopedStorageKey("dartsTournamentBracketDraftSession");
+const bracketDraftWindowNamePrefix = `${getScopedStorageKey("dartsTournamentBracketDraftWindow")}:`;
 const bracketDraftHistoryStateKey = "bracketDraft";
-const bracketCleanupStorageKey = "dartsTournamentBracketCleanupAt";
-const lodCodeStorageKey = "dartsTournamentLodCode";
+const bracketCleanupStorageKey = getScopedStorageKey("dartsTournamentBracketCleanupAt");
+const lodCodeStorageKey = getScopedStorageKey("dartsTournamentLodCode");
 const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const lodCodeClearedValue = "__CLEARED__";
-const assistantAdminPasswordStorageKey = "dartsTournamentAssistantAdminPassword";
-const assistantAdminSessionStorageKey = "dartsTournamentAssistantAdminSessionCode";
-const assistantAdminBackupStorageKey = "dartsTournamentAssistantAdminBackup";
+const assistantAdminPasswordStorageKey = getScopedStorageKey("dartsTournamentAssistantAdminPassword");
+const assistantAdminSessionStorageKey = getScopedStorageKey("dartsTournamentAssistantAdminSessionCode");
+const assistantAdminBackupStorageKey = getScopedStorageKey("dartsTournamentAssistantAdminBackup");
 const productionAssistantAdminPassword = decodePasswordCodes([53, 49, 51, 56, 53, 57, 68, 97, 114, 116, 115, 33]);
 const maxNameBackups = 25;
 const bracketCleanupDurationMs = 24 * 60 * 60 * 1000;
@@ -283,6 +285,7 @@ let diceRollerOriginalNextSibling = null;
 const storedLodCode = getStoredLodCode();
 const requestedLodCode = getRequestedLodCode();
 let lodCode = requestedLodCode || (storedLodCode === null ? generateLodCode() : storedLodCode);
+let remoteSnapshotLoadPendingCode = requestedLodCode;
 let portalPublishTimer = null;
 let lastPublishedPortalSnapshot = "";
 let lastPublishedPortalSnapshotSignature = "";
@@ -371,7 +374,9 @@ syncPayoutTeamsFromPlayerCount();
 updatePayoutCalculator();
 renderPdfLayoutOptions();
 renderPdfColumnMirror(8);
-restoreBracketDraft();
+if (!requestedLodCode) {
+  restoreBracketDraft();
+}
 syncEventTypeControls();
 applyAccountBarName();
 if (requestedLodCode) {
@@ -1232,6 +1237,11 @@ function handleBracketWinnerClick(button) {
     return;
   }
 
+  if (state?.champion) {
+    showMessage("This tournament is complete. Reopen it before changing results.");
+    return;
+  }
+
   if (button.disabled) {
     return;
   }
@@ -1260,6 +1270,11 @@ function handleBracketWinnerClick(button) {
 
 function handleBracketResetClick(button) {
   if (!button || !button.dataset) {
+    return;
+  }
+
+  if (state?.champion) {
+    showMessage("This tournament is complete. Reopen it before changing results.");
     return;
   }
 
@@ -1309,6 +1324,12 @@ bracketOutput.addEventListener("change", (event) => {
   const matchId = Number(boardSelect.dataset.matchId);
   const match = state.matchesById[matchId];
   if (!match) {
+    return;
+  }
+
+  if (state.champion) {
+    boardSelect.value = match.boardAssignment ? String(match.boardAssignment) : "";
+    showMessage("This tournament is complete. Reopen it before changing match details.");
     return;
   }
 
@@ -3739,10 +3760,23 @@ function renderNameInputs(count) {
           data-player-number="${number}"
           value="${escapeAttribute(value)}"
           placeholder="Player ${number}"
+          ${state ? "disabled" : ""}
         >
       </label>
     `;
   }).join("");
+}
+
+function updatePlayerListLock() {
+  const locked = Boolean(state);
+  [totalPlayers, playersPerGroup, playerList].forEach((input) => {
+    if (input) {
+      input.disabled = locked;
+    }
+  });
+  nameList?.querySelectorAll("[data-player-number]").forEach((input) => {
+    input.disabled = locked;
+  });
 }
 
 function isLocalHost() {
@@ -5732,9 +5766,12 @@ function getAllMatches(bracketState) {
 
 function renderBracket() {
   if (!state) {
+    updatePlayerListLock();
     queueActiveLodCodesRefresh();
     return;
   }
+
+  updatePlayerListLock();
 
   if (state.mode === "graph") {
     rebuildGraphMatchIndex(state);
@@ -6105,7 +6142,7 @@ function restoreBracketDraft() {
           return;
         }
       } else {
-        clearCompletedBracketCode(lodCode);
+        finalizeCompletedBracketCode(lodCode);
       }
     } else {
       const cleanupAt = refreshBracketCleanupAt(lodCode) || (Number.isFinite(savedExpiry) && savedExpiry > 0
@@ -6425,6 +6462,29 @@ function restoreGraphStateFromDraft(draftState) {
     return draftState;
   }
 
+  if (Array.isArray(draftState.matches) && draftState.matches.length) {
+    const restoredState = JSON.parse(JSON.stringify(draftState));
+    const matches = restoredState.matches.filter((match) => match && match.id !== undefined);
+    const matchesById = Object.fromEntries(matches.map((match) => [String(match.id), match]));
+    const resolveMatch = (match) => match && matchesById[String(match.id)] ? matchesById[String(match.id)] : match;
+    restoredState.matches = matches;
+    restoredState.matchesById = matchesById;
+    restoredState.rounds = {
+      winner: Array.isArray(restoredState.rounds?.winner)
+        ? restoredState.rounds.winner.map((round) => Array.isArray(round) ? round.map(resolveMatch) : [])
+        : [],
+      loser: Array.isArray(restoredState.rounds?.loser)
+        ? restoredState.rounds.loser.map((round) => Array.isArray(round) ? round.map(resolveMatch) : [])
+        : [],
+    };
+    restoredState.final = resolveMatch(restoredState.final);
+    restoredState.resetFinal = resolveMatch(restoredState.resetFinal);
+    restoredState.doubleDipFinal = resolveMatch(restoredState.doubleDipFinal);
+    rebuildGraphMatchIndex(restoredState);
+    refreshGraphSources(restoredState);
+    return restoredState;
+  }
+
   const originalPlayers = Array.isArray(draftState.originalPlayers) ? [...draftState.originalPlayers] : [];
   const restoredState = createBracketGraph(originalPlayers);
   const boardAssignments = new Map(
@@ -6509,7 +6569,7 @@ function scheduleBracketCleanupIfNeeded() {
   }
 
   if (state.champion) {
-    window.setTimeout(() => clearCompletedBracketCode(normalizedCode), 0);
+    window.setTimeout(() => finalizeCompletedBracketCode(normalizedCode), 0);
     return true;
   }
 
@@ -6544,7 +6604,7 @@ function expireBracketSession(code = lodCode) {
     : "Expired bracket session cleared.");
 }
 
-function clearCompletedBracketCode(code = lodCode) {
+function finalizeCompletedBracketCode(code = lodCode) {
   const completedCode = normalizeLodCode(code);
   if (!completedCode) {
     return;
@@ -6552,14 +6612,6 @@ function clearCompletedBracketCode(code = lodCode) {
 
   clearBracketCleanupTimer();
   clearBracketCleanupStorage(completedCode);
-  clearPortalSnapshotStorage(completedCode);
-
-  if (normalizeLodCode(lodCode) === completedCode) {
-    lodCode = "";
-    saveStoredLodCode("");
-    clearAssistantAdminSessionCode();
-    renderPortalLink();
-  }
 
   queueActiveLodCodesRefresh();
 }
@@ -7093,7 +7145,14 @@ async function pollRemoteAdminSnapshot(code) {
     }
 
     try {
-      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
+      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), {
+        cache: "no-store",
+        headers: getAccountAuthorizationHeaders(),
+      });
+      if (response.status === 401 || response.status === 403) {
+        showOrganizerAccessDenied(normalizedCode, response.status);
+        return false;
+      }
       if (!response.ok) {
         continue;
       }
@@ -7127,6 +7186,40 @@ async function pollRemoteAdminSnapshot(code) {
   return false;
 }
 
+function showOrganizerAccessDenied(code, status = 403) {
+  remoteSnapshotLoadPendingCode = "";
+  stopRemoteMirrorRefresh();
+  clearAssistantAdminSessionCode();
+  clearAssistantAdminBackupDraft();
+  clearBracketDraftStorage();
+  state = null;
+  currentTeams = [];
+  hasGeneratedTeams = false;
+  suppressPortalSnapshotPublish = true;
+
+  if (bracketOutput) {
+    bracketOutput.className = "bracket empty";
+    bracketOutput.textContent = "Organizer access is unavailable for this LOD.";
+  }
+  if (championOutput) {
+    championOutput.textContent = "Champion: unavailable";
+  }
+  if (organizerAccessDeniedPanel) {
+    organizerAccessDeniedPanel.hidden = false;
+  }
+  if (organizerAccessDeniedLink) {
+    const portalUrl = new URL("portal.html", window.location.href);
+    portalUrl.searchParams.set("lod", normalizeLodCode(code));
+    organizerAccessDeniedLink.href = portalUrl.toString();
+  }
+  document.body.classList.add("organizer-access-denied");
+  if (message) {
+    message.textContent = status === 401
+      ? "Sign in is required to open this organizer view."
+      : "You are not authorized to view this organizer LOD.";
+  }
+}
+
 async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
@@ -7135,6 +7228,9 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
     }
     return false;
   }
+
+  remoteSnapshotLoadPendingCode = normalizedCode;
+  cancelPendingPortalSnapshotPublish();
 
   const sessionCode = getAssistantAdminSessionCode();
   if (sessionCode !== normalizedCode && !requireAssistantAdminPassword(normalizedCode)) {
@@ -7157,7 +7253,14 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
     }
 
     try {
-      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), { cache: "no-store" });
+      const response = await fetch(getApiSnapshotUrl(baseUrl, normalizedCode), {
+        cache: "no-store",
+        headers: getAccountAuthorizationHeaders(),
+      });
+      if (response.status === 401 || response.status === 403) {
+        showOrganizerAccessDenied(normalizedCode, response.status);
+        return false;
+      }
       if (!response.ok) {
         continue;
       }
@@ -7174,6 +7277,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
       }
 
       applyRemoteAdminSnapshot(snapshot, baseUrl);
+      remoteSnapshotLoadPendingCode = "";
       lastRemoteMirrorSnapshotSignature = snapshotSignature;
       if (snapshotSignature) {
         lastPublishedPortalSnapshotSignature = snapshotSignature;
@@ -7301,6 +7405,8 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   if (!snapshot || typeof snapshot !== "object") {
     return;
   }
+
+  cancelPendingPortalSnapshotPublish();
 
   stopSplitPotDrawAnimation();
   stopBullseyeShootDrawAnimation();
@@ -7577,6 +7683,10 @@ function queuePortalSnapshotPublish(snapshot) {
     return false;
   }
 
+  if (shouldDeferNullSnapshotPublish(snapshot)) {
+    return false;
+  }
+
   const signature = getPortalSnapshotSignature(snapshot);
   if (signature && signature === lastPublishedPortalSnapshotSignature) {
     return false;
@@ -7598,6 +7708,10 @@ async function publishPortalSnapshotToApi(snapshot) {
     return;
   }
 
+  if (shouldDeferNullSnapshotPublish(snapshot)) {
+    return;
+  }
+
   const serialized = JSON.stringify(snapshot);
   const signature = getPortalSnapshotSignature(snapshot);
   if (signature && signature === lastPublishedPortalSnapshotSignature) {
@@ -7610,6 +7724,7 @@ async function publishPortalSnapshotToApi(snapshot) {
         method: "PUT",
         headers: {
           "content-type": "application/json",
+          ...getAccountAuthorizationHeaders(),
         },
         body: serialized,
       });
@@ -7622,6 +7737,24 @@ async function publishPortalSnapshotToApi(snapshot) {
       // Ignore publish failures; the local snapshot remains available.
     }
   }
+}
+
+function getAccountAuthorizationHeaders() {
+  const token = String(window.LOD_ACCOUNT_SESSION?.token || "").trim();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function cancelPendingPortalSnapshotPublish() {
+  if (portalPublishTimer) {
+    clearTimeout(portalPublishTimer);
+    portalPublishTimer = null;
+  }
+}
+
+function shouldDeferNullSnapshotPublish(snapshot) {
+  return !snapshot.state
+    && remoteSnapshotLoadPendingCode
+    && normalizeLodCode(snapshot.lodCode) === normalizeLodCode(remoteSnapshotLoadPendingCode);
 }
 
 function saveBracketBackup(action) {
@@ -8165,6 +8298,19 @@ function canUseLocalStorage() {
   }
 }
 
+function getAccountStorageScope() {
+  const username = String(window.LOD_ACCOUNT_SESSION?.username || "anonymous")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "_")
+    .slice(0, 48);
+  return username || "anonymous";
+}
+
+function getScopedStorageKey(key) {
+  return `${String(key || "").replace(/:+$/, "")}:${getAccountStorageScope()}`;
+}
+
 function canUseSessionStorage() {
   try {
     return typeof sessionStorage !== "undefined";
@@ -8690,6 +8836,7 @@ function renderFinalMatchBlock(match, title) {
             class="reset-match"
             type="button"
             onclick="window.handleBracketResetClick(this)"
+            ${state?.champion ? "disabled" : ""}
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
@@ -8789,6 +8936,7 @@ function renderMatch(match) {
             class="reset-match"
             type="button"
             onclick="window.handleBracketResetClick(this)"
+            ${state?.champion ? "disabled" : ""}
             data-reset-match="${escapeAttribute(match.id)}"
             data-match-id="${match.id}"
             data-match-type="${escapeAttribute(match.type)}"
@@ -8896,6 +9044,7 @@ function renderBoardAssignmentControl(match) {
         class="board-assignment-select"
         data-board-assignment
         data-match-id="${match.id}"
+        ${state?.champion ? "disabled" : ""}
         aria-label="Board assignment for ${escapeAttribute(formatMatchTitle(match))}"
       >
         <option value=""${currentValue ? "" : " selected"}>Unassigned</option>
@@ -8967,7 +9116,7 @@ function renderPlayerButton(match, player, slotIndex, forceDisabled = false) {
     isLoser ? "loser" : "",
     isBye ? "bye" : "",
   ].filter(Boolean).join(" ");
-  const disabled = forceDisabled || !player || isBye || Boolean(match.winner);
+  const disabled = forceDisabled || Boolean(state?.champion) || !player || isBye || Boolean(match.winner);
 
   return `
     <button

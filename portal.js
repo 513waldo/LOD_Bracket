@@ -13,6 +13,8 @@ const lodRegistryStatus = document.querySelector("#lodRegistryStatus");
 const publishedAt = document.querySelector("#publishedAt");
 const lodCodeText = document.querySelector("#lodCodeText");
 const portalQrCode = document.querySelector("#portalQrCode");
+const barNameText = document.querySelector("#barNameText");
+const eventNameText = document.querySelector("#eventNameText");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const lodCodeInput = document.querySelector("#lodCodeInput");
 const loadLodCodeButton = document.querySelector("#loadLodCode");
@@ -285,6 +287,10 @@ function normalizeSnapshot(data) {
       exportedAt: data.exportedAt || "",
       lodCode: normalizeLodCode(data.lodCode),
       expiresAt: Number(data.expiresAt || 0) || 0,
+      barName: String(data.barName || ""),
+      eventType: String(data.eventType || "normal-lod"),
+      eventName: String(data.eventName || ""),
+      eventDate: normalizeDateInputValue(data.eventDate || ""),
       portalNotice: String(data.portalNotice || ""),
       portalNoticeAt: String(data.portalNoticeAt || ""),
       portalAutoNotice: String(data.portalAutoNotice || ""),
@@ -302,6 +308,10 @@ function normalizeSnapshot(data) {
     exportedAt: data.exportedAt || "",
     lodCode: normalizeLodCode(data.lodCode),
     expiresAt: Number(data.expiresAt || 0) || 0,
+    barName: String(data.barName || ""),
+    eventType: String(data.eventType || "normal-lod"),
+    eventName: String(data.eventName || ""),
+    eventDate: normalizeDateInputValue(data.eventDate || ""),
     portalNotice: String(data.portalNotice || ""),
     portalNoticeAt: String(data.portalNoticeAt || ""),
     portalAutoNotice: String(data.portalAutoNotice || ""),
@@ -386,6 +396,8 @@ function renderSnapshot(snapshot, sourceLabel) {
   const state = snapshot.state || null;
   publishedAt.textContent = snapshot.exportedAt ? formatDate(snapshot.exportedAt) : sourceLabel;
   lodCodeText.textContent = activeLodCode || "Not set";
+  barNameText.textContent = snapshot.barName || "Not set";
+  eventNameText.textContent = snapshot.eventName || "Not set";
   renderPortalQrCode();
   championText.textContent = state?.champion || "Pending";
   teamCountText.textContent = getTeamCount(state);
@@ -413,6 +425,8 @@ function renderEmptyPortal() {
   portalBracket.textContent = "No bracket snapshot available.";
   publishedAt.textContent = "No snapshot loaded";
   lodCodeText.textContent = "Not set";
+  barNameText.textContent = "Not set";
+  eventNameText.textContent = "Not set";
   renderPortalQrCode();
   championText.textContent = "Pending";
   teamCountText.textContent = "-";
@@ -992,6 +1006,11 @@ function normalizeLodCode(value) {
     .slice(0, 12);
 }
 
+function normalizeDateInputValue(value) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
 function getSnapshotFileName(code) {
   const normalized = normalizeLodCode(code);
   return normalized ? `lod-${normalized}.json` : DEFAULT_SNAPSHOT_FILE;
@@ -1004,7 +1023,7 @@ function getCandidateBaseUrls(code) {
 
 function getSnapshotUrl(baseUrl, code) {
   const normalized = normalizeLodCode(code);
-  return normalized ? `${baseUrl}/api/lod/${encodeURIComponent(normalized)}` : DEFAULT_SNAPSHOT_FILE;
+  return normalized ? `${baseUrl}/api/public/lod/${encodeURIComponent(normalized)}` : DEFAULT_SNAPSHOT_FILE;
 }
 
 function getApiBaseUrls() {
