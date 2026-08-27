@@ -1838,6 +1838,10 @@ function syncFromInputs() {
 }
 
 function syncVenueNameFromActiveBucket() {
+  if (sheet?.lodCode) {
+    return;
+  }
+
   const bucket = getActiveBucket();
   const accountBarName = String(window.LOD_ACCOUNT_SESSION?.barName || "").trim();
   const access = getCurrentAttendanceLogin();
