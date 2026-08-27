@@ -68,6 +68,7 @@ const organizerAccessDeniedPanel = document.querySelector("#organizerAccessDenie
 const organizerAccessDeniedLink = document.querySelector("#organizerAccessDeniedLink");
 const barNameInput = document.querySelector("#barName");
 const eventTypeInput = document.querySelector("#eventType");
+const descriptionInput = document.querySelector("#description");
 const customEventNameInput = document.querySelector("#customEventName");
 const customEventNameWrap = document.querySelector("#customEventNameWrap");
 const eventDateInput = document.querySelector("#eventDate");
@@ -514,6 +515,7 @@ eventTypeInput?.addEventListener("change", () => {
   syncEventTypeControls();
   queueBracketDraftSave();
 });
+descriptionInput?.addEventListener("input", queueBracketDraftSave);
 customEventNameInput?.addEventListener("input", queueBracketDraftSave);
 
 loadLodCodeButton?.addEventListener("click", () => {
@@ -3845,7 +3847,14 @@ function getEventName() {
 
 function syncEventTypeControls() {
   if (customEventNameWrap) {
-    customEventNameWrap.hidden = getEventType() !== "custom";
+    customEventNameWrap.hidden = false;
+  }
+  if (customEventNameInput) {
+    const isCustom = getEventType() === "custom";
+    customEventNameInput.readOnly = !isCustom;
+    if (!isCustom) {
+      customEventNameInput.value = getEventName();
+    }
   }
 }
 
@@ -5831,6 +5840,7 @@ function buildPortalSnapshot(exportedAt = new Date().toISOString()) {
     totalPlayers: Number(totalPlayers?.value || 0) || 0,
     playersPerGroup: Number(playersPerGroup?.value || 0) || 0,
     barName: getBarName(),
+    description: String(descriptionInput?.value || "").trim(),
     eventType: getEventType(),
     eventName: getEventName(),
     eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
@@ -6127,6 +6137,9 @@ function restoreBracketDraft() {
   }
   if (typeof draft.eventName === "string" && customEventNameInput) {
     customEventNameInput.value = draft.eventName;
+  }
+  if (typeof draft.description === "string" && descriptionInput) {
+    descriptionInput.value = draft.description;
   }
   syncEventTypeControls();
 
@@ -7400,6 +7413,7 @@ function normalizeAdminMirrorSnapshot(data) {
     totalPlayers: Math.max(0, Math.floor(Number(data.totalPlayers) || 0)),
     playersPerGroup: Math.max(0, Math.floor(Number(data.playersPerGroup) || 0)),
     barName: String(data.barName || ""),
+    description: String(data.description || ""),
     eventDate: normalizeDateInputValue(data.eventDate || ""),
     playerList: String(data.playerList || ""),
     nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
@@ -7456,6 +7470,9 @@ function applyRemoteAdminSnapshot(snapshot, sourceBaseUrl = "") {
   }
   if (snapshot.barName !== undefined && barNameInput) {
     barNameInput.value = String(snapshot.barName || "");
+  }
+  if (snapshot.description !== undefined && descriptionInput) {
+    descriptionInput.value = String(snapshot.description || "");
   }
   applyAccountBarName();
   if (snapshot.eventType !== undefined && eventTypeInput) {
