@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-191">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -27,6 +27,13 @@
         <button id="resetBracket" class="secondary" type="button" onclick="resetTournament()">Reset bracket</button>
       </div>
     </header>
+
+    <section id="organizerAccessDenied" class="access-denied-panel" role="alert" hidden>
+      <p class="step-label">Organizer access</p>
+      <h2>Access denied</h2>
+      <p>You are not authorized to manage this LOD. Open the public portal to view its read-only bracket.</p>
+      <a id="organizerAccessDeniedLink" class="button-link" href="portal.html">Open player portal</a>
+    </section>
 
     <div class="top-workspace">
       <div class="setup-stack">
@@ -515,6 +522,6 @@
   <script src="attendance-auth.js?v=2"></script>
   <script src="account-gate.js?v=1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-340"></script>
+  <script src="bracket.js?v=interactive-tools-346"></script>
 </body>
 </html>

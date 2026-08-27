@@ -3,8 +3,12 @@ import { sendResendEmail } from "./email.js";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
+const ALLOWED_CORS_ORIGINS = new Set([
+  "https://ocheoperations.com",
+  "https://www.ocheoperations.com",
+]);
 
 export class BracketRoom {
   constructor(state, env) {
@@ -17,7 +21,7 @@ export class BracketRoom {
     const pathname = new URL(request.url).pathname;
 
     if (method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: corsHeadersForRequest(request) });
     }
 
     if (pathname.startsWith("/api/auth/")) {
@@ -61,22 +65,76 @@ export class BracketRoom {
         return jsonResponse({ error: "EXPIRED CODE" }, 410);
       }
 
+      if (isPublicLodRequest(pathname)) {
+        return jsonResponse(normalizePublicSnapshot(snapshot));
+      }
+
+      const account = await authenticateAccountRequest(request, this.env);
+      if (!account) {
+        return jsonResponse({ error: "Authentication required." }, 401);
+      }
+
+      const owner = await this.state.storage.get("owner");
+      if (!owner || owner.username !== account.username) {
+        return jsonResponse({ error: "You are not authorized to view this tournament." }, 403);
+      }
+
       return jsonResponse(snapshot);
     }
 
     if (method === "PUT" || method === "PATCH") {
-      const payload = await request.json().catch(() => null);
-      const snapshot = normalizeSnapshot(payload);
+      try {
+        if (isPublicLodRequest(pathname)) {
+          return jsonResponse({ error: "The public portal is read-only." }, 405);
+        }
 
-      if (!snapshot) {
-        return jsonResponse({ error: "Invalid snapshot" }, 400);
+        const account = await authenticateAccountRequest(request, this.env);
+        if (!account) {
+          return jsonResponse({ error: "Authentication required." }, 401);
+        }
+
+        const payload = await request.json().catch(() => null);
+        const snapshot = normalizeSnapshot(payload);
+
+        if (!snapshot) {
+          return jsonResponse({ error: "Invalid snapshot" }, 400);
+        }
+
+        const existingSnapshot = await this.state.storage.get("snapshot");
+        const owner = await this.state.storage.get("owner");
+        if (owner && owner.username !== account.username) {
+          return jsonResponse({ error: "This tournament belongs to another account." }, 403);
+        }
+        if (existingSnapshot && !owner) {
+          return jsonResponse({ error: "This tournament has no assigned owner." }, 403);
+        }
+
+        if (existingSnapshot?.state?.champion) {
+          return jsonResponse({ error: "TOURNAMENT_COMPLETED", locked: true }, 409);
+        }
+
+        if (existingSnapshot?.state && hasImmutablePlayerListChanged(existingSnapshot, snapshot)) {
+          return jsonResponse({ error: "PLAYER_LIST_LOCKED", locked: true }, 409);
+        }
+
+        if (!owner) {
+          await this.state.storage.put("owner", {
+            username: account.username,
+            barName: account.barName,
+            claimedAt: new Date().toISOString(),
+          });
+        }
+        await this.state.storage.put("snapshot", snapshot);
+        return jsonResponse(snapshot);
+      } catch (error) {
+        return jsonResponse({ error: "Tournament save failed." }, 500);
       }
-
-      await this.state.storage.put("snapshot", snapshot);
-      return jsonResponse(snapshot);
     }
 
     if (method === "DELETE") {
+      if (isPublicLodRequest(pathname)) {
+        return jsonResponse({ error: "The public portal is read-only." }, 405);
+      }
       await this.state.storage.delete("snapshot");
       return jsonResponse({ ok: true });
     }
@@ -91,24 +149,24 @@ export default {
     const method = request.method.toUpperCase();
 
     if (method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: corsHeadersForRequest(request) });
     }
 
     if (url.pathname.startsWith("/api/auth/")) {
       const authStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__auth__"));
       const targetUrl = new URL(request.url);
       targetUrl.pathname = url.pathname;
-      return withCors(await authStub.fetch(new Request(targetUrl, request)));
+      return withCors(await authStub.fetch(new Request(targetUrl, request)), request);
     }
 
     if (url.pathname === "/api/test-email") {
       if (method !== "POST") {
-        return withCors(jsonResponse({ error: "Method not allowed" }, 405));
+        return withCors(jsonResponse({ error: "Method not allowed" }, 405), request);
       }
 
       const testToken = String(env.EMAIL_TEST_TOKEN || "").trim();
       if (!testToken || request.headers.get("x-email-test-token") !== testToken) {
-        return withCors(jsonResponse({ error: "Unauthorized" }, 401));
+        return withCors(jsonResponse({ error: "Unauthorized" }, 401), request);
       }
 
       try {
@@ -117,9 +175,9 @@ export default {
           subject: "LOD Bracket email test",
           html: "<p>Congrats on sending your <strong>first LOD Bracket email</strong>!</p>",
         });
-        return withCors(jsonResponse({ ok: true, id: result?.id || "" }));
+        return withCors(jsonResponse({ ok: true, id: result?.id || "" }), request);
       } catch (error) {
-        return withCors(jsonResponse({ error: error.message || "Email send failed" }, 502));
+        return withCors(jsonResponse({ error: error.message || "Email send failed" }, 502), request);
       }
     }
 
@@ -130,8 +188,8 @@ export default {
           new Request("https://registry/api/lod/index", { method: "GET" }),
         );
         return response.status === 404
-          ? withCors(jsonResponse({ version: 1, updatedAt: "", codes: [] }))
-          : withCors(response);
+          ? withCors(jsonResponse({ version: 1, updatedAt: "", codes: [] }), request)
+          : withCors(response, request);
       }
 
       if (method === "DELETE") {
@@ -147,7 +205,7 @@ export default {
         const clearResponse = await registryStub.fetch(
           new Request("https://registry/api/lod/index", { method: "DELETE" }),
         );
-        return withCors(clearResponse);
+        return withCors(clearResponse, request);
       }
 
       return jsonResponse({ error: "Method not allowed" }, 405);
@@ -159,7 +217,7 @@ export default {
         const targetUrl = new URL(request.url);
         targetUrl.pathname = "/api/name-backups";
         const response = await nameBackupsStub.fetch(new Request(targetUrl, request));
-        return withCors(response);
+      return withCors(response, request);
       }
 
       return jsonResponse({ error: "Method not allowed" }, 405);
@@ -179,7 +237,9 @@ export default {
     const roomId = env.BRACKET_ROOMS.idFromName(code);
     const stub = env.BRACKET_ROOMS.get(roomId);
     const targetUrl = new URL(request.url);
-    targetUrl.pathname = `/api/lod/${code}`;
+    targetUrl.pathname = isPublicLodRequest(url.pathname)
+      ? `/api/public/lod/${code}`
+      : `/api/lod/${code}`;
     const payload = method === "PUT" || method === "PATCH"
       ? await request.clone().json().catch(() => null)
       : null;
@@ -190,7 +250,7 @@ export default {
       await updateRegistry(env, code, false);
     }
 
-    if (method === "PUT" || method === "PATCH") {
+    if ((method === "PUT" || method === "PATCH") && response.ok) {
       const snapshot = normalizeSnapshot(payload);
       if (snapshot) {
         await updateRegistry(env, snapshot.lodCode || code, true);
@@ -199,9 +259,49 @@ export default {
       await updateRegistry(env, code, false);
     }
 
-    return withCors(response);
+    return withCors(response, request);
   },
 };
+
+async function authenticateAccountRequest(request, env) {
+  const authorization = String(request.headers.get("authorization") || "").trim();
+  if (!authorization) {
+    return null;
+  }
+
+  const authStub = env?.BRACKET_ROOMS?.get(env.BRACKET_ROOMS.idFromName("__auth__"));
+  if (!authStub) {
+    return null;
+  }
+
+  const response = await authStub.fetch(new Request("https://auth/api/auth/session", {
+    method: "GET",
+    headers: { authorization },
+  }));
+  if (!response.ok) {
+    return null;
+  }
+
+  const account = await response.json().catch(() => null);
+  return account?.username && account?.verified ? account : null;
+}
+
+function hasImmutablePlayerListChanged(previousSnapshot, nextSnapshot) {
+  return getImmutablePlayerListSignature(previousSnapshot) !== getImmutablePlayerListSignature(nextSnapshot);
+}
+
+function getImmutablePlayerListSignature(snapshot) {
+  const statePlayers = Array.isArray(snapshot?.state?.originalPlayers)
+    ? snapshot.state.originalPlayers.map((player) => String(player || ""))
+    : null;
+  return JSON.stringify({
+    totalPlayers: Number(snapshot?.totalPlayers || 0),
+    playerList: String(snapshot?.playerList || ""),
+    nameMap: snapshot?.nameMap && typeof snapshot.nameMap === "object" ? snapshot.nameMap : {},
+    currentTeams: Array.isArray(snapshot?.currentTeams) ? snapshot.currentTeams : [],
+    statePlayers,
+  });
+}
 
 async function handleAuthRequest(request, storage, env) {
   const url = new URL(request.url);
@@ -241,7 +341,7 @@ async function handleAuthRequest(request, storage, env) {
     await storage.put(`verify:${verificationToken}`, username, { expirationTtl: 86400 });
 
     const appBaseUrl = String(env?.APP_BASE_URL || "https://lod-bracket.pages.dev").replace(/\/$/, "");
-    const verificationUrl = `${url.origin}/api/auth/verify?token=${encodeURIComponent(verificationToken)}`;
+    const verificationUrl = `${appBaseUrl}/verify.html?token=${encodeURIComponent(verificationToken)}`;
 
     try {
       await sendResendEmail(env, {
@@ -441,12 +541,16 @@ function isRegistryRequest(pathname) {
   return pathname === "/api/lod" || pathname === "/api/lod/" || pathname === "/api/lod/index";
 }
 
+function isPublicLodRequest(pathname) {
+  return /^\/api\/public\/lod\/[A-Z0-9]+$/i.test(String(pathname || ""));
+}
+
 function isNameBackupsRequest(pathname) {
   return pathname === "/api/name-backups" || pathname === "/api/name-backups/";
 }
 
 function extractLodCode(pathname, queryCode) {
-  const fromPath = pathname.match(/^\/api\/lod\/([A-Z0-9]+)$/i)?.[1];
+  const fromPath = pathname.match(/^\/api\/(?:public\/)?lod\/([A-Z0-9]+)$/i)?.[1];
   const normalized = normalizeLodCode(fromPath || queryCode);
   return normalized;
 }
@@ -523,6 +627,11 @@ function normalizeLodCode(value) {
     .slice(0, 12);
 }
 
+function normalizeDateInputValue(value) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
 function normalizeSnapshot(data) {
   if (!data || typeof data !== "object") {
     return null;
@@ -544,6 +653,17 @@ function normalizeSnapshot(data) {
       portalBullshootNoticeAt: String(data.portalBullshootNoticeAt || ""),
       portalSupportMessages,
       state: data.state && typeof data.state === "object" ? data.state : null,
+      totalPlayers: Math.max(0, Math.floor(Number(data.totalPlayers) || 0)),
+      playersPerGroup: Math.max(0, Math.floor(Number(data.playersPerGroup) || 0)),
+      barName: String(data.barName || ""),
+      eventType: String(data.eventType || "normal-lod"),
+      eventName: String(data.eventName || ""),
+      eventDate: normalizeDateInputValue(data.eventDate || ""),
+      playerList: String(data.playerList || ""),
+      nameMap: data.nameMap && typeof data.nameMap === "object" ? data.nameMap : {},
+      currentTeams: Array.isArray(data.currentTeams) ? data.currentTeams : [],
+      hasGeneratedTeams: Boolean(data.hasGeneratedTeams),
+      blockedGenerateCount: Math.max(0, Math.floor(Number(data.blockedGenerateCount) || 0)),
       outShots: Array.isArray(data.outShots) ? data.outShots : [],
       mysteryOut: data.mysteryOut || "",
     };
@@ -554,6 +674,10 @@ function normalizeSnapshot(data) {
     exportedAt: data.exportedAt || new Date().toISOString(),
     lodCode: normalizeLodCode(data.lodCode),
     expiresAt: Number(data.expiresAt || 0) || 0,
+    barName: String(data.barName || ""),
+    eventType: String(data.eventType || "normal-lod"),
+    eventName: String(data.eventName || ""),
+    eventDate: normalizeDateInputValue(data.eventDate || ""),
     portalNotice: String(data.portalNotice || ""),
     portalNoticeAt: String(data.portalNoticeAt || ""),
     portalAutoNotice: String(data.portalAutoNotice || ""),
@@ -565,6 +689,101 @@ function normalizeSnapshot(data) {
     outShots: Array.isArray(data.outShots) ? data.outShots : [],
     mysteryOut: data.mysteryOut || "",
   };
+}
+
+function normalizePublicSnapshot(snapshot) {
+  return {
+    version: Number(snapshot?.version || 1),
+    exportedAt: String(snapshot?.exportedAt || ""),
+    lodCode: normalizeLodCode(snapshot?.lodCode),
+    expiresAt: Number(snapshot?.expiresAt || 0) || 0,
+    barName: String(snapshot?.barName || ""),
+    eventType: String(snapshot?.eventType || "normal-lod"),
+    eventName: String(snapshot?.eventName || ""),
+    eventDate: normalizeDateInputValue(snapshot?.eventDate || ""),
+    portalNotice: String(snapshot?.portalNotice || ""),
+    portalNoticeAt: String(snapshot?.portalNoticeAt || ""),
+    portalAutoNotice: String(snapshot?.portalAutoNotice || ""),
+    portalAutoNoticeAt: String(snapshot?.portalAutoNoticeAt || ""),
+    portalBullshootNotice: String(snapshot?.portalBullshootNotice || ""),
+    portalBullshootNoticeAt: String(snapshot?.portalBullshootNoticeAt || ""),
+    state: normalizePublicState(snapshot?.state),
+  };
+}
+
+function normalizePublicState(state) {
+  if (!state || typeof state !== "object") {
+    return null;
+  }
+
+  return {
+    mode: String(state.mode || ""),
+    champion: String(state.champion || ""),
+    originalPlayers: Array.isArray(state.originalPlayers)
+      ? state.originalPlayers.map((player) => String(player || ""))
+      : [],
+    size: Number(state.size || 0) || 0,
+    matches: normalizePublicMatches(state.matches),
+    winnerRounds: normalizePublicRounds(state.winnerRounds),
+    loserRounds: normalizePublicRounds(state.loserRounds),
+    rounds: state.rounds && typeof state.rounds === "object"
+      ? {
+          winner: normalizePublicRounds(state.rounds.winner),
+          loser: normalizePublicRounds(state.rounds.loser),
+        }
+      : { winner: [], loser: [] },
+    final: normalizePublicMatch(state.final),
+    resetFinal: normalizePublicMatch(state.resetFinal),
+  };
+}
+
+function normalizePublicRounds(rounds) {
+  if (!Array.isArray(rounds)) {
+    return [];
+  }
+
+  return rounds.map((round) => ({
+    title: String(round?.title || ""),
+    matches: normalizePublicMatches(round?.matches || round),
+  }));
+}
+
+function normalizePublicMatches(matches) {
+  if (!Array.isArray(matches)) {
+    return [];
+  }
+
+  return matches.map(normalizePublicMatch).filter(Boolean);
+}
+
+function normalizePublicMatch(match) {
+  if (!match || typeof match !== "object") {
+    return null;
+  }
+
+  return {
+    id: String(match.id ?? ""),
+    title: String(match.title || ""),
+    type: String(match.type || ""),
+    gameNumber: Number(match.gameNumber || 0) || 0,
+    isPlayIn: Boolean(match.isPlayIn),
+    players: Array.isArray(match.players) ? match.players.map((player) => String(player || "")) : [],
+    slotSources: Array.isArray(match.slotSources) ? match.slotSources.map((source) => String(source || "")) : [],
+    winner: String(match.winner || ""),
+    loser: String(match.loser || ""),
+    autoAdvanced: Boolean(match.autoAdvanced),
+    boardAssignment: Number(match.boardAssignment || 0) || null,
+    winnerTo: normalizePublicRoute(match.winnerTo),
+    loserTo: normalizePublicRoute(match.loserTo),
+  };
+}
+
+function normalizePublicRoute(route) {
+  if (!route || typeof route !== "object") {
+    return null;
+  }
+
+  return { matchId: String(route.matchId ?? "") };
 }
 
 function normalizePortalSupportMessages(value) {
@@ -663,9 +882,18 @@ function jsonResponse(data, status = 200) {
   });
 }
 
-async function withCors(response) {
+function corsHeadersForRequest(request) {
+  const origin = String(request?.headers?.get("Origin") || "").trim();
+  return {
+    ...CORS_HEADERS,
+    "Access-Control-Allow-Origin": ALLOWED_CORS_ORIGINS.has(origin) ? origin : "*",
+    Vary: "Origin",
+  };
+}
+
+async function withCors(response, request) {
   const headers = new Headers(response.headers);
-  Object.entries(CORS_HEADERS).forEach(([key, value]) => headers.set(key, value));
+  Object.entries(corsHeadersForRequest(request)).forEach(([key, value]) => headers.set(key, value));
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

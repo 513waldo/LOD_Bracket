@@ -765,6 +765,35 @@ h2 {
   min-width: 0;
 }
 
+.access-denied-panel {
+  margin: 0 0 18px;
+  padding: clamp(18px, 3vw, 28px);
+  border: 2px solid var(--dart-red);
+  border-radius: 12px;
+  background: rgba(255, 247, 230, 0.96);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.access-denied-panel h2,
+.access-denied-panel p {
+  margin-top: 0;
+}
+
+.access-denied-panel p:last-of-type {
+  margin-bottom: 16px;
+}
+
+body.organizer-access-denied .topbar-actions > * {
+  display: none;
+}
+
+body.organizer-access-denied .top-workspace,
+body.organizer-access-denied .bracket-workspace,
+body.organizer-access-denied .backups-panel {
+  display: none;
+}
+
 .setup-stack {
   display: grid;
   gap: 14px;

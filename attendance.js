@@ -5,8 +5,6 @@ const BRACKET_DRAFT_STORAGE_KEY = "dartsTournamentBracketDraft";
 const PORTAL_SNAPSHOT_STORAGE_KEY = "dartsTournamentPortalSnapshot";
 const LOD_CODE_STORAGE_KEY = "dartsTournamentLodCode";
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
-const ATTENDANCE_STORAGE_RESET_STATE_KEY = "dartsTournamentAttendanceResetState:v1";
-const ATTENDANCE_STORAGE_RESET_VERSION = "2026-07-01-start-fresh-v6";
 const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
   "outofbounds",
   "outofboundsbar",
@@ -60,6 +58,7 @@ const clearVenueAccessCredentialsButton = document.querySelector("#clearVenueAcc
 const venueAccessStatus = document.querySelector("#venueAccessStatus");
 const attendanceApp = document.querySelector("#attendanceApp");
 const attendanceGate = document.querySelector("#attendanceGate");
+const attendanceLogoutButton = document.querySelector("#attendanceLogoutButton");
 const rootGateMessage = document.querySelector("#rootGateMessage");
 const gateMessage = document.querySelector("#gateMessage");
 const rootPasswordInput = document.querySelector("#rootPasswordInput");
@@ -85,7 +84,6 @@ const DEFAULT_EVENT_TRACKER = [
 ];
 const DEFAULT_EVENT_HISTORY = [];
 
-resetAttendanceStorageOnce();
 let attendanceCollection = loadAttendanceCollection();
 let activeSheetKey = "";
 let activeAttendanceBucketKey = attendanceCollection.activeBucketKey || "";
@@ -104,6 +102,17 @@ if (unlockRootButton) {
 if (unlockBarButton) {
   unlockBarButton.addEventListener("click", unlockBarAttendanceSheet);
 }
+
+attendanceLogoutButton?.addEventListener("click", () => {
+  try {
+    localStorage.removeItem("lodBracketSession:v1");
+  } catch {
+    // Ignore storage failures and still navigate to the login page.
+  }
+  clearAttendanceAccessSession();
+  clearAttendanceRootSessionPassword();
+  window.location.replace("login.html");
+});
 
 rootPasswordInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -257,14 +266,17 @@ function normalizeAttendanceCollection(value) {
 }
 
 function normalizeAttendanceBucket(bucketKey, value) {
-  const sheetsList = Array.isArray(value?.sheets) ? value.sheets : [];
+  const sourceSheets = value?.sheets && typeof value.sheets === "object" ? value.sheets : {};
+  const sheetsList = Array.isArray(value?.sheets)
+    ? value.sheets.map((sheetValue) => [String(sheetValue?.id || ""), sheetValue])
+    : Object.entries(sourceSheets);
   const sheets = {};
   const order = [];
   const authUsername = normalizeAttendanceRootPassword(value?.authUsername || "");
   const authPassword = normalizeAttendanceRootPassword(value?.authPassword || "");
 
-  sheetsList.forEach((sheetValue, index) => {
-    const normalized = normalizeSheet(sheetValue, index);
+  sheetsList.forEach(([sheetKey, sheetValue], index) => {
+    const normalized = normalizeSheet({ ...(sheetValue || {}), id: sheetValue?.id || sheetKey }, index);
     if (!normalized.id || sheets[normalized.id]) {
       return;
     }
@@ -398,21 +410,6 @@ function clearAttendanceStorageData() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LEGACY_COLLECTION_STORAGE_KEY);
     localStorage.removeItem(LEGACY_STORAGE_KEY);
-    localStorage.removeItem(ATTENDANCE_STORAGE_RESET_STATE_KEY);
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
-function resetAttendanceStorageOnce() {
-  try {
-    const currentVersion = localStorage.getItem(ATTENDANCE_STORAGE_RESET_STATE_KEY);
-    if (currentVersion === ATTENDANCE_STORAGE_RESET_VERSION) {
-      return;
-    }
-
-    clearAttendanceStorageData();
-    localStorage.setItem(ATTENDANCE_STORAGE_RESET_STATE_KEY, ATTENDANCE_STORAGE_RESET_VERSION);
   } catch {
     // Ignore storage failures.
   }
@@ -525,40 +522,6 @@ function ensureBucketHasActiveSheet(bucket) {
   return newSheet;
 }
 
-function looksLikeWorkbookSeedRoster(players) {
-  const seedPlayers = Array.isArray(getDefaultSheetSeed()?.players) ? getDefaultSheetSeed().players : [];
-  const currentPlayers = Array.isArray(players) ? players : [];
-  if (!seedPlayers.length || currentPlayers.length !== seedPlayers.length) {
-    return false;
-  }
-
-  const seedNames = new Set(seedPlayers.map((player) => normalizeRosterKey(player?.name || "")).filter(Boolean));
-  let matchingNames = 0;
-  currentPlayers.forEach((player) => {
-    if (seedNames.has(normalizeRosterKey(player?.name || ""))) {
-      matchingNames += 1;
-    }
-  });
-
-  return matchingNames >= Math.max(1, Math.ceil(seedPlayers.length * 0.8));
-}
-
-function sanitizeBarSheetRoster(nextSheet) {
-  const login = getCurrentAttendanceLogin();
-  if ((login.kind !== "bar" && login.kind !== "account") || !nextSheet) {
-    return false;
-  }
-
-  if (!looksLikeWorkbookSeedRoster(nextSheet.players)) {
-    return false;
-  }
-
-  nextSheet.players = [];
-  nextSheet.eventTracker = normalizeEventTracker(DEFAULT_EVENT_TRACKER);
-  nextSheet.eventHistory = [];
-  return true;
-}
-
 function createAttendanceBucketForCredentials(username, password) {
   const targetUsername = normalizeAttendanceRootPassword(username || "");
   const targetPassword = normalizeAttendanceRootPassword(password || "");
@@ -603,9 +566,6 @@ function getActiveSheet() {
   const bucket = getActiveBucket();
   const sheetValue = ensureBucketHasActiveSheet(bucket);
   if (sheetValue) {
-    if (sanitizeBarSheetRoster(sheetValue)) {
-      saveAttendanceCollection(attendanceCollection);
-    }
     activeSheetKey = sheetValue.id;
     bucket.activeSheetKey = sheetValue.id;
     activeAttendanceBucketKey = bucket.key;
@@ -899,10 +859,6 @@ function initializeAccountAttendanceAccess() {
       const candidate = attendanceCollection.buckets[candidateKey];
       return candidateKey === "default" && !normalizeAttendanceRootPassword(candidate?.authUsername || "");
     });
-  }
-
-  if (!bucketKey && attendanceCollection.bucketOrder.length === 1) {
-    bucketKey = attendanceCollection.bucketOrder[0];
   }
 
   if (bucketKey && !attendanceCollection.buckets[bucketKey].authUsername) {
@@ -1386,9 +1342,6 @@ function unlockBarAttendanceSheet() {
   ensureBucketHasActiveSheet(targetBucket);
   setActiveBucketKey(targetBucket.key);
   sheet.venueName = targetBucket.authUsername || targetBucket.label || enteredUsername;
-  if (sanitizeBarSheetRoster(sheet)) {
-    saveSheet();
-  }
   clearAttendanceRootSessionPassword();
   saveAttendanceAccessSession({
     kind: "bar",
@@ -2079,7 +2032,6 @@ clearDemoButton.addEventListener("click", () => {
   }
 
   clearAttendanceStorageData();
-  resetAttendanceStorageOnce();
   attendanceCollection = loadAttendanceCollection();
   activeSheetKey = attendanceCollection.activeBucketKey || "";
   activeAttendanceBucketKey = attendanceCollection.activeBucketKey || "";

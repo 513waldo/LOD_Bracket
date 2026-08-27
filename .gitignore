@@ -1,0 +1,5 @@
+.wrangler/
+output/
+api/api.txt
+**/.dev.vars
+session-summary-*.json

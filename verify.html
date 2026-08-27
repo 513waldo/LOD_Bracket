@@ -13,20 +13,46 @@
     <section class="panel login-card" aria-labelledby="verifyTitle">
       <p class="eyebrow">LOD Bracket</p>
       <h1 id="verifyTitle">Verify your account</h1>
-      <p id="verifyMessage" class="login-intro">Your account was created, but the bracket is still locked.</p>
-      <p class="verification-callout">Check your email for a confirmation link. Open that link before signing in.</p>
+      <p id="verifyMessage" class="login-intro">Confirming your account…</p>
+      <p id="verifyCallout" class="verification-callout">Please wait while we securely verify your email address.</p>
       <p class="login-note">For security, the bracket and attendance sheet will remain unavailable until verification is complete.</p>
-      <a class="button-link" href="login.html">Return to sign in</a>
+      <a id="verifyLogin" class="button-link" href="login.html" hidden>Return to sign in</a>
     </section>
   </main>
   <script>
-    const username = new URLSearchParams(window.location.search).get("username");
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const username = params.get("username");
     const message = document.querySelector("#verifyMessage");
-    if (username) {
-      const email = new URLSearchParams(window.location.search).get("email");
+    const callout = document.querySelector("#verifyCallout");
+    const login = document.querySelector("#verifyLogin");
+    const apiBaseUrl = "https://lod-bracket-api.lod-bracket.workers.dev";
+
+    if (token) {
+      fetch(`${apiBaseUrl}/api/auth/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token }),
+      })
+        .then(async (response) => {
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.verified) {
+            throw new Error(result.error || "This verification link is invalid or expired.");
+          }
+          message.textContent = "Your account is verified.";
+          callout.textContent = "You can now sign in and open your attendance sheet.";
+          login.hidden = false;
+        })
+        .catch((error) => {
+          message.textContent = "We could not verify your account.";
+          callout.textContent = error.message;
+        });
+    } else if (username) {
+      const email = params.get("email");
       message.textContent = email
         ? `A confirmation message was sent to ${email}.`
         : `Check the email address used for ${username}.`;
+      callout.textContent = "Open the confirmation link in that email to finish verification.";
     }
   </script>
 </body>

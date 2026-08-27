@@ -1,4 +1,4 @@
-import { proxyWorkerRequest } from "../../_lib/worker-proxy.js";
+import { proxyWorkerRequest } from "../../../_lib/worker-proxy.js";
 
 export async function onRequest(context) {
   const code = String(context.params?.code || "")
@@ -12,5 +12,5 @@ export async function onRequest(context) {
     });
   }
 
-  return proxyWorkerRequest(context, `/api/lod/${encodeURIComponent(code)}`);
+  return proxyWorkerRequest(context, `/api/public/lod/${encodeURIComponent(code)}`);
 }
