@@ -6032,6 +6032,21 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   currentTeams = [];
   hasGeneratedTeams = false;
   blockedGenerateCount = 0;
+  if (eventTypeInput) {
+    eventTypeInput.value = "normal-lod";
+  }
+  if (descriptionInput) {
+    descriptionInput.value = "";
+  }
+  if (customEventNameInput) {
+    customEventNameInput.value = "";
+  }
+  syncEventTypeControls();
+  try {
+    localStorage.removeItem(attendanceGenerationStorageKey);
+  } catch {
+    // Ignore optional local cleanup failures.
+  }
   playerList.value = "";
   stopMysteryOutDrawAnimation();
   portalNotice = "";
