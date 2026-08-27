@@ -619,15 +619,26 @@ function maybeGenerateRequestedAttendanceSheet() {
     const requestedCode = normalizeLodCodeForAttendance(params.get("lod") || "");
     const request = JSON.parse(localStorage.getItem(ATTENDANCE_GENERATION_STORAGE_KEY) || "null");
     const code = normalizeLodCodeForAttendance(request?.lodCode || "");
-    if (!request || (requestedCode && code !== requestedCode)) {
+    const isGenerationPage = params.get("attendance") === "generate";
+    if (!isGenerationPage && !request) {
+      return false;
+    }
+    if (requestedCode && code && code !== requestedCode) {
+      return false;
+    }
+
+    const draft = JSON.parse(localStorage.getItem(BRACKET_DRAFT_STORAGE_KEY) || "null");
+    const metadata = request || draft || {};
+    const targetCode = requestedCode || code || normalizeLodCodeForAttendance(draft?.lodCode || "");
+    if (!targetCode) {
       return false;
     }
 
     const bucket = getActiveBucket();
-    const existingKey = bucket.order.find((key) => normalizeLodCodeForAttendance(bucket.sheets[key]?.lodCode) === code);
+    const existingKey = bucket.order.find((key) => normalizeLodCodeForAttendance(bucket.sheets[key]?.lodCode) === targetCode);
     const existing = existingKey ? bucket.sheets[existingKey] : null;
     const existingByName = new Map((existing?.players || []).map((player) => [normalizeRosterKey(player.name), player]));
-    const names = Array.isArray(request.players) ? request.players : [];
+    const names = Array.isArray(request?.players) ? request.players : getBracketRosterNames();
     const players = names.map((name, index) => {
       const normalizedName = normalizeRosterName(name);
       const prior = existingByName.get(normalizeRosterKey(normalizedName));
@@ -642,12 +653,12 @@ function maybeGenerateRequestedAttendanceSheet() {
     const target = normalizeSheet({
       ...(existing || {}),
       id: existing?.id || `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      lodCode: code,
-      venueName: request.venueName || existing?.venueName || "",
-      description: request.description || existing?.description || "",
-      eventType: request.eventType || existing?.eventType || "appreciation",
-      eventName: request.eventName || existing?.eventName || "Appreciation Tournament",
-      eventDate: request.eventDate || existing?.eventDate || "",
+      lodCode: targetCode,
+      venueName: metadata.venueName || existing?.venueName || "",
+      description: metadata.description || existing?.description || "",
+      eventType: metadata.eventType || existing?.eventType || "appreciation",
+      eventName: metadata.eventName || existing?.eventName || "Appreciation Tournament",
+      eventDate: metadata.eventDate || existing?.eventDate || "",
       players,
     });
 
@@ -663,7 +674,7 @@ function maybeGenerateRequestedAttendanceSheet() {
     saveAttendanceCollection(attendanceCollection);
     localStorage.removeItem(ATTENDANCE_GENERATION_STORAGE_KEY);
     render();
-    setStatus(existing ? `Updated attendance sheet for LOD ${code}.` : `Created attendance sheet for LOD ${code}.`);
+    setStatus(existing ? `Updated attendance sheet for LOD ${targetCode}.` : `Created attendance sheet for LOD ${targetCode}.`);
     return true;
   } catch {
     return false;

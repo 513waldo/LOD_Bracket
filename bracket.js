@@ -1468,7 +1468,10 @@ function generateAttendanceSheetFromAdmin() {
     const attendanceUrl = new URL("attendance.html", window.location.href);
     attendanceUrl.searchParams.set("attendance", "generate");
     attendanceUrl.searchParams.set("lod", code);
-    window.open(attendanceUrl.href, "_blank", "noopener");
+    const attendanceWindow = window.open(attendanceUrl.href, "_blank", "noopener");
+    if (!attendanceWindow) {
+      window.location.assign(attendanceUrl.href);
+    }
     showMessage(`Attendance sheet ready for LOD ${code}.`);
   } catch {
     showMessage("Unable to prepare the attendance sheet in this browser.");
