@@ -3883,6 +3883,10 @@ function getEventType() {
 
 function getEventName() {
   const type = getEventType();
+  const enteredName = String(customEventNameInput?.value || "").trim();
+  if (enteredName) {
+    return enteredName;
+  }
   if (type === "appreciation") {
     return "Appreciation Tournament";
   }
@@ -3897,11 +3901,10 @@ function syncEventTypeControls() {
     customEventNameWrap.hidden = false;
   }
   if (customEventNameInput) {
-    const isCustom = getEventType() === "custom";
-    customEventNameInput.readOnly = !isCustom;
-    if (!isCustom) {
+    if (!customEventNameInput.value.trim()) {
       customEventNameInput.value = getEventName();
     }
+    customEventNameInput.readOnly = false;
   }
 }
 

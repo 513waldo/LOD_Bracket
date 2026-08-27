@@ -1100,11 +1100,15 @@ function normalizeAttendanceEventType(value) {
 
 function getAttendanceEventName(type, customName = "") {
   const normalized = normalizeAttendanceEventType(type);
+  const enteredName = String(customName || "").trim();
+  if (enteredName) {
+    return enteredName;
+  }
   if (normalized === "appreciation") {
     return "Appreciation Tournament";
   }
   if (normalized === "custom") {
-    return String(customName || "").trim() || "Custom Tournament";
+    return "Custom Tournament";
   }
   return "Normal LOD";
 }
