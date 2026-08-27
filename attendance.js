@@ -10,6 +10,7 @@ const getScopedStorageKey = (key) => `${String(key || "").replace(/:+$/, "")}:${
 const BRACKET_DRAFT_STORAGE_KEY = getScopedStorageKey("dartsTournamentBracketDraft");
 const PORTAL_SNAPSHOT_STORAGE_KEY = getScopedStorageKey("dartsTournamentPortalSnapshot");
 const LOD_CODE_STORAGE_KEY = getScopedStorageKey("dartsTournamentLodCode");
+const ATTENDANCE_GENERATION_STORAGE_KEY = getScopedStorageKey("dartsTournamentAttendanceGeneration");
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
   "outofbounds",
@@ -100,6 +101,7 @@ syncVenueNameFromBracketDraft();
 syncEventTrackerFromBracketDraft(true);
 maybeApplyRequestedAttendanceSheet();
 initializeAccountAttendanceAccess();
+maybeGenerateRequestedAttendanceSheet();
 
 if (unlockRootButton) {
   unlockRootButton.addEventListener("click", unlockRootAttendanceSheet);
@@ -611,6 +613,67 @@ function maybeApplyRequestedAttendanceSheet() {
   return setActiveSheetKey(requestedKey);
 }
 
+function maybeGenerateRequestedAttendanceSheet() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("attendance") !== "generate") {
+      return false;
+    }
+
+    const requestedCode = normalizeLodCodeForAttendance(params.get("lod") || "");
+    const request = JSON.parse(localStorage.getItem(ATTENDANCE_GENERATION_STORAGE_KEY) || "null");
+    const code = normalizeLodCodeForAttendance(request?.lodCode || "");
+    if (!request || !requestedCode || code !== requestedCode) {
+      return false;
+    }
+
+    const bucket = getActiveBucket();
+    const existingKey = bucket.order.find((key) => normalizeLodCodeForAttendance(bucket.sheets[key]?.lodCode) === code);
+    const existing = existingKey ? bucket.sheets[existingKey] : null;
+    const existingByName = new Map((existing?.players || []).map((player) => [normalizeRosterKey(player.name), player]));
+    const names = Array.isArray(request.players) ? request.players : [];
+    const players = names.map((name, index) => {
+      const normalizedName = normalizeRosterName(name);
+      const prior = existingByName.get(normalizeRosterKey(normalizedName));
+      return normalizePlayer({
+        ...(prior || {}),
+        id: prior?.id || `p-${Date.now()}-${index}`,
+        name: normalizedName,
+        weeks: prior?.weeks || [],
+      }, existing?.totalWeeks || 12, index);
+    }).filter((player) => player.name);
+
+    const target = normalizeSheet({
+      ...(existing || {}),
+      id: existing?.id || `sheet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      lodCode: code,
+      venueName: request.venueName || existing?.venueName || "",
+      description: request.description || existing?.description || "",
+      eventType: request.eventType || existing?.eventType || "appreciation",
+      eventName: request.eventName || existing?.eventName || "Appreciation Tournament",
+      eventDate: request.eventDate || existing?.eventDate || "",
+      players,
+    });
+
+    bucket.sheets[target.id] = target;
+    if (!bucket.order.includes(target.id)) {
+      bucket.order.push(target.id);
+    }
+    bucket.activeSheetKey = target.id;
+    attendanceCollection.activeBucketKey = bucket.key;
+    activeAttendanceBucketKey = bucket.key;
+    activeSheetKey = target.id;
+    sheet = target;
+    saveAttendanceCollection(attendanceCollection);
+    localStorage.removeItem(ATTENDANCE_GENERATION_STORAGE_KEY);
+    render();
+    setStatus(existing ? `Updated attendance sheet for LOD ${code}.` : `Created attendance sheet for LOD ${code}.`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function setActiveSheetKey(nextKey) {
   const bucket = getAttendanceBucketBySheetKey(nextKey);
   if (!nextKey || !bucket || !bucket.sheets[nextKey]) {
@@ -1009,6 +1072,7 @@ function normalizeSheet(value, index = 0) {
 
   return {
     id,
+    lodCode: normalizeLodCodeForAttendance(value?.lodCode || ""),
     venueName: String(value?.venueName || getDefaultSheetSeed().venueName || DEMO.venueName),
     description: String(value?.description || getDefaultSheetSeed().description || ""),
     eventType: normalizeAttendanceEventType(value?.eventType || value?.eventName),
@@ -1415,6 +1479,7 @@ function renderAttendanceSheetManager() {
     const labelParts = [
       portalName,
       bucket?.authUsername && bucket?.authUsername !== portalName ? bucket.authUsername : "",
+      optionSheet?.lodCode ? `LOD ${optionSheet.lodCode}` : "",
       optionSheet?.description || "",
       optionSheet?.eventDate ? formatDateDisplay(optionSheet.eventDate) : "",
       bucket.order.length > 1 ? `Day ${bucket.order.indexOf(key) + 1}` : "",

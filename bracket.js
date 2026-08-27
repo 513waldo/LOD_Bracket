@@ -1,4 +1,5 @@
 const playerList = document.querySelector("#playerList");
+const generateAttendanceSheetButton = document.querySelector("#generateAttendanceSheet");
 const totalPlayers = document.querySelector("#totalPlayers");
 const playersPerGroup = document.querySelector("#playersPerGroup");
 const message = document.querySelector("#message");
@@ -119,6 +120,7 @@ const splitPotStorageKey = getScopedStorageKey("dartsTournamentSplitPot");
 const bullseyeShootStorageKey = getScopedStorageKey("dartsTournamentBullseyeShoot");
 const portalSnapshotStorageKey = getScopedStorageKey("dartsTournamentPortalSnapshot");
 const bracketDraftStorageKey = getScopedStorageKey("dartsTournamentBracketDraft");
+const attendanceGenerationStorageKey = getScopedStorageKey("dartsTournamentAttendanceGeneration");
 const bracketDraftSessionStorageKey = getScopedStorageKey("dartsTournamentBracketDraftSession");
 const bracketDraftWindowNamePrefix = `${getScopedStorageKey("dartsTournamentBracketDraftWindow")}:`;
 const bracketDraftHistoryStateKey = "bracketDraft";
@@ -517,6 +519,7 @@ eventTypeInput?.addEventListener("change", () => {
 });
 descriptionInput?.addEventListener("input", queueBracketDraftSave);
 customEventNameInput?.addEventListener("input", queueBracketDraftSave);
+generateAttendanceSheetButton?.addEventListener("click", generateAttendanceSheetFromAdmin);
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -1426,6 +1429,50 @@ function getPlayers() {
     .split(/\r?\n/)
     .map((name) => name.trim())
     .filter(Boolean);
+}
+
+function generateAttendanceSheetFromAdmin() {
+  if (getEventType() !== "appreciation") {
+    showMessage("Attendance sheets are only generated for Appreciation Tournaments.");
+    return;
+  }
+
+  const players = Object.keys(getPlayerNameMap())
+    .sort((left, right) => Number(left) - Number(right))
+    .map((key) => String(getPlayerNameMap()[key] || "").trim())
+    .filter(Boolean);
+  const code = normalizeLodCode(lodCode);
+
+  if (!code) {
+    showMessage("Generate an LOD code before creating the attendance sheet.");
+    return;
+  }
+  if (!players.length) {
+    showMessage("Enter player names before creating the attendance sheet.");
+    return;
+  }
+
+  saveBracketDraft();
+  try {
+    localStorage.setItem(attendanceGenerationStorageKey, JSON.stringify({
+      version: 1,
+      lodCode: code,
+      venueName: getBarName(),
+      description: String(descriptionInput?.value || "").trim(),
+      eventType: getEventType(),
+      eventName: getEventName(),
+      eventDate: normalizeDateInputValue(eventDateInput?.value || ""),
+      players,
+      requestedAt: new Date().toISOString(),
+    }));
+    const attendanceUrl = new URL("attendance.html", window.location.href);
+    attendanceUrl.searchParams.set("attendance", "generate");
+    attendanceUrl.searchParams.set("lod", code);
+    window.open(attendanceUrl.href, "_blank", "noopener");
+    showMessage(`Attendance sheet ready for LOD ${code}.`);
+  } catch {
+    showMessage("Unable to prepare the attendance sheet in this browser.");
+  }
 }
 
 function renderTeams(teams) {
