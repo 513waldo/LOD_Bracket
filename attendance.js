@@ -616,14 +616,10 @@ function maybeApplyRequestedAttendanceSheet() {
 function maybeGenerateRequestedAttendanceSheet() {
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("attendance") !== "generate") {
-      return false;
-    }
-
     const requestedCode = normalizeLodCodeForAttendance(params.get("lod") || "");
     const request = JSON.parse(localStorage.getItem(ATTENDANCE_GENERATION_STORAGE_KEY) || "null");
     const code = normalizeLodCodeForAttendance(request?.lodCode || "");
-    if (!request || !requestedCode || code !== requestedCode) {
+    if (!request || (requestedCode && code !== requestedCode)) {
       return false;
     }
 
@@ -2199,6 +2195,12 @@ shareModeInputs.forEach((input) => {
 });
 
 window.addEventListener("storage", (event) => {
+  if (event.key === ATTENDANCE_GENERATION_STORAGE_KEY) {
+    if (maybeGenerateRequestedAttendanceSheet()) {
+      showAttendanceApp();
+      render();
+    }
+  }
   if (event.key === ATTENDANCE_ROOT_PASSWORD_STORAGE_KEY || event.key === ATTENDANCE_ROOT_SESSION_STORAGE_KEY) {
     if (hasAttendanceAccess()) {
       showAttendanceApp();
