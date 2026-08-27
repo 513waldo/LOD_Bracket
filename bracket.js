@@ -61,6 +61,7 @@ const pdfColumnMirror = document.querySelector("#pdfColumnMirror");
 const copyPortalLinkButton = document.querySelector("#copyPortalLink");
 const openAttendanceSheetButton = document.querySelector("#openAttendanceSheet");
 const localExitButton = document.querySelector("#localExitButton");
+const accountLogoutButton = document.querySelector("#accountLogout");
 const assistantAdminStatus = document.querySelector("#assistantAdminStatus");
 const assistantAdminLogoutButton = document.querySelector("#assistantAdminLogout");
 const organizerAccessDeniedPanel = document.querySelector("#organizerAccessDenied");
@@ -533,9 +534,23 @@ loadLodCodeButton?.addEventListener("click", () => {
 });
 
 assistantAdminLogoutButton?.addEventListener("click", logoutAssistantAdmin);
+accountLogoutButton?.addEventListener("click", logoutAccount);
 deleteAllActiveLodsButton?.addEventListener("click", () => {
   void deleteAllActiveLods();
 });
+
+function logoutAccount() {
+  try {
+    localStorage.removeItem("lodBracketSession:v1");
+    localStorage.removeItem("dartsTournamentAttendanceAccessSession");
+  } catch {
+    // Continue to the sign-in page even if browser storage is unavailable.
+  }
+
+  clearAssistantAdminSessionCode();
+  clearAttendanceRootSessionPassword();
+  window.location.replace("login.html");
+}
 
 clearLodCodeButton?.addEventListener("click", () => {
   const previousCode = lodCode;
