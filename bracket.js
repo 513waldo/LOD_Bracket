@@ -506,24 +506,30 @@ function generateTournamentDate() {
   showMessage("Tournament date generated.");
 }
 
+function queueAdminMetadataSave() {
+  queueBracketDraftSave();
+  savePortalSnapshotToLocalStorage();
+}
+
 newLodCodeButton?.addEventListener("click", generateNewPortalCode);
 window.generateNewPortalCode = generateNewPortalCode;
 
 generateEventDateButton?.addEventListener("click", generateTournamentDate);
 eventDateInput?.addEventListener("input", () => {
   updateEventDateStatus();
-  queueBracketDraftSave();
+  queueAdminMetadataSave();
 });
 eventDateInput?.addEventListener("change", () => {
   updateEventDateStatus();
-  queueBracketDraftSave();
+  queueAdminMetadataSave();
 });
 eventTypeInput?.addEventListener("change", () => {
   syncEventTypeControls();
-  queueBracketDraftSave();
+  queueAdminMetadataSave();
 });
-descriptionInput?.addEventListener("input", queueBracketDraftSave);
-customEventNameInput?.addEventListener("input", queueBracketDraftSave);
+barNameInput?.addEventListener("input", queueAdminMetadataSave);
+descriptionInput?.addEventListener("input", queueAdminMetadataSave);
+customEventNameInput?.addEventListener("input", queueAdminMetadataSave);
 generateAttendanceSheetButton?.addEventListener("click", generateAttendanceSheetFromAdmin);
 
 loadLodCodeButton?.addEventListener("click", () => {
@@ -1490,6 +1496,9 @@ function generateAttendanceSheetFromAdmin() {
   }
 
   saveBracketDraft();
+  const snapshot = buildPortalSnapshot();
+  savePortalSnapshotToLocalStorage();
+  void flushPortalSnapshotPublish(snapshot);
   try {
     localStorage.setItem(attendanceGenerationStorageKey, JSON.stringify({
       version: 1,
