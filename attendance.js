@@ -707,6 +707,10 @@ async function syncAttendanceMetadataFromApi() {
 
     const snapshot = await response.json();
     let changed = false;
+    if (sheet.lodCode !== code) {
+      sheet.lodCode = code;
+      changed = true;
+    }
     const nextVenueName = String(snapshot?.barName || "").trim();
     const nextDescription = String(snapshot?.description || "").trim();
     const nextEventType = String(snapshot?.eventType || "").trim();
@@ -1141,14 +1145,19 @@ function normalizeSheet(value, index = 0) {
   const required = clampWeekCount(value?.requiredWeeks, DEMO.requiredWeeks, total);
   const players = Array.isArray(value?.players) ? value.players.map((player, index) => normalizePlayer(player, total, index)) : [];
   const id = String(value?.id || `sheet-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`).trim();
+  const hasVenueName = Boolean(value && Object.prototype.hasOwnProperty.call(value, "venueName"));
+  const hasDescription = Boolean(value && Object.prototype.hasOwnProperty.call(value, "description"));
+  const hasEventType = Boolean(value && Object.prototype.hasOwnProperty.call(value, "eventType"));
+  const hasEventName = Boolean(value && Object.prototype.hasOwnProperty.call(value, "eventName"));
+  const eventTypeValue = hasEventType ? value.eventType : (value?.eventName || getDefaultSheetSeed().eventType || getDefaultSheetSeed().eventName);
 
   return {
     id,
     lodCode: normalizeLodCodeForAttendance(value?.lodCode || ""),
-    venueName: String(value?.venueName || getDefaultSheetSeed().venueName || DEMO.venueName),
-    description: String(value?.description || getDefaultSheetSeed().description || ""),
-    eventType: normalizeAttendanceEventType(value?.eventType || value?.eventName),
-    eventName: getAttendanceEventName(value?.eventType || value?.eventName, value?.eventName),
+    venueName: hasVenueName ? String(value.venueName || "") : String(getDefaultSheetSeed().venueName || DEMO.venueName),
+    description: hasDescription ? String(value.description || "") : String(getDefaultSheetSeed().description || ""),
+    eventType: normalizeAttendanceEventType(eventTypeValue),
+    eventName: hasEventName ? String(value.eventName || "") : getAttendanceEventName(eventTypeValue, value?.eventName),
     eventDate: String(value?.eventDate || ""),
     totalWeeks: total,
     requiredWeeks: required,

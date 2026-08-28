@@ -7224,7 +7224,12 @@ function clearAttendanceRootPasswordFromAdmin() {
 }
 
 function openAttendanceSheet() {
-  window.location.href = "attendance.html";
+  const attendanceUrl = new URL("attendance.html", window.location.href);
+  const code = normalizeLodCode(lodCode);
+  if (code) {
+    attendanceUrl.searchParams.set("lod", code);
+  }
+  window.location.href = attendanceUrl.href;
 }
 
 async function requireAssistantAdminPassword(code) {
