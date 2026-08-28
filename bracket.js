@@ -1468,6 +1468,11 @@ function generateAttendanceSheetFromAdmin() {
     const attendanceUrl = new URL("attendance.html", window.location.href);
     attendanceUrl.searchParams.set("attendance", "generate");
     attendanceUrl.searchParams.set("lod", code);
+    attendanceUrl.searchParams.set("venueName", getBarName());
+    attendanceUrl.searchParams.set("description", String(descriptionInput?.value || "").trim());
+    attendanceUrl.searchParams.set("eventType", getEventType());
+    attendanceUrl.searchParams.set("eventName", getEventName());
+    attendanceUrl.searchParams.set("eventDate", normalizeDateInputValue(eventDateInput?.value || ""));
     const attendanceWindow = window.open(attendanceUrl.href, "_blank", "noopener");
     if (!attendanceWindow) {
       window.location.assign(attendanceUrl.href);

@@ -628,7 +628,14 @@ function maybeGenerateRequestedAttendanceSheet() {
     }
 
     const draft = JSON.parse(localStorage.getItem(BRACKET_DRAFT_STORAGE_KEY) || "null");
-    const metadata = request || draft || {};
+    const metadata = {
+      ...(request || draft || {}),
+      ...(params.has("venueName") ? { venueName: params.get("venueName") || "" } : {}),
+      ...(params.has("description") ? { description: params.get("description") || "" } : {}),
+      ...(params.has("eventType") ? { eventType: params.get("eventType") || "" } : {}),
+      ...(params.has("eventName") ? { eventName: params.get("eventName") || "" } : {}),
+      ...(params.has("eventDate") ? { eventDate: params.get("eventDate") || "" } : {}),
+    };
     const targetCode = requestedCode || code || normalizeLodCodeForAttendance(draft?.lodCode || "");
     if (!targetCode) {
       return false;
