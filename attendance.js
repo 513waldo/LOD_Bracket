@@ -11,6 +11,7 @@ const BRACKET_DRAFT_STORAGE_KEY = getScopedStorageKey("dartsTournamentBracketDra
 const PORTAL_SNAPSHOT_STORAGE_KEY = getScopedStorageKey("dartsTournamentPortalSnapshot");
 const LOD_CODE_STORAGE_KEY = getScopedStorageKey("dartsTournamentLodCode");
 const ATTENDANCE_GENERATION_STORAGE_KEY = getScopedStorageKey("dartsTournamentAttendanceGeneration");
+const BRACKET_API_BASE_URL = String(window.BRACKET_API_BASE_URL || "https://lod-bracket-api.lod-bracket.workers.dev").replace(/\/$/, "");
 const ATTENDANCE_ACCESS_SESSION_STORAGE_KEY = "dartsTournamentAttendanceAccessSession";
 const ATTENDANCE_BUCKETS_TO_REMOVE = new Set([
   "outofbounds",
@@ -102,6 +103,8 @@ syncEventTrackerFromBracketDraft(true);
 maybeApplyRequestedAttendanceSheet();
 initializeAccountAttendanceAccess();
 maybeGenerateRequestedAttendanceSheet();
+syncAttendanceMetadataFromApi();
+window.setInterval(syncAttendanceMetadataFromApi, 10000);
 
 if (unlockRootButton) {
   unlockRootButton.addEventListener("click", unlockRootAttendanceSheet);
@@ -683,6 +686,59 @@ function maybeGenerateRequestedAttendanceSheet() {
     render();
     setStatus(existing ? `Updated attendance sheet for LOD ${targetCode}.` : `Created attendance sheet for LOD ${targetCode}.`);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function syncAttendanceMetadataFromApi() {
+  try {
+    const code = normalizeLodCodeForAttendance(sheet?.lodCode || new URLSearchParams(window.location.search).get("lod") || "");
+    if (!code) {
+      return false;
+    }
+
+    const response = await fetch(`${BRACKET_API_BASE_URL}/api/public/lod/${encodeURIComponent(code)}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return false;
+    }
+
+    const snapshot = await response.json();
+    let changed = false;
+    const nextVenueName = String(snapshot?.barName || "").trim();
+    const nextDescription = String(snapshot?.description || "").trim();
+    const nextEventType = String(snapshot?.eventType || "").trim();
+    const nextEventName = String(snapshot?.eventName || "").trim();
+    const nextEventDate = normalizeAnyDateInput(snapshot?.eventDate || "");
+
+    if (nextVenueName && sheet.venueName !== nextVenueName) {
+      sheet.venueName = nextVenueName;
+      changed = true;
+    }
+    if (snapshot?.description !== undefined && sheet.description !== nextDescription) {
+      sheet.description = nextDescription;
+      changed = true;
+    }
+    if (nextEventType && sheet.eventType !== nextEventType) {
+      sheet.eventType = nextEventType;
+      changed = true;
+    }
+    if (nextEventName && sheet.eventName !== nextEventName) {
+      sheet.eventName = nextEventName;
+      changed = true;
+    }
+    if (snapshot?.eventDate !== undefined && sheet.eventDate !== nextEventDate) {
+      sheet.eventDate = nextEventDate;
+      changed = true;
+    }
+
+    if (changed) {
+      saveSheet();
+      render();
+    }
+    return changed;
   } catch {
     return false;
   }
