@@ -76,6 +76,11 @@ const eventDateInput = document.querySelector("#eventDate");
 const eventDateStatus = document.querySelector("#eventDateStatus");
 const generateEventDateButton = document.querySelector("#generateEventDate");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
+const assistantPasswordDialog = document.querySelector("#assistantPasswordDialog");
+const assistantPasswordForm = document.querySelector("#assistantPasswordForm");
+const assistantPasswordInput = document.querySelector("#assistantPasswordInput");
+const assistantPasswordMessage = document.querySelector("#assistantPasswordMessage");
+const assistantPasswordCancel = document.querySelector("#assistantPasswordCancel");
 const newLodCodeButton = document.querySelector("#newLodCode");
 const portalQrCode = document.querySelector("#portalQrCode");
 const lodCodeText = document.querySelector("#lodCodeText");
@@ -543,6 +548,38 @@ accountLogoutButton?.addEventListener("click", logoutAccount);
 deleteAllActiveLodsButton?.addEventListener("click", () => {
   void deleteAllActiveLods();
 });
+
+function requestAssistantAdminPassword(message) {
+  if (!assistantPasswordDialog || !assistantPasswordForm || !assistantPasswordInput) {
+    return Promise.resolve(window.prompt(message, ""));
+  }
+
+  if (assistantPasswordMessage) {
+    assistantPasswordMessage.textContent = message;
+  }
+  assistantPasswordInput.value = "";
+  assistantPasswordDialog.showModal();
+  assistantPasswordInput.focus();
+
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      assistantPasswordForm.onsubmit = null;
+      assistantPasswordCancel.onclick = null;
+      assistantPasswordDialog.oncancel = null;
+      if (assistantPasswordDialog.open) {
+        assistantPasswordDialog.close();
+      }
+      resolve(value);
+    };
+
+    assistantPasswordForm.onsubmit = (event) => {
+      event.preventDefault();
+      finish(assistantPasswordInput.value);
+    };
+    assistantPasswordCancel.onclick = () => finish("");
+    assistantPasswordDialog.oncancel = () => finish("");
+  });
+}
 
 function logoutAccount() {
   try {
@@ -6869,7 +6906,7 @@ async function deleteAllActiveLods() {
   const loadedCode = normalizeLodCode(lodCode);
   const storedPassword = getAssistantAdminPassword();
   if (!activeSessionCode || (loadedCode && activeSessionCode !== loadedCode)) {
-    const entered = window.prompt("Enter the assistant admin password to delete all active LODs.", "");
+    const entered = await requestAssistantAdminPassword("Enter the assistant admin password to delete all active LODs.");
     if (!entered) {
       showMessage("Assistant admin access was cancelled.");
       return false;
@@ -7181,7 +7218,7 @@ function openAttendanceSheet() {
   window.location.href = "attendance.html";
 }
 
-function requireAssistantAdminPassword(code) {
+async function requireAssistantAdminPassword(code) {
   const normalizedCode = normalizeLodCode(code);
   if (!normalizedCode) {
     return false;
@@ -7194,7 +7231,7 @@ function requireAssistantAdminPassword(code) {
 
   const storedPassword = getAssistantAdminPassword();
   const promptLabel = `Enter the assistant admin password to load LOD ${normalizedCode}.`;
-  const entered = window.prompt(promptLabel, "");
+  const entered = await requestAssistantAdminPassword(promptLabel);
 
   if (!entered) {
     showMessage("Assistant admin access was cancelled.");
@@ -7335,7 +7372,7 @@ async function loadRemoteAdminSnapshot(code, announceFailure = false) {
   cancelPendingPortalSnapshotPublish();
 
   const sessionCode = getAssistantAdminSessionCode();
-  if (sessionCode !== normalizedCode && !requireAssistantAdminPassword(normalizedCode)) {
+  if (sessionCode !== normalizedCode && !(await requireAssistantAdminPassword(normalizedCode))) {
     return false;
   }
 

@@ -29,6 +29,21 @@
       </div>
     </header>
 
+    <dialog id="assistantPasswordDialog" class="password-modal" aria-labelledby="assistantPasswordTitle">
+      <form id="assistantPasswordForm" class="password-modal-card" method="dialog">
+        <h2 id="assistantPasswordTitle">Assistant admin access</h2>
+        <p id="assistantPasswordMessage">Enter the assistant admin password.</p>
+        <label class="password-modal-field">
+          Password
+          <input id="assistantPasswordInput" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="password-modal-actions">
+          <button id="assistantPasswordCancel" class="secondary" type="button">Cancel</button>
+          <button type="submit">Continue</button>
+        </div>
+      </form>
+    </dialog>
+
     <section id="organizerAccessDenied" class="access-denied-panel" role="alert" hidden>
       <p class="step-label">Organizer access</p>
       <h2>Access denied</h2>
@@ -527,6 +542,6 @@
   <script src="attendance-auth.js?v=2"></script>
   <script src="account-gate.js?v=1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-348"></script>
+  <script src="bracket.js?v=interactive-tools-349"></script>
 </body>
 </html>
