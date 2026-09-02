@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create local lab account</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="login.css?v=4">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="login-shell">
+    <section class="panel login-card" aria-labelledby="localAccountTitle">
+      <p class="eyebrow">Local testing only</p>
+      <h1 id="localAccountTitle">Create lab account</h1>
+      <p class="login-intro">This account is stored only in the local Wrangler database and does not send email.</p>
+      <form id="localAccountForm" class="login-form">
+        <label>
+          Venue
+          <select id="localBarName" required>
+            <option value="Lab">Lab</option>
+          </select>
+        </label>
+        <label>
+          Username
+          <input id="localUsername" type="text" autocomplete="username" minlength="3" required>
+        </label>
+        <label>
+          Password
+          <input id="localPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+          Confirm password
+          <input id="localPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button type="submit">Create local account</button>
+        <a class="text-button" href="login.html">Return to sign in</a>
+      </form>
+      <p id="localAccountMessage" class="login-message" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="config.js?v=5"></script>
+  <script src="local-account.js?v=1"></script>
+</body>
+</html>

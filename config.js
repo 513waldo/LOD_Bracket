@@ -1,7 +1,7 @@
 const isLocalLodDevelopment = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 window.BRACKET_API_BASE_URLS = isLocalLodDevelopment
   ? [
-      "http://127.0.0.1:8788",
+      "http://127.0.0.1:8787",
       "https://lod-bracket-api.lod-bracket.workers.dev",
       "https://lod-bracket.pages.dev",
     ]

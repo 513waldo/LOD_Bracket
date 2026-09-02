@@ -314,8 +314,8 @@ async function handleAuthRequest(request, storage, env) {
     const email = String(input?.email || "").trim().toLowerCase();
     const password = String(input?.password || "");
 
-    if (!username || !barName || !isEmail(email) || password.length < 8) {
-      return jsonResponse({ error: "Enter a bar name, valid email, username, and password of at least 8 characters." }, 400);
+    if (!username || !isEmail(email) || password.length < 8) {
+      return jsonResponse({ error: "Enter a valid email, username, and password of at least 8 characters." }, 400);
     }
 
     const accountKey = `account:${username}`;
@@ -347,7 +347,7 @@ async function handleAuthRequest(request, storage, env) {
       await sendResendEmail(env, {
         to: email,
         subject: "Verify your LOD Bracket account",
-        html: `<p>Thanks for creating an account for <strong>${escapeHtmlForEmail(barName)}</strong>.</p><p><a href="${verificationUrl}">Confirm your account</a></p><p>This link expires in 24 hours.</p>`,
+        html: `<p>Thanks for creating your Oche Operations account${barName ? ` for <strong>${escapeHtmlForEmail(barName)}</strong>` : ""}.</p><p><a href="${verificationUrl}">Confirm your account</a></p><p>This link expires in 24 hours.</p>`,
       });
     } catch (error) {
       await storage.delete(accountKey);
@@ -356,6 +356,42 @@ async function handleAuthRequest(request, storage, env) {
     }
 
     return jsonResponse({ ok: true, verified: false, email });
+  }
+
+  if (url.pathname === "/api/auth/dev-create" && method === "POST") {
+    if (!isLocalAuthRequest(request)) {
+      return jsonResponse({ error: "Local account creation is unavailable here." }, 404);
+    }
+
+    const input = await request.json().catch(() => null);
+    const username = normalizeUsername(input?.username);
+    const barName = String(input?.barName || "Local Lab").trim().slice(0, 120) || "Local Lab";
+    const password = String(input?.password || "");
+
+    if (!username || password.length < 8) {
+      return jsonResponse({ error: "Enter a username and a password of at least 8 characters." }, 400);
+    }
+
+    const accountKey = `account:${username}`;
+    if (await storage.get(accountKey)) {
+      return jsonResponse({ error: "That username is already in use." }, 409);
+    }
+
+    const passwordRecord = await hashPassword(password);
+    await storage.put(accountKey, {
+      version: 1,
+      username,
+      barName,
+      email: "",
+      passwordHash: passwordRecord.hash,
+      passwordSalt: passwordRecord.salt,
+      verified: true,
+      verificationToken: "",
+      createdAt: new Date().toISOString(),
+      localOnly: true,
+    });
+
+    return jsonResponse({ ok: true, username, barName, verified: true, localOnly: true });
   }
 
   if (url.pathname === "/api/auth/verify" && (method === "GET" || method === "POST")) {
@@ -490,6 +526,11 @@ async function findAccountsByEmail(storage, email) {
 
 function normalizeUsername(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 48);
+}
+
+function isLocalAuthRequest(request) {
+  const hostname = new URL(request.url).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
 function isEmail(value) {
