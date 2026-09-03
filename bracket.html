@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Darts Admin Portal</title>
-  <link rel="stylesheet" href="bracket.css?v=interactive-tools-191">
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-195">
 </head>
 <body>
   <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
@@ -19,7 +19,9 @@
         <div class="lod-link-group">
           <button id="copyPortalLink" class="secondary" type="button">Copy link</button>
         </div>
-        <button id="openAttendanceSheet" class="secondary" type="button">Attendance sheet</button>
+        <a class="secondary" href="attendance-v2.html">Attendance V2</a>
+        <button id="openAttendanceRootControls" class="secondary" type="button">Code Lookup</button>
+        <button id="openAttendanceSheet" class="secondary" type="button" hidden>Attendance sheet</button>
         <button id="localExitButton" class="secondary" type="button" hidden>Exit local test</button>
         <button id="assistantAdminLogout" class="secondary" type="button">Return to Player Portal</button>
         <button id="accountLogout" class="secondary" type="button">Log out</button>
@@ -40,6 +42,23 @@
         <div class="password-modal-actions">
           <button id="assistantPasswordCancel" class="secondary" type="button">Cancel</button>
           <button type="submit">Continue</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="attendanceCodeLookupDialog" class="password-modal" aria-labelledby="attendanceCodeLookupTitle">
+      <form class="password-modal-card" method="dialog" onsubmit="return false">
+        <h2 id="attendanceCodeLookupTitle">Code Lookup</h2>
+        <p>Root access is required to view stored tournament and LOD codes.</p>
+        <label class="password-modal-field">
+          Root password
+          <input id="attendanceCodeLookupPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <p id="attendanceCodeLookupStatus" class="message" aria-live="polite"></p>
+        <pre id="attendanceCodeLookupResults" class="code-console" hidden></pre>
+        <div class="password-modal-actions">
+          <button id="closeAttendanceCodeLookup" class="secondary" type="button">Close</button>
+          <button id="lookupAttendanceCodes" type="button">Look up codes</button>
         </div>
       </form>
     </dialog>
@@ -81,7 +100,7 @@
 
             <label>
               Event type
-              <select id="eventType">
+              <select id="eventType" onchange="window.syncEventTypeControls?.()">
                 <option value="normal-lod">Normal LOD</option>
                 <option value="appreciation">Appreciation Tournament</option>
                 <option value="custom">Name a specific tournament</option>
@@ -95,6 +114,13 @@
               Tournament name
               <input id="customEventName" type="text" autocomplete="off" placeholder="Tournament Name">
             </label>
+            <div class="attendance-code-generator setup-full-span">
+              <button id="generateAttendanceSeriesCode" class="secondary" type="button" onclick="window.generateAttendanceSeriesCodeFromAdmin?.()" disabled>Generate Attendance Tournament Code</button>
+              <label>
+                Generated Tournament Code
+                <input id="attendanceSeriesCode" type="text" readonly placeholder="Not generated">
+              </label>
+            </div>
 
             <div class="setup-date-row setup-full-span">
               <label>
@@ -114,6 +140,11 @@
               </div>
             </div>
             <p class="name-dedupe-note">Same names merge, case-insensitive.</p>
+            <div class="bulk-roster-import">
+              <label for="bulkRosterNames">Paste player names (one per line)</label>
+              <textarea id="bulkRosterNames" rows="6" spellcheck="false" placeholder="Paste a roster here, one name per line"></textarea>
+              <button id="importRosterNames" class="secondary" type="button">Import names</button>
+            </div>
             <div class="name-backup-preview" aria-labelledby="savedPlayerNamesTitle">
               <div class="name-backup-preview-header">
                 <h4>Recent saved rosters</h4>
@@ -149,7 +180,7 @@
           </label>
           <div class="actions single-action">
             <button id="generatePlayers" type="button" onclick="startTeamGeneration()">Generate teams</button>
-            <button id="generateAttendanceSheet" class="secondary" type="button">Generate attendance sheet</button>
+            <button id="generateAttendanceSheet" class="secondary" type="button" hidden>Generate attendance sheet</button>
           </div>
         </section>
 
@@ -408,38 +439,6 @@
           </div>
         </details>
 
-        <section class="panel tool-panel attendance-panel">
-          <div class="tool-body">
-            <div class="panel-title">
-              <div>
-                <h2 id="attendanceRootTitle">Attendance Root Password</h2>
-                <p id="attendanceRootStatus" class="attendance-root-status" aria-live="polite">Using the default attendance root password.</p>
-              </div>
-            </div>
-
-            <div class="stack-form">
-              <label>
-                Current password
-                <input id="attendanceRootCurrentPassword" type="password" autocomplete="current-password" placeholder="Required if already set">
-              </label>
-              <label>
-                New password
-                <input id="attendanceRootNewPassword" type="password" autocomplete="new-password" placeholder="Set a root password">
-              </label>
-              <label>
-                Confirm new password
-                <input id="attendanceRootConfirmPassword" type="password" autocomplete="new-password" placeholder="Repeat the password">
-              </label>
-            </div>
-
-            <div class="backup-actions">
-              <button id="saveAttendanceRootPassword" type="button">Save root password</button>
-              <button id="openAttendancePage" class="secondary" type="button">Open attendance page</button>
-              <button id="clearAttendanceRootPassword" class="danger" type="button">Reset to default password</button>
-            </div>
-          </div>
-        </section>
-
       </div>
     </div>
 
@@ -542,6 +541,6 @@
   <script src="attendance-auth.js?v=2"></script>
   <script src="account-gate.js?v=1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="bracket.js?v=interactive-tools-351"></script>
+  <script src="bracket.js?v=interactive-tools-362"></script>
 </body>
 </html>

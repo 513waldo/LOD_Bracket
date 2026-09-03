@@ -59,6 +59,36 @@ textarea {
   font: inherit;
 }
 
+.input-action-group {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.input-action-group input {
+  min-width: 0;
+}
+
+.input-action-group button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.attendance-code-generator {
+  display: grid;
+  gap: 10px;
+}
+
+.attendance-code-generator button {
+  justify-self: start;
+}
+
+.attendance-code-generator input {
+  letter-spacing: 0.08em;
+  font-weight: 900;
+}
+
 button {
   min-height: 48px;
   border: 0;
@@ -805,6 +835,19 @@ body.organizer-access-denied .backups-panel {
   display: grid;
   gap: 14px;
   min-width: 0;
+}
+
+.code-console {
+  max-height: 360px;
+  overflow: auto;
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 1px solid #263238;
+  border-radius: 8px;
+  background: #111820;
+  color: #b8f7c1;
+  font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
 }
 
 .top-workspace .out-shot-panel,

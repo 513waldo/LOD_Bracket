@@ -72,7 +72,11 @@ const eventTypeInput = document.querySelector("#eventType");
 const descriptionInput = document.querySelector("#description");
 const customEventNameInput = document.querySelector("#customEventName");
 const customEventNameWrap = document.querySelector("#customEventNameWrap");
+const attendanceSeriesCodeInput = document.querySelector("#attendanceSeriesCode");
+const generateAttendanceSeriesCodeButton = document.querySelector("#generateAttendanceSeriesCode");
 const eventDateInput = document.querySelector("#eventDate");
+const bulkRosterNamesInput = document.querySelector("#bulkRosterNames");
+const importRosterNamesButton = document.querySelector("#importRosterNames");
 const eventDateStatus = document.querySelector("#eventDateStatus");
 const generateEventDateButton = document.querySelector("#generateEventDate");
 const deleteAllActiveLodsButton = document.querySelector("#deleteAllActiveLods");
@@ -108,6 +112,13 @@ const attendanceRootNewPassword = document.querySelector("#attendanceRootNewPass
 const attendanceRootConfirmPassword = document.querySelector("#attendanceRootConfirmPassword");
 const saveAttendanceRootPasswordButton = document.querySelector("#saveAttendanceRootPassword");
 const clearAttendanceRootPasswordButton = document.querySelector("#clearAttendanceRootPassword");
+const attendanceCodeLookupPassword = document.querySelector("#attendanceCodeLookupPassword");
+const lookupAttendanceCodesButton = document.querySelector("#lookupAttendanceCodes");
+const attendanceCodeLookupResults = document.querySelector("#attendanceCodeLookupResults");
+const attendanceCodeLookupDialog = document.querySelector("#attendanceCodeLookupDialog");
+const attendanceCodeLookupStatus = document.querySelector("#attendanceCodeLookupStatus");
+const closeAttendanceCodeLookupButton = document.querySelector("#closeAttendanceCodeLookup");
+const openAttendanceRootControlsButton = document.querySelector("#openAttendanceRootControls");
 const openAttendancePageButton = document.querySelector("#openAttendancePage");
 const lodRegistryList = document.querySelector("#lodRegistryList");
 const refreshRegistryButton = document.querySelector("#refreshRegistry");
@@ -131,6 +142,7 @@ const bracketDraftWindowNamePrefix = `${getScopedStorageKey("dartsTournamentBrac
 const bracketDraftHistoryStateKey = "bracketDraft";
 const bracketCleanupStorageKey = getScopedStorageKey("dartsTournamentBracketCleanupAt");
 const lodCodeStorageKey = getScopedStorageKey("dartsTournamentLodCode");
+const attendanceSeriesCodeStorageKey = getScopedStorageKey("dartsTournamentAttendanceSeriesCode");
 const portalLodCodeStorageKey = "dartsTournamentPortalLodCode";
 const lodCodeClearedValue = "__CLEARED__";
 const assistantAdminPasswordStorageKey = getScopedStorageKey("dartsTournamentAssistantAdminPassword");
@@ -358,6 +370,13 @@ totalPlayers?.addEventListener("paste", () => window.setTimeout(() => syncTotalP
 
 saveStoredLodCode(lodCode);
 renderPortalLink();
+try {
+  if (attendanceSeriesCodeInput) {
+    attendanceSeriesCodeInput.value = localStorage.getItem(attendanceSeriesCodeStorageKey) || "";
+  }
+} catch {
+  // Ignore local storage failures.
+}
 
 diceRollerOverlay.className = "dice-roller-overlay";
 
@@ -408,6 +427,30 @@ document.querySelector("#refreshNames").addEventListener("click", () => {
   shrinkTotalPlayersToEnteredNames();
   saveCurrentRosterBackup();
   queueBracketDraftSave();
+});
+
+importRosterNamesButton?.addEventListener("click", () => {
+  const names = String(bulkRosterNamesInput?.value || "")
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (names.length < 2 || names.length > 200) {
+    showMessage("Paste between 2 and 200 player names, one per line.");
+    return;
+  }
+
+  totalPlayers.value = String(names.length);
+  syncTotalPlayersSection(true);
+  names.forEach((name, index) => {
+    const input = nameList?.querySelector(`[data-player-number="${index + 1}"]`);
+    if (input) {
+      input.value = name;
+    }
+  });
+  savePortalSnapshotToLocalStorage();
+  queueBracketDraftSave();
+  showMessage(`Imported ${names.length} player names.`);
 });
 
 function saveCurrentRosterBackup() {
@@ -531,6 +574,7 @@ barNameInput?.addEventListener("input", queueAdminMetadataSave);
 descriptionInput?.addEventListener("input", queueAdminMetadataSave);
 customEventNameInput?.addEventListener("input", queueAdminMetadataSave);
 generateAttendanceSheetButton?.addEventListener("click", generateAttendanceSheetFromAdmin);
+generateAttendanceSeriesCodeButton?.addEventListener("click", generateAttendanceSeriesCodeFromAdmin);
 
 loadLodCodeButton?.addEventListener("click", () => {
   const code = normalizeLodCode(lodCodeInput?.value || "");
@@ -1473,6 +1517,70 @@ function getPlayers() {
     .map((name) => name.trim())
     .filter(Boolean);
 }
+
+async function generateAttendanceSeriesCodeFromAdmin() {
+  if (!isAppreciationEventSelected()) {
+    showMessage("Select Appreciation Tournament before generating the attendance Tournament Code.");
+    syncEventTypeControls();
+    return;
+  }
+  const storedSession = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("lodBracketSession:v1") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const session = storedSession || window.LOD_ACCOUNT_SESSION || null;
+  const baseUrl = String(window.LOD_AUTH_API_BASE_URL || API_BASE_URLS[0] || "").replace(/\/$/, "");
+  if (!session?.token || !baseUrl) {
+    showMessage("Sign in before generating an attendance Tournament Code.");
+    return;
+  }
+  const name = getEventName();
+  if (!name || name === "Normal LOD") {
+    showMessage("Enter a tournament name before generating the attendance Tournament Code.");
+    return;
+  }
+  generateAttendanceSeriesCodeButton.disabled = true;
+  showMessage("Generating attendance Tournament Code…");
+  try {
+    const response = await fetch(`${baseUrl}/api/attendance/series`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${session.token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        description: String(descriptionInput?.value || "").trim(),
+        schedule: {
+          cadence: "weekly",
+          totalSessions: 12,
+          startDate: normalizeDateInputValue(eventDateInput?.value || ""),
+        },
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(`${payload.error || "Unable to generate the attendance Tournament Code."} (HTTP ${response.status})`);
+    }
+    const generatedCode = String(payload.code || payload.series?.code || "").trim();
+    if (!generatedCode) {
+      throw new Error("The Worker returned success but no Tournament Code. Restart Wrangler and try again.");
+    }
+    if (attendanceSeriesCodeInput) attendanceSeriesCodeInput.value = generatedCode;
+    localStorage.setItem(attendanceSeriesCodeStorageKey, generatedCode);
+    showMessage(`Attendance Tournament Code generated: ${generatedCode}.`);
+  } catch (error) {
+    const detail = error?.message || "Unable to generate the attendance Tournament Code.";
+    showMessage(`${detail} Confirm Wrangler is running on port 8787.`);
+  } finally {
+    syncEventTypeControls();
+  }
+}
+
+window.generateAttendanceSeriesCodeFromAdmin = generateAttendanceSeriesCodeFromAdmin;
 
 function generateAttendanceSheetFromAdmin() {
   if (getEventType() !== "appreciation") {
@@ -3935,13 +4043,21 @@ function getEventType() {
   return String(eventTypeInput?.value || "normal-lod");
 }
 
+function isAppreciationEventSelected() {
+  const value = getEventType().trim().toLowerCase();
+  const label = String(eventTypeInput?.selectedOptions?.[0]?.textContent || "")
+    .trim()
+    .toLowerCase();
+  return value === "appreciation" || value.includes("appreciation") || label.includes("appreciation");
+}
+
 function getEventName() {
   const type = getEventType();
   const enteredName = String(customEventNameInput?.value || "").trim();
   if (enteredName) {
     return enteredName;
   }
-  if (type === "appreciation") {
+  if (isAppreciationEventSelected()) {
     return "Appreciation Tournament";
   }
   if (type === "custom") {
@@ -3960,7 +4076,12 @@ function syncEventTypeControls() {
     customEventNameInput.readOnly = false;
     customEventNameInput.disabled = false;
   }
+  if (generateAttendanceSeriesCodeButton) {
+    generateAttendanceSeriesCodeButton.disabled = !isAppreciationEventSelected();
+  }
 }
+
+window.syncEventTypeControls = syncEventTypeControls;
 
 function shrinkTotalPlayersToEnteredNames() {
   const enteredNames = Array.from(nameList?.querySelectorAll("[data-player-number]") || [])
@@ -7223,6 +7344,33 @@ function clearAttendanceRootPasswordFromAdmin() {
   showMessage("Attendance root password reset to the default.");
 }
 
+async function lookupStoredAttendanceCodes() {
+  const password = String(attendanceCodeLookupPassword?.value || "").trim();
+  const session = window.LOD_ACCOUNT_SESSION;
+  const baseUrl = String(window.LOD_AUTH_API_BASE_URL || API_BASE_URLS[0] || "").replace(/\/$/, "");
+  if (!password || !session?.token || !baseUrl) {
+    showMessage("Sign in and enter the root lookup password.");
+    return;
+  }
+  lookupAttendanceCodesButton.disabled = true;
+  try {
+    const response = await fetch(`${baseUrl}/api/admin/attendance-codes`, {
+      headers: { authorization: `Bearer ${session.token}`, "x-attendance-root-password": password },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Root code lookup failed.");
+    attendanceCodeLookupResults.hidden = false;
+    attendanceCodeLookupResults.textContent = JSON.stringify(payload, null, 2);
+    if (attendanceCodeLookupStatus) attendanceCodeLookupStatus.textContent = "Root access confirmed.";
+    showMessage("Stored attendance and active LOD codes loaded.");
+  } catch (error) {
+    if (attendanceCodeLookupStatus) attendanceCodeLookupStatus.textContent = error.message || "Root code lookup failed.";
+    showMessage(error.message || "Root code lookup failed.");
+  } finally {
+    lookupAttendanceCodesButton.disabled = false;
+  }
+}
+
 function openAttendanceSheet() {
   const attendanceUrl = new URL("attendance.html", window.location.href);
   const code = normalizeLodCode(lodCode);
@@ -8219,6 +8367,15 @@ if (localExitButton) {
 saveAttendanceRootPasswordButton?.addEventListener("click", saveAttendanceRootPasswordFromAdmin);
 clearAttendanceRootPasswordButton?.addEventListener("click", clearAttendanceRootPasswordFromAdmin);
 openAttendancePageButton?.addEventListener("click", openAttendanceSheet);
+lookupAttendanceCodesButton?.addEventListener("click", lookupStoredAttendanceCodes);
+openAttendanceRootControlsButton?.addEventListener("click", () => {
+  attendanceCodeLookupResults.hidden = true;
+  attendanceCodeLookupStatus.textContent = "";
+  attendanceCodeLookupPassword.value = "";
+  attendanceCodeLookupDialog?.showModal();
+  attendanceCodeLookupPassword?.focus();
+});
+closeAttendanceCodeLookupButton?.addEventListener("click", () => attendanceCodeLookupDialog?.close());
 window.addEventListener("beforeunload", flushBracketDraftSave);
 window.addEventListener("beforeunload", clearSharedNameBackupRefreshTimer);
 window.addEventListener("pagehide", flushBracketDraftSave);

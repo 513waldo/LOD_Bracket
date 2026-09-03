@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance V2</title>
+  <link rel="stylesheet" href="bracket.css?v=interactive-tools-190">
+  <link rel="stylesheet" href="attendance.css?v=44">
+</head>
+<body>
+  <img class="page-background" src="assets/background.png?v=5" alt="" aria-hidden="true">
+  <main class="sheet-shell">
+    <section class="hero" aria-labelledby="attendanceV2Title">
+      <p class="eyebrow"><a href="bracket.html">Director Portal</a> / Attendance V2</p>
+      <h1 id="attendanceV2Title">Attendance V2</h1>
+      <p class="hero-text">Server-owned attendance is being built here. The existing attendance sheet remains available for rollback.</p>
+    </section>
+    <section class="panel" aria-labelledby="attendanceV2StatusTitle">
+      <h2 id="attendanceV2StatusTitle">V2 foundation</h2>
+      <p id="attendanceV2AccountStatus">Authenticated account loaded.</p>
+      <p>Attendance is organized by series. Each series receives one Tournament Code and can contain many weekly LOD codes.</p>
+      <div class="field-grid">
+        <label class="setup-full-span">
+          Attendance Tournament Code
+          <span class="input-action-group">
+            <input id="attendanceAuthenticationCode" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Enter the code generated in the Admin Portal">
+            <button id="authenticateAttendanceCode" type="button">Load attendance series</button>
+          </span>
+        </label>
+        <p id="attendanceAuthenticationStatus" class="gate-message setup-full-span" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="attendanceSeriesTitle">
+      <div class="panel-title">
+        <div>
+          <p class="step-label">Series setup</p>
+          <h2 id="attendanceSeriesTitle">Attendance series</h2>
+        </div>
+        <p>Review the series information loaded from the Admin Portal.</p>
+      </div>
+
+      <div class="field-grid">
+        <label>
+          Existing series
+          <select id="attendanceSeriesSelect">
+            <option value="">No series created yet</option>
+          </select>
+        </label>
+        <label>
+          Series name
+          <input id="attendanceSeriesName" type="text" placeholder="Monday Appreciation Tournament">
+        </label>
+        <label class="setup-full-span">
+          Description
+          <input id="attendanceSeriesDescription" type="text" placeholder="Weekly attendance tracking">
+        </label>
+        <label>
+          Schedule
+          <select id="attendanceSeriesCadence">
+            <option value="weekly">Weekly</option>
+            <option value="bi-weekly">Bi-weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="bi-yearly">Bi-yearly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </label>
+        <label>
+          Scheduled sessions
+          <input id="attendanceSeriesWeeks" type="number" min="2" max="52" value="6">
+        </label>
+        <label>
+          Start date
+          <input id="attendanceSeriesStartDate" type="date">
+        </label>
+      </div>
+
+      <div class="action-row">
+        <span id="attendanceSeriesStatus" class="gate-message" aria-live="polite"></span>
+      </div>
+      <div id="attendanceSeriesCodePanel" class="field-grid" hidden>
+        <label class="setup-full-span">
+          Tournament Code
+          <span class="input-action-group">
+            <input id="attendanceSeriesCode" type="text" readonly>
+            <button id="copyAttendanceSeriesCode" class="secondary" type="button">Copy code</button>
+          </span>
+        </label>
+        <p id="attendanceSeriesEndDate" class="gate-message setup-full-span"></p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="weeklyAttendanceTitle">
+      <div class="panel-title">
+        <div>
+          <p class="step-label">Weekly operation</p>
+          <h2 id="weeklyAttendanceTitle">Attendance week</h2>
+        </div>
+        <p>Attach an existing weekly LOD code or create a manual attendance roster.</p>
+      </div>
+
+      <div class="field-grid">
+        <label>
+          Tournament Code
+          <input id="weeklyTournamentCode" type="text" placeholder="Created with the series" readonly>
+        </label>
+        <label>
+          Attendance week
+          <div id="attendanceWeekList" class="attendance-week-list" aria-label="Attendance weeks">
+            <p class="section-note">Select a series first.</p>
+          </div>
+        </label>
+        <label class="setup-full-span">
+          Weekly LOD/QR code (optional)
+          <input id="weeklyLodCode" type="text" placeholder="Enter the existing weekly LOD code" disabled>
+        </label>
+        <label class="setup-full-span">
+          Create roster from scratch (optional)
+          <textarea id="manualRosterNames" rows="4" placeholder="Enter one attending player per line" disabled></textarea>
+        </label>
+      </div>
+
+      <div class="action-row">
+        <button id="mergeLodRoster" type="button" disabled>Merge LOD roster</button>
+        <button id="createManualRoster" type="button" class="secondary" disabled>Create manual roster</button>
+      </div>
+      <div id="attendanceRoster" class="backup-preview-list empty" aria-live="polite">No attendance roster loaded yet.</div>
+    </section>
+  </main>
+  <script src="config.js?v=6"></script>
+  <script src="account-gate.js?v=1"></script>
+  <script src="attendance-v2.js?v=13"></script>
+  <script>
+    const account = window.LOD_ACCOUNT_SESSION;
+    document.querySelector("#attendanceV2AccountStatus").textContent =
+      `Signed in as ${account.username}${account.barName ? ` · ${account.barName}` : ""}.`;
+  </script>
+</body>
+</html>

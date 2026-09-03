@@ -1,0 +1,35 @@
+name: Validate application
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript
+        run: |
+          node --check api/src/index.js
+          node --check bracket.js
+          node --check attendance.js
+          node --check attendance-v2.js
+
+      - name: Check for tracked secrets
+        run: |
+          if git ls-files | grep -E '(^|/)(\.dev\.vars|\.env)(\.|$)' ; then
+            echo "A local secrets file is tracked by Git. Remove it before merging."
+            exit 1
+          fi

@@ -3,7 +3,7 @@ import { sendResendEmail } from "./email.js";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Attendance-Root-Password",
 };
 const ALLOWED_CORS_ORIGINS = new Set([
   "https://ocheoperations.com",
@@ -26,6 +26,10 @@ export class BracketRoom {
 
     if (pathname.startsWith("/api/auth/")) {
       return handleAuthRequest(request, this.state.storage, this.env);
+    }
+
+    if (isAttendanceSeriesRequest(pathname)) {
+      return handleAttendanceSeriesRequest(request, this.state.storage, this.env);
     }
 
     if (isNameBackupsRequest(pathname)) {
@@ -157,6 +161,50 @@ export default {
       const targetUrl = new URL(request.url);
       targetUrl.pathname = url.pathname;
       return withCors(await authStub.fetch(new Request(targetUrl, request)), request);
+    }
+
+    if (isAttendanceSeriesRequest(url.pathname)) {
+      const account = await authenticateAccountRequest(request, env);
+      if (!account) {
+        return withCors(jsonResponse({ error: "Authentication required." }, 401), request);
+      }
+
+      const seriesStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__attendance_series__"));
+      const targetUrl = new URL(request.url);
+      targetUrl.pathname = url.pathname;
+      const headers = new Headers(request.headers);
+      headers.set("x-authenticated-username", account.username);
+      headers.set("x-authenticated-bar-name", account.barName || "");
+      return withCors(await seriesStub.fetch(new Request(targetUrl, {
+        method,
+        headers,
+        body: ["POST", "PATCH"].includes(method) ? await request.clone().text() : undefined,
+      })), request);
+    }
+
+    if (url.pathname === "/api/admin/attendance-codes" && method === "GET") {
+      const account = await authenticateAccountRequest(request, env);
+      const expectedPassword = String(env.ATTENDANCE_ROOT_PASSWORD || "").trim();
+      const suppliedPassword = String(request.headers.get("x-attendance-root-password") || "").trim();
+      if (!account || !expectedPassword || suppliedPassword !== expectedPassword) {
+        return withCors(jsonResponse({ error: "Root access required." }, 403), request);
+      }
+      const seriesStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__attendance_series__"));
+      const index = await seriesStub.fetch(new Request("https://series/api/attendance/series", {
+        method: "GET",
+        headers: {
+          "x-authenticated-username": account.username,
+          "x-authenticated-bar-name": account.barName || "",
+        },
+      }));
+      const seriesPayload = await index.json().catch(() => ({ series: [] }));
+      return withCors(jsonResponse({
+        attendanceSeries: (Array.isArray(seriesPayload.series) ? seriesPayload.series : []).map((series) => ({
+          code: series.code || "",
+          name: series.name || "",
+          description: series.description || "",
+        })),
+      }), request);
     }
 
     if (url.pathname === "/api/test-email") {
@@ -588,6 +636,232 @@ function isPublicLodRequest(pathname) {
 
 function isNameBackupsRequest(pathname) {
   return pathname === "/api/name-backups" || pathname === "/api/name-backups/";
+}
+
+function isAttendanceSeriesRequest(pathname) {
+  return /^\/api\/attendance\/series(?:\/[^/]+(?:\/merge)?)?\/?$/i.test(String(pathname || ""));
+}
+
+async function handleAttendanceSeriesRequest(request, storage, env) {
+  const method = request.method.toUpperCase();
+  const pathname = new URL(request.url).pathname;
+  const username = String(request.headers.get("x-authenticated-username") || "").trim();
+  const venueName = String(request.headers.get("x-authenticated-bar-name") || "").trim();
+  const accountVenueKey = normalizeVenueKey(venueName || username);
+
+  if (!username) {
+    return jsonResponse({ error: "An authenticated account is required." }, 403);
+  }
+
+  const mergeMatch = pathname.match(/^\/api\/attendance\/series\/([^/]+)\/merge\/?$/i);
+  if (mergeMatch) {
+    if (method !== "POST") {
+      return jsonResponse({ error: "Method not allowed" }, 405);
+    }
+
+    const code = normalizeAttendanceSeriesCode(decodeURIComponent(mergeMatch[1]));
+    const series = await storage.get(`attendanceSeries:${code}`);
+    if (!series || series.venueKey !== accountVenueKey) {
+      return jsonResponse({ error: "Attendance series not found." }, 404);
+    }
+
+    const input = await request.json().catch(() => null);
+    const sessionId = String(input?.sessionId || "").trim();
+    const lodCode = normalizeLodCode(input?.lodCode);
+    const manualNames = Array.isArray(input?.names)
+      ? input.names.map((name) => String(name || "").trim()).filter(Boolean)
+      : [];
+    const session = Array.isArray(series.schedule?.sessions)
+      ? series.schedule.sessions.find((entry) => String(entry.id || "") === sessionId)
+      : null;
+    if (!sessionId || !session) {
+      return jsonResponse({ error: "Select an attendance week." }, 400);
+    }
+    let names = manualNames;
+    if (lodCode) {
+      const authorization = request.headers.get("authorization") || "";
+      const lodStub = env?.BRACKET_ROOMS?.get(env.BRACKET_ROOMS.idFromName(lodCode));
+      if (!lodStub) {
+        return jsonResponse({ error: "LOD service is unavailable." }, 503);
+      }
+      const lodResponse = await lodStub.fetch(new Request(`https://lod/api/lod/${lodCode}`, {
+        method: "GET",
+        headers: { authorization },
+      }));
+      if (!lodResponse.ok) {
+        return jsonResponse({ error: lodResponse.status === 404 ? "LOD not found." : "Unable to read that LOD." }, lodResponse.status === 404 ? 404 : 502);
+      }
+      const snapshot = await lodResponse.json().catch(() => null);
+      names = getAttendanceRosterNames(snapshot);
+    }
+    if (!names.length) {
+      return jsonResponse({ error: lodCode ? "That LOD has no player roster." : "Enter at least one player name." }, 400);
+    }
+
+    const attendance = normalizeAttendanceRecord(series.attendance);
+    const sourceKey = lodCode || `manual:${names.map(normalizeAttendancePlayerKey).sort().join("|")}`;
+    const mergeKey = `${sessionId}:${sourceKey}`;
+    const existingMerge = attendance.merges.find((entry) => entry.key === mergeKey);
+    if (existingMerge) {
+      return jsonResponse({ series, attendance, alreadyApplied: true });
+    }
+
+    const mergedAt = new Date().toISOString();
+    const playerMap = new Map(attendance.players.map((player) => [player.key, player]));
+    for (const name of names) {
+      const key = normalizeAttendancePlayerKey(name);
+      if (!key) continue;
+      const player = playerMap.get(key) || {
+        key,
+        name: String(name).trim(),
+        weeks: {},
+        count: 0,
+      };
+      if (!player.weeks[sessionId]) {
+        player.weeks[sessionId] = {
+          sessionId,
+          date: String(session.date || ""),
+          lodCode: lodCode || "",
+          checkedAt: mergedAt,
+        };
+      }
+      player.count = Object.keys(player.weeks).length;
+      playerMap.set(key, player);
+    }
+
+    attendance.players = Array.from(playerMap.values()).sort((left, right) => left.name.localeCompare(right.name));
+    attendance.merges.push({ key: mergeKey, sessionId, lodCode, mergedAt, playerCount: names.length });
+    series.attendance = attendance;
+    series.updatedAt = mergedAt;
+    await storage.put(`attendanceSeries:${code}`, series);
+    return jsonResponse({ series, attendance, alreadyApplied: false });
+  }
+
+  if (method === "GET") {
+    const index = await storage.get("attendanceSeriesIndex") || [];
+    const series = [];
+    for (const code of Array.isArray(index) ? index : []) {
+      const record = await storage.get(`attendanceSeries:${code}`);
+      if (record && record.venueKey === accountVenueKey) {
+        series.push(record);
+      }
+    }
+    return jsonResponse({ series });
+  }
+
+  if (method === "POST") {
+    const input = await request.json().catch(() => null);
+    const name = String(input?.name || "").trim().slice(0, 120);
+    const description = String(input?.description || "").trim().slice(0, 500);
+    const supportedCadences = new Set(["weekly", "bi-weekly", "monthly", "quarterly", "bi-yearly", "yearly"]);
+    const requestedCadence = String(input?.schedule?.cadence || "weekly").trim().toLowerCase();
+    const cadence = supportedCadences.has(requestedCadence) ? requestedCadence : "weekly";
+    const startDate = String(input?.schedule?.startDate || "").trim().slice(0, 10);
+    const totalSessions = Math.min(52, Math.max(2, Math.trunc(Number(input?.schedule?.totalSessions || input?.schedule?.plannedWeeks) || 2)));
+    const scheduledSessions = totalSessions - 1;
+    if (!name) {
+      return jsonResponse({ error: "Enter a series name." }, 400);
+    }
+
+    const index = Array.isArray(await storage.get("attendanceSeriesIndex"))
+      ? await storage.get("attendanceSeriesIndex")
+      : [];
+    let code = "";
+    do {
+      code = `ATT-${randomToken().slice(0, 10).toUpperCase()}`;
+    } while (await storage.get(`attendanceSeries:${code}`));
+
+    const record = {
+      version: 1,
+      code,
+      name,
+      description,
+      venueName,
+      venueKey: accountVenueKey,
+      createdBy: username,
+      createdAt: new Date().toISOString(),
+      status: "active",
+      schedule: {
+        cadence,
+        startDate,
+        plannedWeeks: scheduledSessions,
+        scheduledSessions,
+        bufferWeeks: 1,
+        totalWeeks: totalSessions,
+        sessions: buildAttendanceSessions(startDate, cadence, totalSessions),
+      },
+    };
+    await storage.put(`attendanceSeries:${code}`, record);
+    await storage.put("attendanceSeriesIndex", [...index, code]);
+    return jsonResponse(record, 201);
+  }
+
+  return jsonResponse({ error: "Method not allowed" }, 405);
+}
+
+function normalizeAttendanceSeriesCode(value) {
+  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32);
+}
+
+function normalizeAttendancePlayerKey(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function normalizeAttendanceRecord(value) {
+  return {
+    version: 1,
+    players: Array.isArray(value?.players) ? value.players.map((player) => ({
+      key: normalizeAttendancePlayerKey(player?.key || player?.name),
+      name: String(player?.name || "").trim(),
+      weeks: player?.weeks && typeof player.weeks === "object" ? player.weeks : {},
+      count: Math.max(0, Number(player?.count) || 0),
+    })).filter((player) => player.key && player.name) : [],
+    merges: Array.isArray(value?.merges) ? value.merges : [],
+  };
+}
+
+function getAttendanceRosterNames(snapshot) {
+  const stateNames = Array.isArray(snapshot?.state?.originalPlayers) ? snapshot.state.originalPlayers : [];
+  if (stateNames.length) {
+    return stateNames.map((name) => String(name || "").trim()).filter(Boolean);
+  }
+  return String(snapshot?.playerList || "")
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function normalizeVenueKey(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function buildAttendanceSessions(startDate, cadence, totalWeeks) {
+  const firstDate = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? startDate : "";
+  return Array.from({ length: totalWeeks }, (_, index) => ({
+    id: `session-${index + 1}`,
+    number: index + 1,
+    date: firstDate ? addScheduleInterval(firstDate, cadence, index) : "",
+    buffer: index === totalWeeks - 1,
+  }));
+}
+
+function addScheduleInterval(startDate, cadence, index) {
+  const [year, month, day] = startDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (cadence === "bi-weekly") {
+    date.setUTCDate(date.getUTCDate() + (index * 14));
+  } else if (cadence === "monthly") {
+    date.setUTCMonth(date.getUTCMonth() + index);
+  } else if (cadence === "quarterly") {
+    date.setUTCMonth(date.getUTCMonth() + (index * 3));
+  } else if (cadence === "bi-yearly") {
+    date.setUTCMonth(date.getUTCMonth() + (index * 6));
+  } else if (cadence === "yearly") {
+    date.setUTCFullYear(date.getUTCFullYear() + index);
+  } else {
+    date.setUTCDate(date.getUTCDate() + (index * 7));
+  }
+  return date.toISOString().slice(0, 10);
 }
 
 function extractLodCode(pathname, queryCode) {
