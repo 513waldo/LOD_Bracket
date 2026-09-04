@@ -4078,7 +4078,10 @@ function syncEventTypeControls() {
     customEventNameInput.disabled = false;
   }
   if (generateAttendanceSeriesCodeButton) {
-    generateAttendanceSeriesCodeButton.disabled = !isAppreciationEventSelected();
+    generateAttendanceSeriesCodeButton.disabled = false;
+    generateAttendanceSeriesCodeButton.title = isAppreciationEventSelected()
+      ? ""
+      : "Select Appreciation Tournament before generating an attendance code.";
   }
 }
 
