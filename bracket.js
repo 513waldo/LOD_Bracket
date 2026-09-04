@@ -1532,8 +1532,9 @@ async function generateAttendanceSeriesCodeFromAdmin() {
     }
   })();
   const session = storedSession || window.LOD_ACCOUNT_SESSION || null;
+  const sessionToken = String(session?.token || session?.sessionToken || "").trim();
   const baseUrl = String(window.LOD_AUTH_API_BASE_URL || API_BASE_URLS[0] || "").replace(/\/$/, "");
-  if (!session?.token || !baseUrl) {
+  if (!sessionToken || !baseUrl) {
     showMessage("Sign in before generating an attendance Tournament Code.");
     return;
   }
@@ -1548,7 +1549,7 @@ async function generateAttendanceSeriesCodeFromAdmin() {
     const response = await fetch(`${baseUrl}/api/attendance/series`, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${session.token}`,
+        authorization: `Bearer ${sessionToken}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({
