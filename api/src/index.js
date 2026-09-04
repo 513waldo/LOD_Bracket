@@ -806,6 +806,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
     const requestedCodes = Array.isArray(input?.codes)
       ? input.codes.map(normalizeAttendanceSeriesCode).filter(Boolean)
       : [];
+    const deleteAll = requestedCodes.length === 0;
     const codeSet = new Set(requestedCodes);
     const currentIndex = Array.isArray(await storage.get("attendanceSeriesIndex"))
       ? await storage.get("attendanceSeriesIndex")
@@ -813,16 +814,16 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
     const deletedCodes = [];
     for (const code of currentIndex) {
       const normalizedCode = normalizeAttendanceSeriesCode(code);
-      if (!codeSet.has(normalizedCode)) continue;
+      if (!deleteAll && !codeSet.has(normalizedCode)) continue;
       const record = await storage.get(`attendanceSeries:${normalizedCode}`);
       if (record) {
         await storage.delete(`attendanceSeries:${normalizedCode}`);
-        deletedCodes.push(normalizedCode);
       }
+      deletedCodes.push(normalizedCode);
     }
     const remainingCodes = currentIndex
       .map(normalizeAttendanceSeriesCode)
-      .filter((code) => code && !deletedCodes.includes(code));
+      .filter((code) => code && !deleteAll && !deletedCodes.includes(code));
     await storage.put("attendanceSeriesIndex", remainingCodes);
     return jsonResponse({ ok: true, deletedCodes, remainingCount: remainingCodes.length });
   }
