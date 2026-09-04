@@ -769,6 +769,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
       return jsonResponse({ error: "Enter a valid attendance start date." }, 400);
     }
     const totalSessions = Math.min(52, Math.max(2, Math.trunc(Number(schedule.totalSessions || series.schedule?.totalWeeks) || 2)));
+    const requiredWeeks = Math.min(totalSessions, Math.max(1, Math.trunc(Number(schedule.requiredWeeks) || Math.ceil(totalSessions / 2))));
     series.schedule = {
       ...series.schedule,
       cadence,
@@ -776,6 +777,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
       plannedWeeks: totalSessions - 1,
       scheduledSessions: totalSessions - 1,
       totalWeeks: totalSessions,
+      requiredWeeks,
       sessions: buildAttendanceSessions(startDate, cadence, totalSessions),
     };
     series.updatedAt = new Date().toISOString();
@@ -834,6 +836,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
     const cadence = supportedCadences.has(requestedCadence) ? requestedCadence : "weekly";
     const startDate = String(input?.schedule?.startDate || "").trim().slice(0, 10);
     const totalSessions = Math.min(52, Math.max(2, Math.trunc(Number(input?.schedule?.totalSessions || input?.schedule?.plannedWeeks) || 2)));
+    const requiredWeeks = Math.min(totalSessions, Math.max(1, Math.trunc(Number(input?.schedule?.requiredWeeks) || Math.ceil(totalSessions / 2))));
     const scheduledSessions = totalSessions - 1;
     if (!name) {
       return jsonResponse({ error: "Enter a series name." }, 400);
@@ -864,6 +867,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
         scheduledSessions,
         bufferWeeks: 1,
         totalWeeks: totalSessions,
+        requiredWeeks,
         sessions: buildAttendanceSessions(startDate, cadence, totalSessions),
       },
     };

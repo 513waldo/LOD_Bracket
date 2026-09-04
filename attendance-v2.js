@@ -5,6 +5,7 @@ const seriesName = document.querySelector("#attendanceSeriesName");
 const seriesDescription = document.querySelector("#attendanceSeriesDescription");
 const seriesCadence = document.querySelector("#attendanceSeriesCadence");
 const seriesWeeks = document.querySelector("#attendanceSeriesWeeks");
+const seriesRequiredWeeks = document.querySelector("#attendanceSeriesRequiredWeeks");
 const seriesStartDate = document.querySelector("#attendanceSeriesStartDate");
 const seriesStatus = document.querySelector("#attendanceSeriesStatus");
 const seriesCodePanel = document.querySelector("#attendanceSeriesCodePanel");
@@ -92,6 +93,8 @@ function renderSelectedSeries() {
   seriesDescription.value = selected.description || "";
   seriesCadence.value = selected.schedule?.cadence || "weekly";
   seriesWeeks.value = String(selected.schedule?.totalWeeks || selected.schedule?.plannedWeeks || 1);
+  const totalScheduledWeeks = Number(seriesWeeks.value) || 1;
+  seriesRequiredWeeks.value = String(selected.schedule?.requiredWeeks || Math.ceil(totalScheduledWeeks / 2));
   seriesStartDate.value = selected.schedule?.startDate || "";
   seriesCodeInput.value = selected.code || "";
   weeklyTournamentCodeInput.value = selected.code || "";
@@ -151,6 +154,7 @@ async function saveAttendanceSchedule() {
         startDate,
         cadence: seriesCadence.value,
         totalSessions: seriesWeeks.value,
+        requiredWeeks: seriesRequiredWeeks.value,
       },
     });
     const index = attendanceSeries.findIndex((record) => record.code === code);
@@ -180,6 +184,7 @@ function getDateThumbnailParts(value) {
 function renderAttendanceRoster(attendance = {}) {
   const selected = attendanceSeries.find((record) => record.code === seriesSelect.value);
   const sessions = Array.isArray(selected?.schedule?.sessions) ? selected.schedule.sessions : [];
+  const requiredWeeks = Number(selected?.schedule?.requiredWeeks || Math.ceil(sessions.length / 2));
   const storedPlayers = Array.isArray(attendance?.players) ? attendance.players : [];
   const currentRoster = getCurrentAdminRoster();
   const playerMap = new Map();
@@ -208,6 +213,7 @@ function renderAttendanceRoster(attendance = {}) {
             <th scope="col">Player</th>
             ${sessions.map((session, index) => `<th scope="col"><span>Session ${Number(session.number || index + 1)}</span><strong>${escapeHtml(session.date ? formatScheduleDate(session.date) : "Date not set")}</strong></th>`).join("")}
             <th scope="col">Count</th>
+            <th scope="col">Qualification</th>
           </tr>
         </thead>
         <tbody>
@@ -215,6 +221,7 @@ function renderAttendanceRoster(attendance = {}) {
             <th scope="row">${escapeHtml(player.name)}</th>
             ${sessions.map((session) => `<td><input type="checkbox" data-attendance-player="${escapeHtml(player.name)}" data-attendance-session="${escapeHtml(session.id)}" aria-label="${escapeHtml(`${player.name} attended ${session.date || "this session"}`)}" ${hasAttendanceForSession(player, session) ? "checked" : ""}></td>`).join("")}
             <td class="attendance-matrix-count">${Number(player.count || Object.keys(player.weeks || {}).length || 0)}</td>
+            <td>${Number(player.count || Object.keys(player.weeks || {}).length || 0) >= requiredWeeks ? "Qualified" : `${requiredWeeks - Number(player.count || Object.keys(player.weeks || {}).length || 0)} more needed`}</td>
           </tr>`).join("")}
         </tbody>
       </table>
