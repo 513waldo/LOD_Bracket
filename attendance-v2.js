@@ -107,7 +107,7 @@ function renderSelectedSeries() {
     : "Scheduled end date will appear after a start date is set.";
   selectedAttendanceSessionId = selectedAttendanceSessionId && sessions.some((session) => session.id === selectedAttendanceSessionId)
     ? selectedAttendanceSessionId
-    : sessions[0]?.id || "";
+    : getCurrentAttendanceSessionId(sessions);
   attendanceWeekList.innerHTML = sessions.map((session, index) => {
     const sessionNumber = Number(session.number || index + 1);
     const date = session.date ? formatScheduleDate(session.date) : "Date not set";
@@ -121,6 +121,13 @@ function renderSelectedSeries() {
   mergeLodRosterButton.disabled = false;
   createManualRosterButton.disabled = false;
   renderAttendanceRoster(selected.attendance);
+}
+
+function getCurrentAttendanceSessionId(sessions) {
+  const today = new Date();
+  const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const elapsedSessions = sessions.filter((session) => session.date && session.date <= todayValue);
+  return elapsedSessions.at(-1)?.id || sessions[0]?.id || "";
 }
 
 function getDateThumbnailParts(value) {
