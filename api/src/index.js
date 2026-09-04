@@ -182,14 +182,27 @@ export default {
       })), request);
     }
 
-    if (url.pathname === "/api/admin/attendance-codes" && method === "GET") {
+    if (url.pathname === "/api/admin/attendance-codes" && (method === "GET" || method === "DELETE")) {
       const account = await authenticateAccountRequest(request, env);
       const expectedPassword = String(env.ATTENDANCE_ROOT_PASSWORD || "").trim();
       const suppliedPassword = String(request.headers.get("x-attendance-root-password") || "").trim();
-      if (!account || !expectedPassword || suppliedPassword !== expectedPassword) {
+      if (!expectedPassword || suppliedPassword !== expectedPassword || (method === "GET" && !account)) {
         return withCors(jsonResponse({ error: "Root access required." }, 403), request);
       }
       const seriesStub = env.BRACKET_ROOMS.get(env.BRACKET_ROOMS.idFromName("__attendance_series__"));
+      if (method === "DELETE") {
+        const input = await request.json().catch(() => null);
+        const codes = Array.isArray(input?.codes) ? input.codes : [];
+        const response = await seriesStub.fetch(new Request("https://series/api/attendance/series", {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            "x-root-authorized": "1",
+          },
+          body: JSON.stringify({ codes }),
+        }));
+        return withCors(response, request);
+      }
       const index = await seriesStub.fetch(new Request("https://series/api/attendance/series", {
         method: "GET",
         headers: {
@@ -649,7 +662,7 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
   const venueName = String(request.headers.get("x-authenticated-bar-name") || "").trim();
   const accountVenueKey = normalizeVenueKey(venueName || username);
 
-  if (!username) {
+  if (!username && request.headers.get("x-root-authorized") !== "1") {
     return jsonResponse({ error: "An authenticated account is required." }, 403);
   }
 
@@ -747,6 +760,36 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
       }
     }
     return jsonResponse({ series });
+  }
+
+  if (method === "DELETE") {
+    if (request.headers.get("x-root-authorized") !== "1") {
+      return jsonResponse({ error: "Root access required." }, 403);
+    }
+
+    const input = await request.json().catch(() => null);
+    const requestedCodes = Array.isArray(input?.codes)
+      ? input.codes.map(normalizeAttendanceSeriesCode).filter(Boolean)
+      : [];
+    const codeSet = new Set(requestedCodes);
+    const currentIndex = Array.isArray(await storage.get("attendanceSeriesIndex"))
+      ? await storage.get("attendanceSeriesIndex")
+      : [];
+    const deletedCodes = [];
+    for (const code of currentIndex) {
+      const normalizedCode = normalizeAttendanceSeriesCode(code);
+      if (!codeSet.has(normalizedCode)) continue;
+      const record = await storage.get(`attendanceSeries:${normalizedCode}`);
+      if (record) {
+        await storage.delete(`attendanceSeries:${normalizedCode}`);
+        deletedCodes.push(normalizedCode);
+      }
+    }
+    const remainingCodes = currentIndex
+      .map(normalizeAttendanceSeriesCode)
+      .filter((code) => code && !deletedCodes.includes(code));
+    await storage.put("attendanceSeriesIndex", remainingCodes);
+    return jsonResponse({ ok: true, deletedCodes, remainingCount: remainingCodes.length });
   }
 
   if (method === "POST") {
