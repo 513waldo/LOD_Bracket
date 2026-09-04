@@ -6220,8 +6220,12 @@ function clearTournamentState({ preserveLodCode = true, clearDraft = true, code 
   syncEventTypeControls();
   try {
     localStorage.removeItem(attendanceGenerationStorageKey);
+    localStorage.removeItem(attendanceSeriesCodeStorageKey);
   } catch {
     // Ignore optional local cleanup failures.
+  }
+  if (attendanceSeriesCodeInput) {
+    attendanceSeriesCodeInput.value = "";
   }
   playerList.value = "";
   stopMysteryOutDrawAnimation();
