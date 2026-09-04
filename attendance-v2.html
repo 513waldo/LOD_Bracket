@@ -131,6 +131,14 @@
         <button id="createManualRoster" type="button" class="secondary" disabled>Create manual roster</button>
       </div>
       <div id="attendanceRoster" class="backup-preview-list empty" aria-live="polite">No attendance roster loaded yet.</div>
+      <section id="qualifiedAnnouncement" class="qualified-announcement" aria-labelledby="qualifiedAnnouncementTitle" hidden>
+        <div>
+          <p class="step-label">Finale announcement</p>
+          <h3 id="qualifiedAnnouncementTitle">Qualified players</h3>
+        </div>
+        <p id="qualifiedAnnouncementText"></p>
+        <button id="copyQualifiedAnnouncement" type="button" class="secondary">Copy announcement</button>
+      </section>
     </section>
   </main>
   <script src="config.js?v=6"></script>

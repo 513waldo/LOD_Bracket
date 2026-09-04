@@ -1067,3 +1067,23 @@ h3 {
 .attendance-matrix-count {
   font-weight: 800;
 }
+
+.qualified-announcement {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 2px solid #b7642f;
+  border-radius: 10px;
+  background: #fff3df;
+}
+
+.qualified-announcement h3,
+.qualified-announcement p {
+  margin: 0;
+}
+
+.qualified-announcement p:not(.step-label) {
+  line-height: 1.45;
+  font-weight: 700;
+}

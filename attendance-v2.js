@@ -23,6 +23,9 @@ const manualRosterNames = document.querySelector("#manualRosterNames");
 const mergeLodRosterButton = document.querySelector("#mergeLodRoster");
 const createManualRosterButton = document.querySelector("#createManualRoster");
 const attendanceRoster = document.querySelector("#attendanceRoster");
+const qualifiedAnnouncement = document.querySelector("#qualifiedAnnouncement");
+const qualifiedAnnouncementText = document.querySelector("#qualifiedAnnouncementText");
+const copyQualifiedAnnouncementButton = document.querySelector("#copyQualifiedAnnouncement");
 let attendanceSeries = [];
 let selectedAttendanceSessionId = "";
 
@@ -201,6 +204,7 @@ function renderAttendanceRoster(attendance = {}) {
   if (!players.length || !sessions.length) {
     attendanceRoster.className = "backup-preview-list empty";
     attendanceRoster.textContent = sessions.length ? "No attendance roster loaded yet." : "Load an attendance series to display its dates.";
+    qualifiedAnnouncement.hidden = true;
     return;
   }
 
@@ -226,6 +230,15 @@ function renderAttendanceRoster(attendance = {}) {
         </tbody>
       </table>
     </div>`;
+
+  const qualifiedPlayers = players
+    .filter((player) => Number(player.count || Object.keys(player.weeks || {}).length || 0) >= requiredWeeks)
+    .map((player) => player.name);
+  const finaleDate = sessions.at(-1)?.date ? formatScheduleDate(sessions.at(-1).date) : "the Finale date";
+  qualifiedAnnouncementText.textContent = qualifiedPlayers.length
+    ? `Congratulations to ${qualifiedPlayers.join(", ")}! You have met the required ${requiredWeeks} weeks and are qualified for this session's Finale on ${finaleDate}.`
+    : `No players have reached the required ${requiredWeeks} weeks yet.`;
+  qualifiedAnnouncement.hidden = false;
 }
 
 function hasAttendanceForSession(player, session) {
@@ -466,6 +479,17 @@ copySeriesCodeButton.addEventListener("click", async () => {
     seriesCodeInput.focus();
     seriesCodeInput.select();
     setSeriesStatus("Select the code and copy it manually.");
+  }
+});
+
+copyQualifiedAnnouncementButton.addEventListener("click", async () => {
+  const text = qualifiedAnnouncementText.textContent.trim();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    setSeriesStatus("Qualification announcement copied.", "success");
+  } catch {
+    setSeriesStatus("Could not copy the announcement.", "error");
   }
 });
 
