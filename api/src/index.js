@@ -750,6 +750,39 @@ async function handleAttendanceSeriesRequest(request, storage, env) {
     return jsonResponse({ series, attendance, alreadyApplied: false });
   }
 
+  const seriesMatch = pathname.match(/^\/api\/attendance\/series\/([^/]+)\/?$/i);
+  if (seriesMatch && method === "PATCH") {
+    const code = normalizeAttendanceSeriesCode(decodeURIComponent(seriesMatch[1]));
+    const series = await storage.get(`attendanceSeries:${code}`);
+    if (!series || series.venueKey !== accountVenueKey) {
+      return jsonResponse({ error: "Attendance series not found." }, 404);
+    }
+
+    const input = await request.json().catch(() => null);
+    const schedule = input?.schedule && typeof input.schedule === "object" ? input.schedule : {};
+    const cadenceOptions = new Set(["weekly", "bi-weekly", "monthly", "quarterly", "bi-yearly", "yearly"]);
+    const cadence = cadenceOptions.has(String(schedule.cadence || "").trim().toLowerCase())
+      ? String(schedule.cadence).trim().toLowerCase()
+      : series.schedule?.cadence || "weekly";
+    const startDate = String(schedule.startDate || "").trim().slice(0, 10);
+    if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      return jsonResponse({ error: "Enter a valid attendance start date." }, 400);
+    }
+    const totalSessions = Math.min(52, Math.max(2, Math.trunc(Number(schedule.totalSessions || series.schedule?.totalWeeks) || 2)));
+    series.schedule = {
+      ...series.schedule,
+      cadence,
+      startDate,
+      plannedWeeks: totalSessions - 1,
+      scheduledSessions: totalSessions - 1,
+      totalWeeks: totalSessions,
+      sessions: buildAttendanceSessions(startDate, cadence, totalSessions),
+    };
+    series.updatedAt = new Date().toISOString();
+    await storage.put(`attendanceSeries:${code}`, series);
+    return jsonResponse({ series });
+  }
+
   if (method === "GET") {
     const index = await storage.get("attendanceSeriesIndex") || [];
     const series = [];

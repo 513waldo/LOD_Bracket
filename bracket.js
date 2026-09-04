@@ -1558,7 +1558,7 @@ async function generateAttendanceSeriesCodeFromAdmin() {
         schedule: {
           cadence: "weekly",
           totalSessions: 12,
-          startDate: normalizeDateInputValue(eventDateInput?.value || ""),
+          startDate: "",
         },
       }),
     });

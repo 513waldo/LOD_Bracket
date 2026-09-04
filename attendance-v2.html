@@ -71,12 +71,13 @@
           <input id="attendanceSeriesWeeks" type="number" min="2" max="52" value="6">
         </label>
         <label>
-          Start date from Admin Portal
-          <input id="attendanceSeriesStartDate" type="date" readonly aria-readonly="true">
+          Attendance start date
+          <input id="attendanceSeriesStartDate" type="date">
         </label>
       </div>
 
       <div class="action-row">
+        <button id="saveAttendanceSchedule" type="button">Save schedule</button>
         <span id="attendanceSeriesStatus" class="gate-message" aria-live="polite"></span>
       </div>
       <div id="attendanceSeriesCodePanel" class="field-grid" hidden>

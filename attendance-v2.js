@@ -11,6 +11,7 @@ const seriesCodePanel = document.querySelector("#attendanceSeriesCodePanel");
 const seriesCodeInput = document.querySelector("#attendanceSeriesCode");
 const copySeriesCodeButton = document.querySelector("#copyAttendanceSeriesCode");
 const seriesEndDate = document.querySelector("#attendanceSeriesEndDate");
+const saveAttendanceScheduleButton = document.querySelector("#saveAttendanceSchedule");
 const attendanceAuthenticationCodeInput = document.querySelector("#attendanceAuthenticationCode");
 const authenticateAttendanceCodeButton = document.querySelector("#authenticateAttendanceCode");
 const attendanceAuthenticationStatus = document.querySelector("#attendanceAuthenticationStatus");
@@ -128,6 +129,39 @@ function getCurrentAttendanceSessionId(sessions) {
   const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const elapsedSessions = sessions.filter((session) => session.date && session.date <= todayValue);
   return elapsedSessions.at(-1)?.id || sessions[0]?.id || "";
+}
+
+async function saveAttendanceSchedule() {
+  const code = seriesSelect.value.trim();
+  if (!code) {
+    setSeriesStatus("Authenticate with a Tournament Code first.", "error");
+    return;
+  }
+  const startDate = seriesStartDate.value.trim();
+  if (!startDate) {
+    setSeriesStatus("Choose an attendance start date.", "error");
+    return;
+  }
+  saveAttendanceScheduleButton.disabled = true;
+  setSeriesStatus("Saving attendance schedule…");
+  try {
+    const payload = await attendanceRequest(`/api/attendance/series/${encodeURIComponent(code)}`, "PATCH", {
+      schedule: {
+        startDate,
+        cadence: seriesCadence.value,
+        totalSessions: seriesWeeks.value,
+      },
+    });
+    const index = attendanceSeries.findIndex((record) => record.code === code);
+    if (index >= 0 && payload.series) attendanceSeries[index] = payload.series;
+    selectedAttendanceSessionId = "";
+    renderSelectedSeries();
+    setSeriesStatus("Attendance schedule saved.", "success");
+  } catch (error) {
+    setSeriesStatus(error.message, "error");
+  } finally {
+    saveAttendanceScheduleButton.disabled = false;
+  }
 }
 
 function getDateThumbnailParts(value) {
@@ -426,6 +460,8 @@ copySeriesCodeButton.addEventListener("click", async () => {
     setSeriesStatus("Select the code and copy it manually.");
   }
 });
+
+saveAttendanceScheduleButton.addEventListener("click", saveAttendanceSchedule);
 
 // Attendance V2 is code-gated. Do not enumerate or load a series until the
 // user authenticates with the Tournament Code from the Admin Portal.
