@@ -45,7 +45,8 @@ function setAttendanceAuthenticationStatus(message, kind = "") {
 
 async function attendanceRequest(path, method = "GET", body) {
   const session = getAttendanceV2Session();
-  const headers = { authorization: `Bearer ${session?.token || ""}` };
+  const sessionToken = String(session?.token || session?.sessionToken || "").trim();
+  const headers = { authorization: `Bearer ${sessionToken}` };
   if (body) {
     headers["content-type"] = "application/json";
   }
