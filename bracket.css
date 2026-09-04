@@ -934,6 +934,11 @@ select {
   min-height: 48px;
 }
 
+#eventType,
+#eventType option {
+  font-weight: 900;
+}
+
 textarea {
   min-height: 160px;
   resize: vertical;
