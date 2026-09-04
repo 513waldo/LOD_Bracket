@@ -341,6 +341,16 @@ function shouldPreferSnapshot(candidate, current) {
     return Boolean(candidate);
   }
 
+  // Bracket state changes must win over a cached snapshot that happens to
+  // contain an older portal notice. Notice timestamps are only a tie-breaker;
+  // otherwise a board call can freeze the portal on that older bracket state.
+  const candidateExportedAt = Number(new Date(candidate.exportedAt || 0));
+  const currentExportedAt = Number(new Date(current.exportedAt || 0));
+  if (Number.isFinite(candidateExportedAt) && Number.isFinite(currentExportedAt)
+    && candidateExportedAt !== currentExportedAt) {
+    return candidateExportedAt > currentExportedAt;
+  }
+
   const candidateNotice = String(candidate.portalNotice || "").trim();
   const currentNotice = String(current.portalNotice || "").trim();
   const candidateAutoNotice = String(candidate.portalAutoNotice || "").trim();
