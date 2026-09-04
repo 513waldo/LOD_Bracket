@@ -7352,15 +7352,16 @@ function clearAttendanceRootPasswordFromAdmin() {
 async function lookupStoredAttendanceCodes() {
   const password = String(attendanceCodeLookupPassword?.value || "").trim();
   const session = window.LOD_ACCOUNT_SESSION;
+  const sessionToken = String(session?.token || session?.sessionToken || "").trim();
   const baseUrl = String(window.LOD_AUTH_API_BASE_URL || API_BASE_URLS[0] || "").replace(/\/$/, "");
-  if (!password || !session?.token || !baseUrl) {
+  if (!password || !sessionToken || !baseUrl) {
     showMessage("Sign in and enter the root lookup password.");
     return;
   }
   lookupAttendanceCodesButton.disabled = true;
   try {
     const response = await fetch(`${baseUrl}/api/admin/attendance-codes`, {
-      headers: { authorization: `Bearer ${session.token}`, "x-attendance-root-password": password },
+      headers: { authorization: `Bearer ${sessionToken}`, "x-attendance-root-password": password },
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Root code lookup failed.");
